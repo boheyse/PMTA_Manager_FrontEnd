@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { PlusCircle, Trash2, Search, ChevronRight, ChevronDown, Play, Pause, Square } from 'lucide-react';
+import { PlusCircle, Trash2, Search, ChevronRight, ChevronDown, Play, Pause, Square, Edit } from 'lucide-react';
+import { DomainModal, DomainFormData } from '../components/DomainModal';
 
 type QueueStatus = 'Active' | 'Paused' | 'Stopped';
 
@@ -57,6 +58,57 @@ export function SendingDomainsPage() {
       ]
     },
   ]);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingDomain, setEditingDomain] = useState<Domain | undefined>();
+
+  const availableIPs = [
+    '192.168.1.1',
+    '192.168.1.2',
+    '10.0.0.1',
+    '10.0.0.2'
+  ];
+
+  const handleSave = (formData: DomainFormData) => {
+    if (editingDomain) {
+      // Update existing domain
+      setDomains(prevDomains => 
+        prevDomains.map(domain => 
+          domain.domain === editingDomain.domain
+            ? {
+                ...domain,
+                domain: formData.domain,
+                subdomains: formData.subdomains.map(sub => ({
+                  ...sub,
+                  queueStatus: sub.queueStatus || 'Active'
+                }))
+              }
+            : domain
+        )
+      );
+    } else {
+      // Add new domain
+      setDomains(prevDomains => [
+        ...prevDomains,
+        {
+          domain: formData.domain,
+          ipAddresses: [...new Set(formData.subdomains.map(sub => sub.ipAddress))],
+          emailsSent: 0,
+          queue: 'Delivering',
+          subdomains: formData.subdomains.map(sub => ({
+            ...sub,
+            queueStatus: sub.queueStatus || 'Active'
+          }))
+        }
+      ]);
+    }
+    setEditingDomain(undefined);
+  };
+
+  const handleEdit = (domain: Domain) => {
+    setEditingDomain(domain);
+    setIsModalOpen(true);
+  };
 
   const updateQueueStatus = (domainIndex: number, subdomainIndex: number, newStatus: QueueStatus) => {
     setDomains(prevDomains => {
@@ -166,7 +218,13 @@ export function SendingDomainsPage() {
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold">Sending Domains</h1>
-        <button className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
+        <button 
+          className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+          onClick={() => {
+            setEditingDomain(undefined);
+            setIsModalOpen(true);
+          }}
+        >
           <PlusCircle className="w-4 h-4 mr-2" />
           Add Domain
         </button>
@@ -215,15 +273,26 @@ export function SendingDomainsPage() {
                   <td className="p-4">{domain.emailsSent}</td>
                   <td className="p-4">{domain.queue}</td>
                   <td className="p-4">
-                    <button 
-                      className="text-red-500 hover:text-red-700"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // Handle delete
-                      }}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center space-x-2">
+                      <button 
+                        className="text-blue-500 hover:text-blue-700"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEdit(domain);
+                        }}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button 
+                        className="text-red-500 hover:text-red-700"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // Handle delete
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
                 {expandedDomains.includes(domain.domain) && (
@@ -269,6 +338,17 @@ export function SendingDomainsPage() {
           </tbody>
         </table>
       </div>
+
+      <DomainModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingDomain(undefined);
+        }}
+        onSave={handleSave}
+        editData={editingDomain}
+        availableIPs={availableIPs}
+      />
     </div>
   );
 } 
