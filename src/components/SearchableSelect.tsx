@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Search, ChevronDown } from 'lucide-react';
 
 interface SearchableSelectProps {
@@ -10,13 +10,27 @@ export function SearchableSelect({ options, placeholder }: SearchableSelectProps
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState(placeholder);
+  const selectRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (selectRef.current && !selectRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const filteredOptions = options.filter(option =>
     option.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
-    <div className="relative">
+    <div className="relative" ref={selectRef}>
       <div
         className="flex items-center justify-between w-full px-3 py-2 border rounded-lg bg-white cursor-pointer"
         onClick={() => setIsOpen(!isOpen)}

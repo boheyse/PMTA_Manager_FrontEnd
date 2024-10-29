@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Info, Search } from 'lucide-react';
 import { SearchableSelect } from '../components/SearchableSelect';
+import { Select } from '../components/Select';
 
 export function MailboxProvidersPage() {
   const [view, setView] = useState<'table' | 'charts' | 'timeline'>('table');
@@ -9,7 +10,7 @@ export function MailboxProvidersPage() {
   const domains = ['All Domains', 'example.com', 'test.com'];
   const ipAddresses = ['All IP Addresses', '192.168.1.1', '10.0.0.1'];
   const providers = ['All Mailbox Providers', 'Gmail', 'Yahoo', 'Outlook'];
-  const categories = ['All Categories', 'Primary', 'Social', 'Promotions'];
+  const deliveryStatus = ['Delivered', 'In queue'];
 
   return (
     <div className="p-6">
@@ -24,7 +25,11 @@ export function MailboxProvidersPage() {
         <SearchableSelect options={domains} placeholder="All Domains" />
         <SearchableSelect options={ipAddresses} placeholder="All IP Addresses" />
         <SearchableSelect options={providers} placeholder="All Mailbox Providers" />
-        <SearchableSelect options={categories} placeholder="All Categories" />
+        <Select 
+          options={deliveryStatus} 
+          placeholder="Delivered"
+          defaultValue="Delivered"
+        />
       </div>
 
       <div className="flex items-center space-x-4 mb-4">

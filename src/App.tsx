@@ -4,6 +4,8 @@ import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { StatsPage } from './pages/StatsPage';
 import { MailboxProvidersPage } from './pages/MailboxProvidersPage';
+import { EmailLogsPage } from './pages/EmailLogsPage';
+import { SendingDomainsPage } from './pages/SendingDomainsPage';
 
 function App() {
   return (
@@ -16,6 +18,8 @@ function App() {
             <Route path="/" element={<StatsPage />} />
             <Route path="/stats" element={<StatsPage />} />
             <Route path="/mailbox-providers" element={<MailboxProvidersPage />} />
+            <Route path="/email-logs" element={<EmailLogsPage />} />
+            <Route path="/sending-domains" element={<SendingDomainsPage />} />
           </Routes>
         </div>
       </div>
