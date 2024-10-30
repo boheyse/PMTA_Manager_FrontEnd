@@ -1,73 +1,92 @@
 import React, { useState } from 'react';
-import { PlusCircle, Trash2, Search, ChevronRight, ChevronDown, Play, Pause, Square, Edit } from 'lucide-react';
-import { DomainModal, DomainFormData } from '../components/DomainModal';
-
-type QueueStatus = 'Active' | 'Paused' | 'Stopped';
-
-interface Subdomain {
-  name: string;
-  ipAddress: string;
-  queueStatus: QueueStatus;
-  queueName: string;
-}
-
-interface Domain {
-  domain: string;
-  ipAddresses: string[];
-  emailsSent: number;
-  queue: string;
-  subdomains: Subdomain[];
-}
+import { PlusCircle, Trash2, Search, ChevronRight, ChevronDown, Play, Pause, Square, Edit, AlertCircle } from 'lucide-react';
+import { DomainModal } from '../components/DomainModal';
+import { QueueManagementModal } from '../components/QueueManagementModal';
+import type { Domain, QueueStatus, ISPTarget } from '../types/domain';
 
 export function SendingDomainsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedDomains, setExpandedDomains] = useState<string[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isQueueModalOpen, setIsQueueModalOpen] = useState(false);
+  const [editingDomain, setEditingDomain] = useState<Domain | undefined>();
+  const [selectedDomain, setSelectedDomain] = useState<Domain | undefined>();
+
   const [domains, setDomains] = useState<Domain[]>([
     { 
-      domain: 'gleemate.com',
+      domain: 'test.com',
       ipAddresses: ['192.168.1.1', '192.168.1.2'],
       emailsSent: 0,
       queue: 'Delivering',
+      healthStatus: 'healthy',
+      ispStatus: {
+        'Gmail': 'Active',
+        'Yahoo/AOL': 'Active',
+        'Hotmail': 'Active'
+      },
       subdomains: [
         { 
-          name: 'mail.gleemate.com', 
+          name: 'mail.test.com', 
           ipAddress: '192.168.1.1', 
           queueStatus: 'Active',
-          queueName: 'gleemate.com-fresh'
-        },
-        { 
-          name: 'news.gleemate.com', 
-          ipAddress: '192.168.1.2', 
-          queueStatus: 'Paused',
-          queueName: 'gleemate.com-unthrottled'
+          queueName: 'test.com-fresh',
+          queues: [
+            {
+              name: 'Gmail-Fresh',
+              ispTarget: 'Gmail',
+              type: 'Fresh',
+              speed: 1000,
+              messageCount: 500,
+              status: 'Active'
+            },
+            {
+              name: 'Gmail-Engaged',
+              ispTarget: 'Gmail',
+              type: 'Engaged',
+              speed: 2000,
+              messageCount: 200,
+              status: 'Active'
+            }
+          ]
         }
       ]
-    },
-    { 
-      domain: 'demomailtrap.com',
-      ipAddresses: ['10.0.0.1'],
-      emailsSent: 1,
-      queue: 'Delivering',
-      subdomains: [
-        { 
-          name: 'mail.demomailtrap.com', 
-          ipAddress: '10.0.0.1', 
-          queueStatus: 'Stopped',
-          queueName: 'demomailtrap.com-fresh'
-        }
-      ]
-    },
+    }
   ]);
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingDomain, setEditingDomain] = useState<Domain | undefined>();
+  const availableIPs = ['192.168.1.1', '192.168.1.2', '10.0.0.1', '10.0.0.2'];
 
-  const availableIPs = [
-    '192.168.1.1',
-    '192.168.1.2',
-    '10.0.0.1',
-    '10.0.0.2'
-  ];
+  const getHealthStatusColor = (status: Domain['healthStatus']) => {
+    switch (status) {
+      case 'healthy':
+        return 'text-green-500';
+      case 'warning':
+        return 'text-yellow-500';
+      case 'error':
+        return 'text-red-500';
+    }
+  };
+
+  const toggleISPStatus = (domainIndex: number, isp: ISPTarget) => {
+    setDomains(prevDomains => {
+      const newDomains = [...prevDomains];
+      const currentStatus = newDomains[domainIndex].ispStatus[isp];
+      newDomains[domainIndex].ispStatus[isp] = currentStatus === 'Active' ? 'Paused' : 'Active';
+      return newDomains;
+    });
+  };
+
+  const handleQueueManagement = (domain: Domain) => {
+    setSelectedDomain(domain);
+    setIsQueueModalOpen(true);
+  };
+
+  const handleSaveQueues = (domainIndex: number, queues: Domain['subdomains'][0]['queues']) => {
+    setDomains(prevDomains => {
+      const newDomains = [...prevDomains];
+      newDomains[domainIndex].subdomains[0].queues = queues;
+      return newDomains;
+    });
+  };
 
   const handleSave = (formData: DomainFormData) => {
     if (editingDomain) {
@@ -95,6 +114,12 @@ export function SendingDomainsPage() {
           ipAddresses: [...new Set(formData.subdomains.map(sub => sub.ipAddress))],
           emailsSent: 0,
           queue: 'Delivering',
+          healthStatus: 'healthy',
+          ispStatus: {
+            'Gmail': 'Active',
+            'Yahoo/AOL': 'Active',
+            'Hotmail': 'Active'
+          },
           subdomains: formData.subdomains.map(sub => ({
             ...sub,
             queueStatus: sub.queueStatus || 'Active'
@@ -108,98 +133,6 @@ export function SendingDomainsPage() {
   const handleEdit = (domain: Domain) => {
     setEditingDomain(domain);
     setIsModalOpen(true);
-  };
-
-  const updateQueueStatus = (domainIndex: number, subdomainIndex: number, newStatus: QueueStatus) => {
-    setDomains(prevDomains => {
-      const newDomains = [...prevDomains];
-      newDomains[domainIndex].subdomains[subdomainIndex].queueStatus = newStatus;
-      return newDomains;
-    });
-  };
-
-  const getStatusColor = (status: QueueStatus) => {
-    switch (status) {
-      case 'Active':
-        return 'bg-green-100 text-green-800';
-      case 'Paused':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'Stopped':
-        return 'bg-red-100 text-red-800';
-    }
-  };
-
-  const QueueControls = ({ status, onStatusChange }: { 
-    status: QueueStatus, 
-    onStatusChange: (newStatus: QueueStatus) => void 
-  }) => {
-    switch (status) {
-      case 'Active':
-        return (
-          <div className="flex items-center space-x-2">
-            <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                onStatusChange('Paused');
-              }}
-              className="p-1 hover:bg-gray-100 rounded"
-              title="Pause Queue"
-            >
-              <Pause className="w-4 h-4 text-yellow-600" />
-            </button>
-            <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                onStatusChange('Stopped');
-              }}
-              className="p-1 hover:bg-gray-100 rounded"
-              title="Stop Queue"
-            >
-              <Square className="w-4 h-4 text-red-600" />
-            </button>
-          </div>
-        );
-      case 'Paused':
-        return (
-          <div className="flex items-center space-x-2">
-            <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                onStatusChange('Active');
-              }}
-              className="p-1 hover:bg-gray-100 rounded"
-              title="Start Queue"
-            >
-              <Play className="w-4 h-4 text-green-600" />
-            </button>
-            <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                onStatusChange('Stopped');
-              }}
-              className="p-1 hover:bg-gray-100 rounded"
-              title="Stop Queue"
-            >
-              <Square className="w-4 h-4 text-red-600" />
-            </button>
-          </div>
-        );
-      case 'Stopped':
-        return (
-          <div className="flex items-center space-x-2">
-            <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                onStatusChange('Active');
-              }}
-              className="p-1 hover:bg-gray-100 rounded"
-              title="Start Queue"
-            >
-              <Play className="w-4 h-4 text-green-600" />
-            </button>
-          </div>
-        );
-    }
   };
 
   const toggleDomain = (domain: string) => {
@@ -249,14 +182,14 @@ export function SendingDomainsPage() {
             <tr className="border-b">
               <th className="text-left p-4 w-8"></th>
               <th className="text-left p-4">Domain</th>
+              <th className="text-left p-4">Health</th>
               <th className="text-left p-4">IP Addresses</th>
-              <th className="text-left p-4">Emails Sent</th>
-              <th className="text-left p-4">Queues</th>
+              <th className="text-left p-4">ISP Status</th>
               <th className="text-left p-4">Action</th>
             </tr>
           </thead>
           <tbody>
-            {filteredDomains.map((domain, domainIndex) => (
+            {domains.map((domain, domainIndex) => (
               <React.Fragment key={domain.domain}>
                 <tr 
                   className="border-b hover:bg-gray-50 cursor-pointer"
@@ -264,31 +197,58 @@ export function SendingDomainsPage() {
                 >
                   <td className="p-4">
                     {expandedDomains.includes(domain.domain) 
-                      ? <ChevronDown className="w-4 h-4 text-gray-500" />
-                      : <ChevronRight className="w-4 h-4 text-gray-500" />
+                      ? <ChevronDown className="w-4 h-4" />
+                      : <ChevronRight className="w-4 h-4" />
                     }
                   </td>
-                  <td className="p-4 font-medium">{domain.domain}</td>
+                  <td className="p-4">{domain.domain}</td>
+                  <td className="p-4">
+                    <AlertCircle className={`w-5 h-5 ${getHealthStatusColor(domain.healthStatus)}`} />
+                  </td>
                   <td className="p-4">{domain.ipAddresses.join(', ')}</td>
-                  <td className="p-4">{domain.emailsSent}</td>
-                  <td className="p-4">{domain.queue}</td>
+                  <td className="p-4">
+                    <div className="flex space-x-2">
+                      {(Object.entries(domain.ispStatus) as [ISPTarget, QueueStatus][]).map(([isp, status]) => (
+                        <button
+                          key={isp}
+                          onClick={(e) => {
+                            e.stopPropagation(); // Prevent row click when clicking ISP status
+                            toggleISPStatus(domainIndex, isp);
+                          }}
+                          className={`px-2 py-1 rounded-full text-xs ${
+                            status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                          }`}
+                        >
+                          {isp}: {status}
+                        </button>
+                      ))}
+                    </div>
+                  </td>
                   <td className="p-4">
                     <div className="flex items-center space-x-2">
-                      <button 
-                        className="text-blue-500 hover:text-blue-700"
+                      <button
                         onClick={(e) => {
-                          e.stopPropagation();
+                          e.stopPropagation(); // Prevent row click when clicking buttons
+                          handleQueueManagement(domain);
+                        }}
+                        className="text-blue-500 hover:text-blue-700"
+                      >
+                        Manage Queues
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent row click when clicking buttons
                           handleEdit(domain);
                         }}
+                        className="text-blue-500 hover:text-blue-700"
                       >
                         <Edit className="w-4 h-4" />
                       </button>
                       <button 
-                        className="text-red-500 hover:text-red-700"
                         onClick={(e) => {
-                          e.stopPropagation();
-                          // Handle delete
+                          e.stopPropagation(); // Prevent row click when clicking buttons
                         }}
+                        className="text-red-500 hover:text-red-700"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -296,8 +256,8 @@ export function SendingDomainsPage() {
                   </td>
                 </tr>
                 {expandedDomains.includes(domain.domain) && (
-                  <tr className="bg-gray-50">
-                    <td colSpan={6} className="p-4">
+                  <tr>
+                    <td colSpan={6} className="p-4 bg-gray-50">
                       <div className="pl-8">
                         <table className="w-full">
                           <thead>
@@ -306,25 +266,31 @@ export function SendingDomainsPage() {
                               <th className="text-left py-2">Queue Status</th>
                               <th className="text-left py-2">Queue Name</th>
                               <th className="text-left py-2">IP Address</th>
+                              <th className="text-left py-2">Messages in Queue</th>
                             </tr>
                           </thead>
                           <tbody>
-                            {domain.subdomains.map((subdomain, subdomainIndex) => (
+                            {domain.subdomains.map((subdomain) => (
                               <tr key={subdomain.name} className="text-sm">
                                 <td className="py-2">{subdomain.name}</td>
                                 <td className="py-2">
                                   <div className="flex items-center space-x-3">
-                                    <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(subdomain.queueStatus)}`}>
+                                    <span className={`px-2 py-1 rounded-full text-xs ${
+                                      subdomain.queueStatus === 'Active' 
+                                        ? 'bg-green-100 text-green-800'
+                                        : subdomain.queueStatus === 'Paused'
+                                        ? 'bg-yellow-100 text-yellow-800'
+                                        : 'bg-red-100 text-red-800'
+                                    }`}>
                                       {subdomain.queueStatus}
                                     </span>
-                                    <QueueControls 
-                                      status={subdomain.queueStatus}
-                                      onStatusChange={(newStatus) => updateQueueStatus(domainIndex, subdomainIndex, newStatus)}
-                                    />
                                   </div>
                                 </td>
                                 <td className="py-2">{subdomain.queueName}</td>
                                 <td className="py-2">{subdomain.ipAddress}</td>
+                                <td className="py-2">
+                                  {subdomain.queues.reduce((total, queue) => total + queue.messageCount, 0)}
+                                </td>
                               </tr>
                             ))}
                           </tbody>
@@ -349,6 +315,23 @@ export function SendingDomainsPage() {
         editData={editingDomain}
         availableIPs={availableIPs}
       />
+
+      {selectedDomain && (
+        <QueueManagementModal
+          isOpen={isQueueModalOpen}
+          onClose={() => {
+            setIsQueueModalOpen(false);
+            setSelectedDomain(undefined);
+          }}
+          domain={selectedDomain.domain}
+          queues={selectedDomain.subdomains[0].queues}
+          onSave={(queues) => {
+            const domainIndex = domains.findIndex(d => d.domain === selectedDomain.domain);
+            handleSaveQueues(domainIndex, queues);
+            setIsQueueModalOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 } 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, BarChart2, Mail, Network, Globe, Ban, InboxIcon } from 'lucide-react';
+import { Home, BarChart2, Mail, Network, Globe, Ban, InboxIcon, Inbox } from 'lucide-react';
 import { NavLink } from './NavLink';
 
 export function Sidebar() {
@@ -14,6 +14,7 @@ export function Sidebar() {
         <NavLink to="/" icon={<Home size={20} />} text="Home" />
         <NavLink to="/stats" icon={<BarChart2 size={20} />} text="Stats" />
         <NavLink to="/sending-domains" icon={<Globe size={20} />} text="Sending Domains" />
+        <NavLink to="/mailboxes" icon={<Inbox size={20} />} text="Mailboxes" />
         <NavLink to="/ip-addresses" icon={<Network size={20} />} text="IP Addresses" />
         <NavLink to="/mailbox-providers" icon={<Mail size={20} />} text="Mailbox Providers" />
         <NavLink to="/bounces" icon={<Ban size={20} />} text="Bounces" />

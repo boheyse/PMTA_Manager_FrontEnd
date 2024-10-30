@@ -6,6 +6,7 @@ import { StatsPage } from './pages/StatsPage';
 import { MailboxProvidersPage } from './pages/MailboxProvidersPage';
 import { EmailLogsPage } from './pages/EmailLogsPage';
 import { SendingDomainsPage } from './pages/SendingDomainsPage';
+import { MailboxesPage } from './pages/MailboxesPage';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
             <Route path="/mailbox-providers" element={<MailboxProvidersPage />} />
             <Route path="/email-logs" element={<EmailLogsPage />} />
             <Route path="/sending-domains" element={<SendingDomainsPage />} />
+            <Route path="/mailboxes" element={<MailboxesPage />} />
           </Routes>
         </div>
       </div>
