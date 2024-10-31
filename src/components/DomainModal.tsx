@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Button, Form, Row, Col } from 'react-bootstrap';
+import { Modal, Button, Form, Row, Col, Badge } from 'react-bootstrap';
 import { X, Plus, Trash2 } from 'lucide-react';
+import type { Domain, QueueStatus } from '../types/domain';
 
 interface DomainModalProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface DomainModalProps {
 
 export interface DomainFormData {
   domain: string;
+  ipAddresses: string[];
   subdomains: {
     name: string;
     ipAddress: string;
@@ -22,6 +24,7 @@ export interface DomainFormData {
 
 const initialFormData: DomainFormData = {
   domain: '',
+  ipAddresses: [],
   subdomains: [{
     name: '',
     ipAddress: '',
@@ -32,6 +35,7 @@ const initialFormData: DomainFormData = {
 
 export function DomainModal({ isOpen, onClose, onSave, editData, availableIPs }: DomainModalProps) {
   const [formData, setFormData] = useState<DomainFormData>(initialFormData);
+  const [newIP, setNewIP] = useState('');
   const [customIP, setCustomIP] = useState('');
 
   useEffect(() => {
@@ -39,6 +43,7 @@ export function DomainModal({ isOpen, onClose, onSave, editData, availableIPs }:
       if (editData) {
         setFormData({
           domain: editData.domain,
+          ipAddresses: editData.ipAddresses,
           subdomains: editData.subdomains.map(sub => ({
             name: sub.name,
             ipAddress: sub.ipAddress,
@@ -49,9 +54,34 @@ export function DomainModal({ isOpen, onClose, onSave, editData, availableIPs }:
       } else {
         setFormData(initialFormData);
         setCustomIP('');
+        setNewIP('');
       }
     }
   }, [isOpen, editData]);
+
+  const handleAddIP = () => {
+    const ipToAdd = newIP || customIP;
+    if (ipToAdd && !formData.ipAddresses.includes(ipToAdd)) {
+      setFormData(prev => ({
+        ...prev,
+        ipAddresses: [...prev.ipAddresses, ipToAdd]
+      }));
+      setNewIP('');
+      setCustomIP('');
+    }
+  };
+
+  const handleRemoveIP = (ip: string) => {
+    setFormData(prev => ({
+      ...prev,
+      ipAddresses: prev.ipAddresses.filter(existingIP => existingIP !== ip),
+      // Clear IP address from subdomains using this IP
+      subdomains: prev.subdomains.map(sub => ({
+        ...sub,
+        ipAddress: sub.ipAddress === ip ? '' : sub.ipAddress
+      }))
+    }));
+  };
 
   const addSubdomain = () => {
     setFormData(prev => ({
@@ -81,12 +111,6 @@ export function DomainModal({ isOpen, onClose, onSave, editData, availableIPs }:
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave(formData);
-    onClose();
-  };
-
   return (
     <Modal show={isOpen} onHide={onClose} size="lg">
       <Modal.Header closeButton>
@@ -94,7 +118,7 @@ export function DomainModal({ isOpen, onClose, onSave, editData, availableIPs }:
       </Modal.Header>
       
       <Modal.Body>
-        <Form onSubmit={handleSubmit}>
+        <Form>
           <Form.Group className="mb-3">
             <Form.Label>Domain Name</Form.Label>
             <Form.Control
@@ -104,6 +128,70 @@ export function DomainModal({ isOpen, onClose, onSave, editData, availableIPs }:
               placeholder="example.com"
               required
             />
+          </Form.Group>
+
+          <Form.Group className="mb-3">
+            <Form.Label>Add IP Address</Form.Label>
+            <Row>
+              <Col md={5}>
+                <Form.Select
+                  value={newIP}
+                  onChange={(e) => setNewIP(e.target.value)}
+                  className="mb-2"
+                >
+                  <option value="">Select an IP address</option>
+                  {availableIPs
+                    .filter(ip => !formData.ipAddresses.includes(ip))
+                    .map(ip => (
+                      <option key={ip} value={ip}>{ip}</option>
+                    ))
+                  }
+                </Form.Select>
+              </Col>
+              <Col md={5}>
+                <Form.Control
+                  type="text"
+                  placeholder="Or enter custom IP"
+                  value={customIP}
+                  onChange={(e) => setCustomIP(e.target.value)}
+                />
+              </Col>
+              <Col md={2}>
+                <Button 
+                  variant="primary"
+                  onClick={handleAddIP}
+                  className="w-100"
+                >
+                  Add IP
+                </Button>
+              </Col>
+            </Row>
+          </Form.Group>
+
+          <Form.Group className="mb-4">
+            <Form.Label>Selected IP Addresses</Form.Label>
+            <div className="d-flex flex-wrap gap-2 border rounded p-2">
+              {formData.ipAddresses.length === 0 ? (
+                <span className="text-muted">No IP addresses selected</span>
+              ) : (
+                formData.ipAddresses.map(ip => (
+                  <Badge 
+                    key={ip} 
+                    bg="secondary" 
+                    className="d-flex align-items-center p-2"
+                  >
+                    {ip}
+                    <Button
+                      variant="link"
+                      className="p-0 ms-2 text-white"
+                      onClick={() => handleRemoveIP(ip)}
+                    >
+                      <X size={14} />
+                    </Button>
+                  </Badge>
+                ))
+              )}
+            </div>
           </Form.Group>
 
           <div className="mb-3">
@@ -154,24 +242,13 @@ export function DomainModal({ isOpen, onClose, onSave, editData, availableIPs }:
                       <Form.Select
                         value={subdomain.ipAddress}
                         onChange={(e) => updateSubdomain(index, 'ipAddress', e.target.value)}
+                        required
                       >
-                        <option value="">Select IP or enter custom</option>
-                        {availableIPs.map(ip => (
+                        <option value="">Select IP address</option>
+                        {formData.ipAddresses.map(ip => (
                           <option key={ip} value={ip}>{ip}</option>
                         ))}
                       </Form.Select>
-                      {subdomain.ipAddress === '' && (
-                        <Form.Control
-                          type="text"
-                          value={customIP}
-                          onChange={(e) => {
-                            setCustomIP(e.target.value);
-                            updateSubdomain(index, 'ipAddress', e.target.value);
-                          }}
-                          placeholder="Enter custom IP"
-                          className="mt-2"
-                        />
-                      )}
                     </Form.Group>
                   </Col>
 
@@ -198,7 +275,7 @@ export function DomainModal({ isOpen, onClose, onSave, editData, availableIPs }:
         <Button variant="secondary" onClick={onClose}>
           Cancel
         </Button>
-        <Button variant="primary" onClick={handleSubmit}>
+        <Button variant="primary" onClick={() => onSave(formData)}>
           Save
         </Button>
       </Modal.Footer>

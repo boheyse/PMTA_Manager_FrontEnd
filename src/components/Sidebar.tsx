@@ -14,8 +14,8 @@ export function Sidebar() {
         <NavLink to="/" icon={<Home size={20} />} text="Home" />
         <NavLink to="/stats" icon={<BarChart2 size={20} />} text="Stats" />
         <NavLink to="/sending-domains" icon={<Globe size={20} />} text="Sending Domains" />
-        <NavLink to="/mailboxes" icon={<Inbox size={20} />} text="Mailboxes" />
         <NavLink to="/ip-addresses" icon={<Network size={20} />} text="IP Addresses" />
+        <NavLink to="/mailboxes" icon={<Inbox size={20} />} text="Mailboxes" />
         <NavLink to="/mailbox-providers" icon={<Mail size={20} />} text="Mailbox Providers" />
         <NavLink to="/bounces" icon={<Ban size={20} />} text="Bounces" />
         <NavLink to="/email-logs" icon={<InboxIcon size={20} />} text="Email Logs" />

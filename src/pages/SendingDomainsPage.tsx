@@ -15,8 +15,7 @@ export function SendingDomainsPage() {
   const [domains, setDomains] = useState<Domain[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const availableIPs = ['192.168.1.1', '192.168.1.2', '10.0.0.1', '10.0.0.2'];
+  const [availableIPs, setAvailableIPs] = useState<string[]>([]);
 
   // Fetch domains on component mount
   useEffect(() => {
@@ -35,9 +34,22 @@ export function SendingDomainsPage() {
       
       const data = await response.json();
       
+      // Collect all unique IP addresses from the response
+      const allIPs = new Set<string>();
+      data['host-domains'].forEach((hostDomain: any) => {
+        hostDomain['virtual-mta-pools'].forEach((pool: any) => {
+          (pool['virtual_mtas'] || []).forEach((mta: any) => {
+            if (mta.smtp_source?.ip_address) {
+              allIPs.add(mta.smtp_source.ip_address);
+            }
+          });
+        });
+      });
+      setAvailableIPs([...allIPs]);
+
       // Transform the API response to match our Domain interface
       const transformedDomains: Domain[] = data['host-domains']
-        .filter((hostDomain: any) => hostDomain.name !== '@*') // Filter out wildcard domain
+        .filter((hostDomain: any) => hostDomain.name !== '@*')
         .map((hostDomain: any) => {
           const domainName = hostDomain.name.replace('@', '');
           const allVirtualMtas = hostDomain['virtual-mta-pools']
@@ -250,7 +262,7 @@ export function SendingDomainsPage() {
   );
 
   return (
-    <div className="p-4">
+    <div className="p-6">
       {error && (
         <div className="alert alert-danger mb-4" role="alert">
           {error}
@@ -291,117 +303,98 @@ export function SendingDomainsPage() {
           </Spinner>
         </div>
       ) : (
-        <Table hover>
-          <thead>
-            <tr className="border-b">
-              <th className="text-left p-4 w-8"></th>
-              <th className="text-left p-4">Domain</th>
-              <th className="text-left p-4">Health</th>
-              <th className="text-left p-4">IP Addresses</th>
-              <th className="text-left p-4">ISP Status</th>
-              <th className="text-left p-4">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {domains.map((domain, domainIndex) => (
-              <React.Fragment key={domain.domain}>
-                <tr className="border-b hover:bg-gray-50">
-                  <td className="p-4">
-                    <button onClick={() => toggleDomain(domain.domain)}>
+        <div className="bg-white rounded-lg shadow">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b">
+                <th className="text-left p-4 w-8"></th>
+                <th className="text-left p-4">Domain</th>
+                <th className="text-left p-4">IP Addresses</th>
+                <th className="text-left p-4">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {domains.map((domain, domainIndex) => (
+                <React.Fragment key={domain.domain}>
+                  <tr 
+                    className="border-b hover:bg-gray-50 cursor-pointer"
+                    onClick={() => toggleDomain(domain.domain)}
+                  >
+                    <td className="p-4">
                       {expandedDomains.includes(domain.domain) 
                         ? <ChevronDown className="w-4 h-4" />
                         : <ChevronRight className="w-4 h-4" />
                       }
-                    </button>
-                  </td>
-                  <td className="p-4">{domain.domain}</td>
-                  <td className="p-4">
-                    <AlertCircle className={`w-5 h-5 ${getHealthStatusColor(domain.healthStatus)}`} />
-                  </td>
-                  <td className="p-4">{domain.ipAddresses.join(', ')}</td>
-                  <td className="p-4">
-                    <div className="flex space-x-2">
-                      {(Object.entries(domain.ispStatus) as [ISPTarget, QueueStatus][]).map(([isp, status]) => (
+                    </td>
+                    <td className="p-4">{domain.domain}</td>
+                    <td className="p-4">{domain.ipAddresses.join(', ')}</td>
+                    <td className="p-4">
+                      <div className="flex items-center space-x-2">
                         <button
-                          key={isp}
-                          onClick={() => toggleISPStatus(domainIndex, isp)}
-                          className={`px-2 py-1 rounded-full text-xs ${
-                            status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                          }`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleQueueManagement(domain);
+                          }}
+                          className="text-blue-500 hover:text-blue-700"
                         >
-                          {isp}: {status}
+                          Manage Queues
                         </button>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => handleQueueManagement(domain)}
-                        className="text-blue-500 hover:text-blue-700"
-                      >
-                        Manage Queues
-                      </button>
-                      <button
-                        onClick={() => handleEdit(domain)}
-                        className="text-blue-500 hover:text-blue-700"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button className="text-red-500 hover:text-red-700">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-                {expandedDomains.includes(domain.domain) && (
-                  <tr>
-                    <td colSpan={6} className="p-4 bg-gray-50">
-                      <div className="pl-8">
-                        <table className="w-full">
-                          <thead>
-                            <tr className="text-sm text-gray-500">
-                              <th className="text-left py-2">Subdomain</th>
-                              <th className="text-left py-2">Queue Status</th>
-                              <th className="text-left py-2">Queue Name</th>
-                              <th className="text-left py-2">IP Address</th>
-                              <th className="text-left py-2">Messages in Queue</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {domain.subdomains.map((subdomain) => (
-                              <tr key={subdomain.name} className="text-sm">
-                                <td className="py-2">{subdomain.name}</td>
-                                <td className="py-2">
-                                  <div className="flex items-center space-x-3">
-                                    <span className={`px-2 py-1 rounded-full text-xs ${
-                                      subdomain.queueStatus === 'Active' 
-                                        ? 'bg-green-100 text-green-800'
-                                        : subdomain.queueStatus === 'Paused'
-                                        ? 'bg-yellow-100 text-yellow-800'
-                                        : 'bg-red-100 text-red-800'
-                                    }`}>
-                                      {subdomain.queueStatus}
-                                    </span>
-                                  </div>
-                                </td>
-                                <td className="py-2">{subdomain.queueName}</td>
-                                <td className="py-2">{subdomain.ipAddress}</td>
-                                <td className="py-2">
-                                  {subdomain.queues.reduce((total, queue) => total + queue.messageCount, 0)}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEdit(domain);
+                          }}
+                          className="text-blue-500 hover:text-blue-700"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(domain);
+                          }}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
                     </td>
                   </tr>
-                )}
-              </React.Fragment>
-            ))}
-          </tbody>
-        </Table>
+                  {expandedDomains.includes(domain.domain) && (
+                    <tr>
+                      <td colSpan={4} className="p-4 bg-gray-50">
+                        <div className="pl-8">
+                          <table className="w-full">
+                            <thead>
+                              <tr className="text-sm text-gray-500">
+                                <th className="text-left py-2">Subdomain</th>
+                                <th className="text-left py-2">Queue Name</th>
+                                <th className="text-left py-2">IP Address</th>
+                                <th className="text-left py-2">Messages in Queue</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {domain.subdomains.map((subdomain) => (
+                                <tr key={subdomain.name} className="text-sm">
+                                  <td className="py-2">{subdomain.name}</td>
+                                  <td className="py-2">{subdomain.queueName}</td>
+                                  <td className="py-2">{subdomain.ipAddress}</td>
+                                  <td className="py-2">
+                                    {subdomain.queues.reduce((total, queue) => total + queue.messageCount, 0)}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
       <DomainModal
