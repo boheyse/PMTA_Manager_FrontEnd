@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Modal, Button, Form, Row, Col } from 'react-bootstrap';
 import { X, Plus, Trash2 } from 'lucide-react';
 
 interface DomainModalProps {
@@ -52,8 +53,6 @@ export function DomainModal({ isOpen, onClose, onSave, editData, availableIPs }:
     }
   }, [isOpen, editData]);
 
-  if (!isOpen) return null;
-
   const addSubdomain = () => {
     setFormData(prev => ({
       ...prev,
@@ -89,134 +88,120 @@ export function DomainModal({ isOpen, onClose, onSave, editData, availableIPs }:
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-semibold">
-              {editData ? 'Edit Domain' : 'Add New Domain'}
-            </h2>
-            <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-              <X className="w-6 h-6" />
-            </button>
-          </div>
+    <Modal show={isOpen} onHide={onClose} size="lg">
+      <Modal.Header closeButton>
+        <Modal.Title>{editData ? 'Edit Domain' : 'Add New Domain'}</Modal.Title>
+      </Modal.Header>
+      
+      <Modal.Body>
+        <Form onSubmit={handleSubmit}>
+          <Form.Group className="mb-3">
+            <Form.Label>Domain Name</Form.Label>
+            <Form.Control
+              type="text"
+              value={formData.domain}
+              onChange={(e) => setFormData(prev => ({ ...prev, domain: e.target.value }))}
+              placeholder="example.com"
+              required
+            />
+          </Form.Group>
 
-          <form onSubmit={handleSubmit}>
-            <div className="mb-6">
-              <label className="block mb-2 font-medium">Domain Name</label>
-              <input
-                type="text"
-                value={formData.domain}
-                onChange={(e) => setFormData(prev => ({ ...prev, domain: e.target.value }))}
-                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="example.com"
-                required
-              />
+          <div className="mb-3">
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <Form.Label className="mb-0">Subdomains</Form.Label>
+              <Button
+                variant="link"
+                onClick={addSubdomain}
+                className="p-0"
+              >
+                <Plus className="me-1" size={16} />
+                Add Subdomain
+              </Button>
             </div>
 
-            <div className="mb-6">
-              <div className="flex justify-between items-center mb-4">
-                <label className="font-medium">Subdomains</label>
-                <button
-                  type="button"
-                  onClick={addSubdomain}
-                  className="flex items-center text-blue-500 hover:text-blue-600"
-                >
-                  <Plus className="w-4 h-4 mr-1" />
-                  Add Subdomain
-                </button>
-              </div>
+            {formData.subdomains.map((subdomain, index) => (
+              <div key={index} className="border rounded p-3 mb-3">
+                <div className="d-flex justify-content-between mb-3">
+                  <h6 className="mb-0">Subdomain {index + 1}</h6>
+                  {formData.subdomains.length > 1 && (
+                    <Button
+                      variant="link"
+                      className="p-0 text-danger"
+                      onClick={() => removeSubdomain(index)}
+                    >
+                      <Trash2 size={16} />
+                    </Button>
+                  )}
+                </div>
 
-              {formData.subdomains.map((subdomain, index) => (
-                <div key={index} className="mb-4 p-4 border rounded-lg">
-                  <div className="flex justify-between mb-4">
-                    <h3 className="font-medium">Subdomain {index + 1}</h3>
-                    {formData.subdomains.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeSubdomain(index)}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block mb-2">Subdomain Name</label>
-                      <input
+                <Row>
+                  <Col md={6}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Subdomain Name</Form.Label>
+                      <Form.Control
                         type="text"
                         value={subdomain.name}
                         onChange={(e) => updateSubdomain(index, 'name', e.target.value)}
-                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="mail.example.com"
                         required
                       />
-                    </div>
+                    </Form.Group>
+                  </Col>
 
-                    <div>
-                      <label className="block mb-2">IP Address</label>
-                      <div className="flex space-x-2">
-                        <select
-                          value={subdomain.ipAddress}
-                          onChange={(e) => updateSubdomain(index, 'ipAddress', e.target.value)}
-                          className="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                          <option value="">Select IP or enter custom</option>
-                          {availableIPs.map(ip => (
-                            <option key={ip} value={ip}>{ip}</option>
-                          ))}
-                        </select>
-                      </div>
+                  <Col md={6}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>IP Address</Form.Label>
+                      <Form.Select
+                        value={subdomain.ipAddress}
+                        onChange={(e) => updateSubdomain(index, 'ipAddress', e.target.value)}
+                      >
+                        <option value="">Select IP or enter custom</option>
+                        {availableIPs.map(ip => (
+                          <option key={ip} value={ip}>{ip}</option>
+                        ))}
+                      </Form.Select>
                       {subdomain.ipAddress === '' && (
-                        <input
+                        <Form.Control
                           type="text"
                           value={customIP}
                           onChange={(e) => {
                             setCustomIP(e.target.value);
                             updateSubdomain(index, 'ipAddress', e.target.value);
                           }}
-                          className="w-full mt-2 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                           placeholder="Enter custom IP"
+                          className="mt-2"
                         />
                       )}
-                    </div>
+                    </Form.Group>
+                  </Col>
 
-                    <div>
-                      <label className="block mb-2">Queue Name</label>
-                      <input
+                  <Col md={6}>
+                    <Form.Group>
+                      <Form.Label>Queue Name</Form.Label>
+                      <Form.Control
                         type="text"
                         value={subdomain.queueName}
                         onChange={(e) => updateSubdomain(index, 'queueName', e.target.value)}
-                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="example.com-fresh"
                         required
                       />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                    </Form.Group>
+                  </Col>
+                </Row>
+              </div>
+            ))}
+          </div>
+        </Form>
+      </Modal.Body>
 
-            <div className="flex justify-end space-x-4">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-              >
-                Save
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
+      <Modal.Footer>
+        <Button variant="secondary" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button variant="primary" onClick={handleSubmit}>
+          Save
+        </Button>
+      </Modal.Footer>
+    </Modal>
   );
 } 

@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PlusCircle, Trash2, Search, ChevronRight, ChevronDown, Play, Pause, Square, Edit, AlertCircle } from 'lucide-react';
+import { Table, Button, Form, InputGroup, Badge, Spinner } from 'react-bootstrap';
 import { DomainModal } from '../components/DomainModal';
 import { QueueManagementModal } from '../components/QueueManagementModal';
 import type { Domain, QueueStatus, ISPTarget } from '../types/domain';
@@ -11,49 +12,205 @@ export function SendingDomainsPage() {
   const [isQueueModalOpen, setIsQueueModalOpen] = useState(false);
   const [editingDomain, setEditingDomain] = useState<Domain | undefined>();
   const [selectedDomain, setSelectedDomain] = useState<Domain | undefined>();
-
-  const [domains, setDomains] = useState<Domain[]>([
-    { 
-      domain: 'test.com',
-      ipAddresses: ['192.168.1.1', '192.168.1.2'],
-      emailsSent: 0,
-      queue: 'Delivering',
-      healthStatus: 'healthy',
-      ispStatus: {
-        'Gmail': 'Active',
-        'Yahoo/AOL': 'Active',
-        'Hotmail': 'Active'
-      },
-      subdomains: [
-        { 
-          name: 'mail.test.com', 
-          ipAddress: '192.168.1.1', 
-          queueStatus: 'Active',
-          queueName: 'test.com-fresh',
-          queues: [
-            {
-              name: 'Gmail-Fresh',
-              ispTarget: 'Gmail',
-              type: 'Fresh',
-              speed: 1000,
-              messageCount: 500,
-              status: 'Active'
-            },
-            {
-              name: 'Gmail-Engaged',
-              ispTarget: 'Gmail',
-              type: 'Engaged',
-              speed: 2000,
-              messageCount: 200,
-              status: 'Active'
-            }
-          ]
-        }
-      ]
-    }
-  ]);
+  const [domains, setDomains] = useState<Domain[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const availableIPs = ['192.168.1.1', '192.168.1.2', '10.0.0.1', '10.0.0.2'];
+
+  // Fetch domains on component mount
+  useEffect(() => {
+    fetchDomains();
+  }, []);
+
+  const fetchDomains = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await fetch('http://127.0.0.1:5000/domains');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      // Transform the API response to match our Domain interface
+      const transformedDomains: Domain[] = data['host-domains']
+        .filter((hostDomain: any) => hostDomain.name !== '@*') // Filter out wildcard domain
+        .map((hostDomain: any) => {
+          const domainName = hostDomain.name.replace('@', '');
+          const allVirtualMtas = hostDomain['virtual-mta-pools']
+            .flatMap((pool: any) => pool['virtual_mtas'] || []);
+
+          // Get unique IP addresses from all virtual MTAs
+          const ipAddresses = [...new Set(
+            allVirtualMtas.map((mta: any) => mta.smtp_source.ip_address)
+          )];
+
+          // Transform subdomains from virtual MTAs
+          const subdomains = allVirtualMtas.map((mta: any) => ({
+            name: mta.smtp_source.subdomain,
+            ipAddress: mta.smtp_source.ip_address,
+            queueStatus: 'Active' as QueueStatus, // Default status
+            queueName: mta.name,
+            queues: [
+              // Gmail queue settings
+              {
+                name: `${domainName}-Gmail-Fresh`,
+                ispTarget: 'Gmail' as ISPTarget,
+                type: 'Fresh',
+                speed: parseInt(mta['recipient-domains']
+                  .find((rd: any) => rd.name === 'gmail.rollup')
+                  ?.settings.max_msg_rate?.split('/')[0] || '0'),
+                messageCount: 0, // This would need to come from another API endpoint
+                status: 'Active' as QueueStatus
+              },
+              // Hotmail queue settings
+              {
+                name: `${domainName}-Hotmail-Fresh`,
+                ispTarget: 'Hotmail' as ISPTarget,
+                type: 'Fresh',
+                speed: parseInt(mta['recipient-domains']
+                  .find((rd: any) => rd.name === 'hotmail.rollup')
+                  ?.settings.max_msg_rate?.split('/')[0] || '0'),
+                messageCount: 0,
+                status: 'Active' as QueueStatus
+              },
+              // Yahoo/AOL queue settings
+              {
+                name: `${domainName}-Yahoo/AOL-Fresh`,
+                ispTarget: 'Yahoo/AOL' as ISPTarget,
+                type: 'Fresh',
+                speed: parseInt(mta['recipient-domains']
+                  .find((rd: any) => rd.name === 'yahooaol.rollup')
+                  ?.settings.max_msg_rate?.split('/')[0] || '0'),
+                messageCount: 0,
+                status: 'Active' as QueueStatus
+              }
+            ]
+          }));
+
+          // Create the domain object
+          return {
+            domain: domainName,
+            ipAddresses,
+            emailsSent: 0, // This would need to come from another API endpoint
+            queue: 'Delivering',
+            healthStatus: 'healthy',
+            ispStatus: {
+              'Gmail': 'Active',
+              'Yahoo/AOL': 'Active',
+              'Hotmail': 'Active'
+            },
+            subdomains
+          };
+        });
+
+      setDomains(transformedDomains);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch domains');
+      console.error('Error fetching domains:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSave = async (formData: DomainFormData) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const method = editingDomain ? 'PUT' : 'POST';
+      const url = editingDomain 
+        ? `http://localhost:5000/domains/${editingDomain.domain}`
+        : 'http://localhost:5000/domains';
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // Refresh the domains list
+      await fetchDomains();
+      setIsModalOpen(false);
+      setEditingDomain(undefined);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save domain');
+      console.error('Error saving domain:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDelete = async (domain: Domain) => {
+    if (!window.confirm(`Are you sure you want to delete ${domain.domain}?`)) {
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const response = await fetch(`http://localhost:5000/domains/${domain.domain}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // Refresh the domains list
+      await fetchDomains();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete domain');
+      console.error('Error deleting domain:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleQueueManagement = async (domain: Domain) => {
+    setSelectedDomain(domain);
+    setIsQueueModalOpen(true);
+  };
+
+  const handleSaveQueues = async (domainIndex: number, queues: Domain['subdomains'][0]['queues']) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const domain = domains[domainIndex];
+      const response = await fetch(`http://localhost:5000/domains/${domain.domain}/queues`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ queues }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // Refresh the domains list
+      await fetchDomains();
+      setIsQueueModalOpen(false);
+      setSelectedDomain(undefined);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update queues');
+      console.error('Error updating queues:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const getHealthStatusColor = (status: Domain['healthStatus']) => {
     switch (status) {
@@ -75,61 +232,6 @@ export function SendingDomainsPage() {
     });
   };
 
-  const handleQueueManagement = (domain: Domain) => {
-    setSelectedDomain(domain);
-    setIsQueueModalOpen(true);
-  };
-
-  const handleSaveQueues = (domainIndex: number, queues: Domain['subdomains'][0]['queues']) => {
-    setDomains(prevDomains => {
-      const newDomains = [...prevDomains];
-      newDomains[domainIndex].subdomains[0].queues = queues;
-      return newDomains;
-    });
-  };
-
-  const handleSave = (formData: DomainFormData) => {
-    if (editingDomain) {
-      // Update existing domain
-      setDomains(prevDomains => 
-        prevDomains.map(domain => 
-          domain.domain === editingDomain.domain
-            ? {
-                ...domain,
-                domain: formData.domain,
-                subdomains: formData.subdomains.map(sub => ({
-                  ...sub,
-                  queueStatus: sub.queueStatus || 'Active'
-                }))
-              }
-            : domain
-        )
-      );
-    } else {
-      // Add new domain
-      setDomains(prevDomains => [
-        ...prevDomains,
-        {
-          domain: formData.domain,
-          ipAddresses: [...new Set(formData.subdomains.map(sub => sub.ipAddress))],
-          emailsSent: 0,
-          queue: 'Delivering',
-          healthStatus: 'healthy',
-          ispStatus: {
-            'Gmail': 'Active',
-            'Yahoo/AOL': 'Active',
-            'Hotmail': 'Active'
-          },
-          subdomains: formData.subdomains.map(sub => ({
-            ...sub,
-            queueStatus: sub.queueStatus || 'Active'
-          }))
-        }
-      ]);
-    }
-    setEditingDomain(undefined);
-  };
-
   const handleEdit = (domain: Domain) => {
     setEditingDomain(domain);
     setIsModalOpen(true);
@@ -148,7 +250,13 @@ export function SendingDomainsPage() {
   );
 
   return (
-    <div className="p-6">
+    <div className="p-4">
+      {error && (
+        <div className="alert alert-danger mb-4" role="alert">
+          {error}
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold">Sending Domains</h1>
         <button 
@@ -176,8 +284,14 @@ export function SendingDomainsPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow">
-        <table className="w-full">
+      {isLoading ? (
+        <div className="d-flex justify-content-center align-items-center" style={{ height: '200px' }}>
+          <Spinner animation="border" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </Spinner>
+        </div>
+      ) : (
+        <Table hover>
           <thead>
             <tr className="border-b">
               <th className="text-left p-4 w-8"></th>
@@ -191,15 +305,14 @@ export function SendingDomainsPage() {
           <tbody>
             {domains.map((domain, domainIndex) => (
               <React.Fragment key={domain.domain}>
-                <tr 
-                  className="border-b hover:bg-gray-50 cursor-pointer"
-                  onClick={() => toggleDomain(domain.domain)}
-                >
+                <tr className="border-b hover:bg-gray-50">
                   <td className="p-4">
-                    {expandedDomains.includes(domain.domain) 
-                      ? <ChevronDown className="w-4 h-4" />
-                      : <ChevronRight className="w-4 h-4" />
-                    }
+                    <button onClick={() => toggleDomain(domain.domain)}>
+                      {expandedDomains.includes(domain.domain) 
+                        ? <ChevronDown className="w-4 h-4" />
+                        : <ChevronRight className="w-4 h-4" />
+                      }
+                    </button>
                   </td>
                   <td className="p-4">{domain.domain}</td>
                   <td className="p-4">
@@ -211,10 +324,7 @@ export function SendingDomainsPage() {
                       {(Object.entries(domain.ispStatus) as [ISPTarget, QueueStatus][]).map(([isp, status]) => (
                         <button
                           key={isp}
-                          onClick={(e) => {
-                            e.stopPropagation(); // Prevent row click when clicking ISP status
-                            toggleISPStatus(domainIndex, isp);
-                          }}
+                          onClick={() => toggleISPStatus(domainIndex, isp)}
                           className={`px-2 py-1 rounded-full text-xs ${
                             status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
                           }`}
@@ -227,29 +337,18 @@ export function SendingDomainsPage() {
                   <td className="p-4">
                     <div className="flex items-center space-x-2">
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation(); // Prevent row click when clicking buttons
-                          handleQueueManagement(domain);
-                        }}
+                        onClick={() => handleQueueManagement(domain)}
                         className="text-blue-500 hover:text-blue-700"
                       >
                         Manage Queues
                       </button>
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation(); // Prevent row click when clicking buttons
-                          handleEdit(domain);
-                        }}
+                        onClick={() => handleEdit(domain)}
                         className="text-blue-500 hover:text-blue-700"
                       >
                         <Edit className="w-4 h-4" />
                       </button>
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation(); // Prevent row click when clicking buttons
-                        }}
-                        className="text-red-500 hover:text-red-700"
-                      >
+                      <button className="text-red-500 hover:text-red-700">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -302,8 +401,8 @@ export function SendingDomainsPage() {
               </React.Fragment>
             ))}
           </tbody>
-        </table>
-      </div>
+        </Table>
+      )}
 
       <DomainModal
         isOpen={isModalOpen}
