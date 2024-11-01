@@ -7,16 +7,17 @@ interface QueueManagementModalProps {
   onClose: () => void;
   domain: string;
   subdomain: Subdomain;
+  recipientDomains: {
+    name: string;
+    settings: {
+      [key: string]: string;
+    };
+  }[];
   onSave: (queues: Queue[]) => void;
 }
 
 interface RecipientDomainSettings {
-  maxSmtpOut?: string;
-  maxMsgPerConnection?: string;
-  maxMsgRate?: string;
-  smtpHosts?: string;
-  useStartTLS?: string;
-  queueTo?: string;
+  [key: string]: string;  // This allows for dynamic settings
 }
 
 interface RecipientDomain {
@@ -29,48 +30,20 @@ export function QueueManagementModal({
   onClose, 
   domain,
   subdomain,
+  recipientDomains,
   onSave 
 }: QueueManagementModalProps) {
-  const [recipientDomains, setRecipientDomains] = useState<RecipientDomain[]>([]);
+  const [localRecipientDomains, setLocalRecipientDomains] = useState<RecipientDomain[]>([]);
   const [selectedDomain, setSelectedDomain] = useState<string>('');
 
   useEffect(() => {
-    if (isOpen && subdomain) {
-      // Initialize recipient domains from the subdomain data
-      const domains = [
-        {
-          name: 'gmail.rollup',
-          settings: {
-            maxSmtpOut: '5',
-            maxMsgPerConnection: '50',
-            maxMsgRate: '1/m',
-            smtpHosts: 'aspmx.l.google.com, alt1.aspmx.l.google.com',
-            useStartTLS: 'yes'
-          }
-        },
-        {
-          name: 'hotmail.rollup',
-          settings: {
-            maxMsgRate: '120/h',
-            smtpHosts: 'lookup-mx:outlook.com'
-          }
-        },
-        {
-          name: 'yahooaol.rollup',
-          settings: {
-            maxSmtpOut: '20',
-            maxMsgPerConnection: '20',
-            maxMsgRate: '60/h',
-            smtpHosts: 'mta5.am0.yahoodns.net, mta6.am0.yahoodns.net'
-          }
-        }
-      ];
-      setRecipientDomains(domains);
+    if (isOpen && recipientDomains) {
+      setLocalRecipientDomains(recipientDomains);
     }
-  }, [isOpen, subdomain]);
+  }, [isOpen, recipientDomains]);
 
-  const handleSettingChange = (domainName: string, setting: keyof RecipientDomainSettings, value: string) => {
-    setRecipientDomains(prev => prev.map(domain => {
+  const handleSettingChange = (domainName: string, setting: string, value: string) => {
+    setLocalRecipientDomains(prev => prev.map(domain => {
       if (domain.name === domainName) {
         return {
           ...domain,
@@ -82,6 +55,14 @@ export function QueueManagementModal({
       }
       return domain;
     }));
+  };
+
+  const formatSettingName = (key: string): string => {
+    // Convert snake_case or kebab-case to Title Case
+    return key
+      .split(/[-_]/)
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   };
 
   return (
@@ -99,7 +80,7 @@ export function QueueManagementModal({
               onChange={(e) => setSelectedDomain(e.target.value)}
             >
               <option value="">Select a domain</option>
-              {recipientDomains.map(domain => (
+              {localRecipientDomains.map(domain => (
                 <option key={domain.name} value={domain.name}>
                   {domain.name}
                 </option>
@@ -111,62 +92,20 @@ export function QueueManagementModal({
             <div className="border rounded p-3">
               <h6 className="mb-3">Settings for {selectedDomain}</h6>
               <Row>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Max SMTP Out</Form.Label>
-                    <Form.Control
-                      type="text"
-                      value={recipientDomains.find(d => d.name === selectedDomain)?.settings.maxSmtpOut || ''}
-                      onChange={(e) => handleSettingChange(selectedDomain, 'maxSmtpOut', e.target.value)}
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Max Messages Per Connection</Form.Label>
-                    <Form.Control
-                      type="text"
-                      value={recipientDomains.find(d => d.name === selectedDomain)?.settings.maxMsgPerConnection || ''}
-                      onChange={(e) => handleSettingChange(selectedDomain, 'maxMsgPerConnection', e.target.value)}
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Max Message Rate</Form.Label>
-                    <Form.Control
-                      type="text"
-                      value={recipientDomains.find(d => d.name === selectedDomain)?.settings.maxMsgRate || ''}
-                      onChange={(e) => handleSettingChange(selectedDomain, 'maxMsgRate', e.target.value)}
-                      placeholder="e.g., 60/h, 1/m"
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Use StartTLS</Form.Label>
-                    <Form.Select
-                      value={recipientDomains.find(d => d.name === selectedDomain)?.settings.useStartTLS || ''}
-                      onChange={(e) => handleSettingChange(selectedDomain, 'useStartTLS', e.target.value)}
-                    >
-                      <option value="">Select option</option>
-                      <option value="yes">Yes</option>
-                      <option value="no">No</option>
-                    </Form.Select>
-                  </Form.Group>
-                </Col>
-                <Col md={12}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>SMTP Hosts</Form.Label>
-                    <Form.Control
-                      as="textarea"
-                      rows={2}
-                      value={recipientDomains.find(d => d.name === selectedDomain)?.settings.smtpHosts || ''}
-                      onChange={(e) => handleSettingChange(selectedDomain, 'smtpHosts', e.target.value)}
-                      placeholder="Comma-separated list of SMTP hosts"
-                    />
-                  </Form.Group>
-                </Col>
+                {Object.entries(
+                  localRecipientDomains.find(d => d.name === selectedDomain)?.settings || {}
+                ).map(([key, value]) => (
+                  <Col md={6} key={key}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>{formatSettingName(key)}</Form.Label>
+                      <Form.Control
+                        type="text"
+                        value={value}
+                        onChange={(e) => handleSettingChange(selectedDomain, key, e.target.value)}
+                      />
+                    </Form.Group>
+                  </Col>
+                ))}
               </Row>
             </div>
           )}
@@ -177,18 +116,33 @@ export function QueueManagementModal({
               <thead>
                 <tr>
                   <th>Domain</th>
-                  <th>Max Rate</th>
-                  <th>Max SMTP Out</th>
-                  <th>Messages Per Conn</th>
+                  {/* Dynamically generate headers based on available settings */}
+                  {Array.from(
+                    new Set(
+                      localRecipientDomains.flatMap(domain => 
+                        Object.keys(domain.settings)
+                      )
+                    )
+                  ).map(setting => (
+                    <th key={setting}>{formatSettingName(setting)}</th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
-                {recipientDomains.map(domain => (
-                  <tr key={domain.name}>
+                {localRecipientDomains.map((domain, index) => (
+                  <tr key={`${domain.name}-${index}`}>
                     <td>{domain.name}</td>
-                    <td>{domain.settings.maxMsgRate || '-'}</td>
-                    <td>{domain.settings.maxSmtpOut || '-'}</td>
-                    <td>{domain.settings.maxMsgPerConnection || '-'}</td>
+                    {Array.from(
+                      new Set(
+                        localRecipientDomains.flatMap(domain => 
+                          Object.keys(domain.settings)
+                        )
+                      )
+                    ).map((setting, settingIndex) => (
+                      <td key={`${domain.name}-${setting}-${settingIndex}`}>
+                        {domain.settings[setting] || '-'}
+                      </td>
+                    ))}
                   </tr>
                 ))}
               </tbody>

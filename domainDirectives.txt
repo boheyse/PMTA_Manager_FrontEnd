@@ -1,0 +1,1943 @@
+3.3.10 <domain> Directives
+
+These directives are specified with a domain pattern and apply to all matching domains, such as in
+
+<domain *.port25.com>
+    bounce-after 6d
+</domain>
+Domain directives may be added in any order to the configuration file. When PowerMTA needs to determine what parameters to use for a specific domain, it uses the best matching (most specific) entry, regardless of the order domain directives are placed into the configuration file:
+
+<domain discard.port25.com> # matches 'discard' only
+    ...
+</domain>
+
+<domain *.port25.com> # matches subdomains of port25.com
+    ...
+</domain>
+
+<domain [*.]port25.com> # matches port25.com and all subdomains
+    ...
+</domain>
+
+<domain *> # matches all domains
+    ...
+</domain>
+When PowerMTA reads the configuration file, it merges settings for related domains from more general to more specific domains, so you can provide defaults for all domains by specifying them for the * pseudo-domain or for a specific site by specifying them for the toplevel domain for the site.
+
+In the following example, commands will be logged for all proper subdomains of port25.com (but not for port25.com itself) and undelivered messages to any address at port25.com will bounce after four days, except for messages to discard.port25.com, which will bounce after one hour.
+
+<domain discard.port25.com>
+    bounce-after 1h
+</domain>
+
+<domain *.port25.com>
+    log-commands yes
+</domain>
+
+<domain [*.]port25.com>
+    bounce-after 4d
+</domain>
+
+<domain *>
+    bounce-after 4d
+</domain>
+You can use domain macros to specify settings for multiple domains at once. For example, if you could use
+
+domain-macro topLevel com, de, co.uk
+
+<domain yahoo.$topLevel>
+    ...settings...
+</domain>
+to configure settings that apply to yahoo.com, yahoo.de and yahoo.co.uk.
+
+You can also use macros within macros:
+
+domain-macro com com, co.uk, com.br
+domain-macro tld $com, org, net
+In which case tld expands to com, co.uk, com.br, org and net. Any loops are detected and result in a configuration load or startup error.
+
+Also, specifically listed domains always take precedence over expanded ones. For example, in
+
+<domain aol.com>
+    max-smtp-out 100
+</domain>
+
+domain-macro com com, co.uk
+
+<domain aol.$com>
+    max-smtp-out 50
+</domain>
+aol.com would have a limit of 100.
+
+3.3.10.1 max-errors-per-connection
+
+This directive tells PowerMTA to break a connection after a certain amount of recipient level errors. The default is unlimited, meaning that PowerMTA will not break a connection due to a number of recipient level errors.
+
+Default: unlimited
+
+Example:
+
+<domain hotmail.com>
+  max-errors-per-connection 10
+</domain>
+3.3.10.2 check-spf-outbound
+
+Specifies whether PowerMTA should perform an SPF check on outbound messages to ensure compliance. If enabled and the check returns a "Pass", message delivery continues; if instead it returns a "TempError", the message is retried. Otherwise, the message bounces. To use this feature, you must currently configure a specific smtp-source-host or smtp-proxy-source-host (either at the global or VirtualMTA level).
+
+Default: false
+
+Example:
+
+<domain hotmail.com>
+  check-spf-outbound true
+</domain>
+3.3.10.3 dsn-format
+
+The default is "standard", which has PowerMTA send a DSN in the standard format. If set to "plain-text", the "message/delivery-status" portion of the DSN report is delivered instead of the full report. The portion is delivered within a mime-type of "text/plain", thus allowing this data to pass through (overzealous) email firewalls that strip all "attachments"
+
+Syntax:
+
+dsn-format { standard | plain-text }
+Default: standard
+
+Example:
+
+<domain hotmail.com>
+  dsn-format plain-text
+</domain>
+3.3.10.4 log-resolution
+
+Specifies that PowerMTA should log information on DNS (name and routing) lookups performed for the domain. This information is generally useful when debugging DNS-based connectivity problems (such as misconfigured DNS entries).
+
+Default: false
+
+Example:
+
+<domain hotmail.com>
+  log-resolution true
+</domain>
+3.3.10.5 log-transfer-failures
+
+Specifies whether PowerMTA should write a warning to the logging file when connections fail while transferring message's contents (headers and body). Setting this directive to true may help when diagnosing delivery problems, especially duplicate or partial deliveries.
+
+Default: false
+
+Example:
+
+<domain hotmail.com>
+  log-transfer-failures true
+</domain>
+3.3.10.6 log-resolution
+
+Specifies that PowerMTA should log information on DNS (name and routing) lookups performed for the domain. This information is generally useful when debugging DNS-based connectivity problems (such as misconfigured DNS entries).
+
+Default: false
+
+Example:
+
+<domain hotmail.com>
+   log-resolution true
+</domain>
+3.3.10.7 log-disabled-ips
+
+Turns on logging to show when and which IPs were disabled.
+
+Default: false
+
+Example:
+
+<domain hotmail.com>
+  log-disabled-ips true
+</domain>
+3.3.10.8 max-events-recorded
+
+Specifies the number of events PowerMTA is to record about the given domain. These events are not written to the logging file, but just recorded in memory. They can be viewed using the pmta show domains and the pmta show topdomains commands, or via the web interface. While recording such events can be very useful when investigating delivery problems, may have have an impact on memory consumption. Currently only error events are recorded.
+
+Default: 10
+
+Example:
+
+<domain port25.com>
+    max-events-recorded 3
+</domain>
+At the command prompt:
+
+$ pmta show dom port25.com --errors
+-----------------------------domain --#rcpt ---kbytes conn last error----------
+port25.com 4 0.5 0 ETIMEDOUT connect...
+
+2003-06-19 16:40:10 ETIMEDOUT connecting to mail.port25.com (193.96.192.241)
+2003-06-19 16:40:10 ETIMEDOUT connecting to mail.port25.com (193.96.192.241)
+2003-06-19 16:40:10 ETIMEDOUT connecting to mail.port25.com (193.96.192.241)
+
+1 of 10 domains shown.
+3.3.10.9 disable-acct-records
+
+Allows one to disable the creation of one or more than one type of accounting file record on a per queue (domain / virtualMTA) basis. For example, there are times when a user wants PowerMTA to discard certain messages without creating an accounting file record for these messages when discarded. By default, PowerMTA would create a "d" (delivered ) record for this, since it was delivered to discard, however the creation of a delivered record can be disabled with this option.
+
+Syntax:
+
+disable-acct-records TYPES
+where TYPES can be one or more of d,b,t,tq
+
+Example:
+
+<domain hotmail.com>
+  disable-acct-records d,b,t,tq
+</domain>
+3.3.10.10 deliver-local-dsn
+
+Specifies whether PowerMTA should generate DSN (bounce, delay or delivery) reports for messages received from the domain specified in this <domain>. Accounting records are still written normally, so this only affects the actual report emails.
+
+Deprecated Use <source> suppress-local-dsn instead.
+
+Default: true
+
+Example:
+
+<domain bounce.port25.com>
+    deliver-local-dsn no
+</domain>
+3.3.10.11 bounce-after
+
+Determines the maximum amount of time PowerMTA will continue to try to deliver messages to the specified destination domain. Messages older than this time interval are bounced, i.e., a (non-)delivery report in DSN format will be sent back to the originator.
+
+Syntax:
+
+bounce-after TIME-INTERVAL
+Default: 4d12h
+
+Example:
+
+<domain hotmail.com>
+  bounce-after 1d
+</domain>
+3.3.10.12 bcc-upon-delivery
+
+Automatically BCC delivered emails to the given address.
+
+Use empty string ("") to clear any inherited value.
+
+Syntax:
+
+bcc-upon-delivery EMAIL-ADDRESS
+Example:
+
+<domain hotmail.com>
+  bcc-upon-delivery foo@bar.com
+</domain>
+3.3.10.13 allow-priority-interruption
+
+When set to "no", this directive prevents interruptions by higher priority queues.
+
+Default: yes
+
+Example:
+
+<domain hotmail.com>
+  allow-priority-interruption true
+</domain>
+3.3.10.14 allow-priority-interruption-during-transfer
+
+When set to 'no', the interruption is delayed until a connection is available. When set to 'yes', the interruption to an existing connection happens immediately. This directive applies to SMTP queues only.
+
+Default: no
+
+Example:
+
+<domain hotmail.com>
+  allow-priority-interruption-during-transfer true
+</domain>
+3.3.10.15 queue-priority
+
+When PowerMTA needs to deliver email for a queue but no connection slots are available, it looks for a queue with lower priority currently connected and interrupts as many connections as needed, starting with the lowest priority connections and working its way up. A queue's priority is set with a number between 0 (lowest) and 100 (highest); 50 by default.
+
+Default: 50
+
+Example:
+
+<domain hotmail.com>
+  queue-priority 75
+</domain>
+3.3.10.16 track-recipient-events
+
+Determines whether PowerMTA will keep track of the last 50 recipient delivery, bounce, and deferred events in memory.
+
+Default: false
+
+Example:
+
+<domain hotmail.com>
+  track-recipient-events true
+</domain>
+3.3.10.17 delivery-priority
+
+Deprecated use queue-priority
+
+3.3.10.18 notify-of-delay-every
+
+Sets how often PowerMTA checks to see if delay notification messages should be sent when using NOTIFY=DELAY option with RCPT TO command.
+
+Syntax:
+
+notify-of-delay-every { TIME-INTERVAL | never }
+Default: 4h
+
+Example:
+
+<domain hotmail.com>
+  notify-of-delay-every 1h
+</domain>
+3.3.10.19 dkim-sign
+
+Specifies whether or not PowerMTA should perform DKIM signing on messages destined for this domain. Domain keys must be configured for this directive to take effect. Please see the domain-key directive below for more information. Also accepts a special value: if-x-dkim-options-present as a way to enable DKIM signing only when an X-DKIM-Options header is present in the email. The directive continues to accept 'yes' and 'no' settings with their existing meaning.
+
+Default: false
+
+Example:
+
+<domain hotmail.com>
+  dkim-sign true
+</domain>
+3.3.10.20 dkim-add-body-limit
+
+Specify whether to add an “l=” tag with the body length to the DKIM signature, limiting the signed portion of the body. This allows further content to be added at the bottom of the message without invalidating the signature.
+
+Default: false
+
+Example:
+
+<domain hotmail.com>
+  dkim-add-body-limit true
+</domain>
+3.3.10.21 dkim-add-timestamp
+
+Specify whether to a timestamp to the DKIM signature.
+
+Default: false
+
+Example:
+
+<domain hotmail.com>
+  dkim-add-timestamp true
+</domain>
+3.3.10.22 dkim-algorithm
+
+Specify which DKIM signing algorithm to use.
+
+Syntax:
+
+dkim-algorithm { rsa-sha1 | rsa-sha256 }
+Default: rsa-sha256
+
+Example:
+
+<domain hotmail.com>
+  dkim-algorithm rsa-sha1
+</domain>
+3.3.10.23 dkim-body-canon
+
+Specify which DKIM canonicalization to apply to the message body.
+
+Syntax:
+
+dkim-body-canon { simple | relaxed }
+Default: relaxed
+
+Example:
+
+<domain hotmail.com>
+  dkim-body-canon simple
+</domain>
+3.3.10.24 dkim-headers-canon
+
+Specify which DKIM canonicalization to apply to the message headers.
+
+Syntax:
+
+dkim-headers-canon { simple | relaxed }
+Default: relaxed
+
+Example:
+
+<domain hotmail.com>
+  dkim-headers-canon simple
+</domain>
+3.3.10.25 dkim-expire-after
+
+Requests that an “x=” tag be included in the DKIM signature to indicate when it expires.
+
+Syntax:
+
+dkim-expire-after { TIME-INTERVAL | never }
+Default: never
+
+Example:
+
+<domain hotmail.com>
+  dkim-expire-after 1d
+</domain>
+
+<domain yahoo.com>
+  dkim-expire-after never
+</domain>
+3.3.10.26 dkim-query-method
+
+Specifies the value of the q= tag in DKIM signatures.
+
+Syntax:
+
+dkim-query-method STRING
+Example:
+
+<domain hotmail.com>
+  dkim-query-method dns/txt
+</domain>
+3.3.10.27 dkim-headers
+
+Specifies the headers to be used for DKIM signing. The following headers will always be used if included in the message and cannot be removed:
+
+CC
+List-Id
+Resent-Date
+Content-Description
+List-Owner
+Resent-From
+Content-Id
+List-Post
+Resent-Message-ID
+Content-Transfer-Encoding
+List-Subscribe
+Resent-Sender
+Content-Type
+List-Unsubscribe
+List-Unsubscribe-Post
+Resent-To
+Date
+MIME-Version
+Sender
+From
+Message-ID
+Subject
+In-Reply-To
+References
+To
+List-Archive
+Reply-To
+List-Help
+Resent-Cc
+RFC 4871 forbids signing the following headers:
+
+Bcc
+Keywords
+Return-Path
+Comments
+Received
+DKIM-Signature
+Resent-Bcc
+Example:
+
+<domain yahoo.com>
+    dkim-headers foo                 # exact match one header
+</domain>
+
+<domain hotmail.com>
+    dkim-headers foo, bar, baz       # exact match many headers
+</domain>
+
+<domain gmail.com>
+    dkim-headers /foo/               # regular expression
+</domain>
+
+<domain aol.com>
+    dkim-headers /foo/, /bar/, /baz/ # many regular expressions
+</domain>
+
+<domain comcast.net>
+    dkim-headers foo, /bar/          # exact match and a regular expression
+</domain>
+
+<domain port25.com>
+    dkim-headers ""                  # no changes to default headers
+</domain>
+3.3.10.28 dkim-identity
+
+Specifies the domain or email address of the signing identity to be used when signing messages with DKIM. (Supported in the DKIM specification only). If defined, and the domain matches, or is a subdomain of the domain defined in the "domain-key" directive, the domain will be used in place of the Sender or From: header domain for signing and for subsequent key verification by the receiving gateways. This may be useful for those who are sending on behalf of another party, and do not have control of the other party's DNS record. A service provider for example, can sign mail using their own private key, use their own email address/domain as the signing identity, and have their own public key in their own DNS record for validation, all while having the From: header domain in the messages sent being the domain of their customer. The "dkim-identity" address will be seen in the i= parameter in the signature, while the d= parameter is set via the domain used in the "domain-key" directive and which has to match or be the parent domain in the dkim-identity directive. The directive also takes the keyword strict-from which requires an exact match for the From: header's domain to find a matching domain key for signing. Any sub-domain or the sender header will not be used.
+
+In the above example, the "From:" or "Sender:" headers can be a different domain then "esp123.com", but it will be the domain "esp123.com" that will be used for the signing, and, the public key in the TXT record in DNS for the domain key1._domainkey.esp123.com will be the one checked for verification.
+
+Syntax:
+
+dkim-identity { EMAIL-ADDRESS | DOMAIN | sender-or-from }
+Default: sender-or-from
+
+Example:
+
+domain-key key1,esp123.com,c:\pmta\m.pem
+
+<domain yahoo.com>
+    dkim-sign yes
+    dkim-identity @esp123.com
+</domain>
+
+<domain hotmail.com>
+    dkim-sign yes
+    dkim-identity sender-or-from
+</domain>
+
+<domain gmail.com>
+    dkim-sign yes
+    dkim-identity email@esp123.com
+</domain>
+3.3.10.29 dkim-identity-fallback
+
+Specifies an alternative DKIM identity to use if the primary identity isn't usable (usually because no keys are matched). This allows PowerMTA to use the dkim key for the From or Sender header if available ( eg. domain-key directive), but if the key is not available, PowerMTA switches to using the dkim-identity-fallback for signing (i= specified email address in the signature). Requires the use of dkim-identity.
+
+Example:
+
+domain-key key1,esp456.com,c:\pmta\m.pem
+<domain yahoo.com>
+    dkim-sign yes
+    dkim-identity sender-or-from
+    dkim-identity-fallback @esp456.com
+</domain>
+3.3.10.30 dkim-disallow-adding-headers
+
+Primarily used to minimize DKIM replay attacks, it allows one to specify headers that invalidate the DKIM signature if the headers are added after the DKIM signing. The directive takes a comma separated list of headers to include an extra time in the signature's "h" tag. Any headers listed in this directive that are also present in the original message will be signed as well.
+
+Syntax:
+
+dkim-disallow-adding-headers HEADER-LIST
+Example:
+
+<domain yahoo.com>
+    dkim-disallow-adding-headers from,to,subject
+</domain>
+3.3.10.31 queue-to
+
+Allows for grouping domains with the same MX record together. See here for more information.
+
+Use the empty string ("") to clear any inherited value.
+
+3.3.10.32 source-ip-max-msg-rate
+
+IP rate limiting allows for controlling the number of attempted recipients on a per-hour, per-minute and per-second basis for each local IP address for each domain/VirtualMTA. Primarily used by sites that define multiple IPs in a single VirtualMTA, and that want to limit the attempted delivery rate for each local IP address in the VirtualMTA to the respective domains.
+
+See max-msg-rate for more examples on rate limit syntax that can be used with this directive.
+
+Syntax:
+
+source-ip-max-msg-rate CIDR { unlimited | 0 | N/[M]{h|hr|m|min|s|sec} }
+where "d" or "day" means per-day, "h" or "hr" means per-hour, "m" or "min" means per-minute and "s" or "sec" means per-second. N is required and must be non-zero, but M is optional. If M is not specified, it defaults to 1.
+
+Default: unlimited
+
+Example:
+
+<domain comcast.net>
+    source-ip-max-msg-rate 1.2.3.4 600/h
+</domain>
+3.3.10.33 max-msg-rate
+
+Specifies maximum attempted recipients to this domain per time interval.
+
+Both deliveries and attempted deliveries are counted towards the limit. The following error will be displayed in the web monitor when the rate limit is reached:
+
+message rate limit reached (based on max-msg-rate in configuration)
+When using rate limiting, it is best to establish a baseline without rate limiting to ensure that the limits set are having a positive impact on deliverability.
+
+New in PowerMTA v5 When specifying the rate limit, you can specific a multiple in the denominator as well. This makes it easier to configure rate limits for time intervals that may not be exact seconds, minutes, hours, or day boundaries. For example, setting the rate limit to 100/15m states that the rate limit allows 100 events every 15 minutes. Setting the rate limit to 83/5s allows 83 events every 5 seconds.
+
+Syntax:
+
+max-msg-rate { unlimited | 0 | N/[M]{d|day|h|hr|m|min|s|sec} }
+where "d" or "day" means per-day, "h" or "hr" means per-hour, "m" or "min" means per-minute and "s" or "sec" means per-second. N is required and must be non-zero, but M is optional. If M is not specified, it defaults to 1.
+
+Default: unlimited
+
+Example:
+
+<domain comcast.net>
+    max-msg-rate 83/10m
+</domain>
+
+<domain gmail.com>
+    max-msg-rate 500/h
+</domain>
+3.3.10.34 backoff-max-msg-rate
+
+This directive has the same function as max-msg-rate, and applies instead of max-msg-rate while a queue is in backoff mode. Both deliveries and attempted deliveries are counted towards the limit. The following error will be displayed in the web monitor when the rate limit is reached: “message rate limit reached (based on backoff-max-msg-rate in configuration)” When using rate limiting, it is best to establish a baseline without rate limiting to ensure that the limits set are having a positive impact on deliverability.
+
+Syntax:
+
+backoff-max-msg-rate { unlimited | 0 | N/[M]{d|day|h|hr|m|min|s|sec} }
+where "d" or "day" means per-day, "h" or "hr" means per-hour, "m" or "min" means per-minute and "s" or "sec" means per-second. N is required and must be non-zero, but M is optional. If M is not specified, it defaults to 1.
+
+Default: If max-msg-rate is also configured for the same queue, the default is equal to the configured max-msg-rate. Else, it is unlimited.
+
+See max-msg-rate for more examples on rate limit syntax that can be used with this directive.
+
+Example:
+
+<domain hotmail.com>
+  # backoff-max-msg-rate  is 600/h
+  backoff-max-msg-rate 600/h
+</domain>
+
+<domain port25.com>
+  # backoff-max-msg-rate is unlimited
+</domain>
+
+<domain foo.com>
+  max-msg-rate 100/h
+
+  # backoff-max-msg-rate defaults to 100/h
+
+</domain>
+3.3.10.35 max-msg-per-hour
+
+Deprecated Use max-msg-rate
+
+3.3.10.36 backoff-max-msg-per-hour
+
+Deprecated Use backoff-max-msg-rate
+
+3.3.10.37 max-data-volume-rate
+
+Specifies maximum amount of data that will be transferred to this domain in the given time interval.
+
+Only the volume of data for successful deliveries are counted towards the limit. The following error will be displayed in the web monitor when the rate limit is reached:
+
+message rate limit reached (based on max-data-volume-rate in configuration)
+Data size suffixes can be used to specify the volume of data to limit in the given time interval. For instance, setting the volume rate to 10g/2h specifies that at most 10 Gigabytes of data will be transferred in a 2 hour time interval.
+
+New in PowerMTA v5 When specifying the rate limit, you can specific a multiple in the denominator as well. This makes it easier to configure rate limits for time intervals that may not be exact seconds, minutes, hours, or day boundaries. For example, setting the rate limit to 100/15m states that the rate limit allows 100 events every 15 minutes. Setting the rate limit to 83/5s allows 83 events every 5 seconds.
+
+Syntax:
+
+max-data-volume-rate { unlimited | 0 | N [{b|B|k|K|m|M|g|G|t|T}] /[X]{d|day|h|hr|m|min|s|sec} }
+For the numerator, "b" or "B" means bytes, "k" or "K" means kilobytes, "m" or "M" means megabyte, "g" or "G" means gigabyte, "t" or "T" means terabyte. A number N must be specified in the numerator. If a data size suffix is not specified, it is assumed to mean bytes.
+
+For the denominator, "d" or "day" means per-day, "h" or "hr" means per-hour, "m" or "min" means per-minute and "s" or "sec" means per-second. X is optional, but must be a number if specified. If X is not specified, it defaults to 1.
+
+Default: unlimited
+
+Example:
+
+<domain hotmail.com>
+    # limit data volume to 1048576 bytes (or, 1 megabyte) every 1 hour
+    max-data-volume-rate 1048576/1h
+</domain>
+
+<domain aol.com>
+    # limit data volume to 1024 kilobytes (or, 1 megabyte) every 15 seconds
+    max-data-volume-rate 1024K/15s
+</domain>
+
+<domain comcast.net>
+    # limit data volume to 12 megabytes every 1 minute
+    max-data-volume-rate 12M/m
+</domain>
+
+<domain yahoo.com>
+    # limit data volume to 2 gigabytes every 10 hours
+    max-data-volume-rate 2g/10h
+</domain>
+
+<domain gmail.com>
+    # limit data volume to 1 terabyte every 7 days
+    max-data-volume-rate 1T/7d
+</domain>
+3.3.10.38 backoff-max-data-volume-rate
+
+This directive has the same function as max-data-volume-rate, and applies instead of max-data-volume-rate while a queue is in backoff mode.
+
+The following error will be displayed in the web monitor when the rate limit is reached: “message rate limit reached (based on backoff-max-data-volume-rate in configuration)”
+
+Syntax:
+
+backoff-max-data-volume-rate { unlimited | 0 | N [{b|B|k|K|m|M|g|G|t|T}] /[X]{d|day|h|hr|m|min|s|sec} }
+For the numerator, "b" or "B" means bytes, "k" or "K" means kilobytes, "m" or "M" means megabyte, "g" or "G" means gigabyte, "t" or "T" means terabyte. A number N must be specified in the numerator. If a data size suffix is not specified, it is assumed to mean bytes.
+
+For the denominator, "d" or "day" means per-day, "h" or "hr" means per-hour, "m" or "min" means per-minute and "s" or "sec" means per-second. X is optional, but must be a number if specified. If X is not specified, it defaults to 1.
+
+Default: If max-data-volume-rate is also configured for the same queue, the default is equal to the configured max-data-volume-rate. Else, it is unlimited.
+
+See max-data-volume-rate for more examples on rate limit syntax that can be used with this directive.
+
+Example:
+
+<domain hotmail.com>
+  # backoff-max-msg-rate  is 600/h
+  backoff-max-msg-rate 600/h
+</domain>
+
+<domain port25.com>
+  # backoff-max-msg-rate is unlimited
+</domain>
+
+<domain foo.com>
+  max-msg-rate 100/h
+
+  # backoff-max-msg-rate defaults to 100/h
+
+</domain>
+3.3.10.39 retry-after
+
+Specifies the retry interval or intervals for the domain/virtualMTA once the domain/virtualMTA is put in retry mode. The directive is a time interval(s), takes a single interval or comma separated list of intervals, with each having a number along with "d" for days, "h" for hours, "m" for minutes, or "s" for seconds, with no spaces between the parameters.
+
+Syntax:
+
+retry-after TIME-INTERVAL-LIST
+Default: 10m
+
+Example:
+
+<domain example.com>
+    retry-after 10m,10m,10m,10m,10m,1h,1h,1h,4h,4h,12h
+</domain>
+In the above example, PowerMTA would try every 10 minutes for the first 5 tries, every hour for the next three tries, every 4 hours for the next two tries, then every 12 hours until the message is bounced. If during any of the retry intervals an email is delivered then the retry-after period is reset and starts again at the first retry interval. The feature is meant to protect against using resources to continually try and email to a dead domain, like example.com.
+
+3.3.10.40 backoff-retry-after
+
+This directive has the same function as retry-after, and applies instead of retry-after while a queue is in backoff mode.
+
+Syntax:
+
+backoff-retry-after TIME-INTERVAL-LIST
+Default: 1h
+
+Example:
+
+<domain hotmail.com>
+  backoff-retry-after 2h
+</domain>
+3.3.10.41 retry-recipients-after
+
+Specifies the minimum time interval to wait before retrying delivery for a recipient that previously received a 4XX (temp error) from the receiving gateway. Even if the domain/VirtualMTA is retried as per its retry-after setting, individual recipients do not get retried until the retry-recipients-after has elapsed.
+
+Syntax:
+
+retry-recipients-after TIME-INTERVAL
+Default: 10m
+
+Example:
+
+<domain hotmail.com>
+  retry-recipients-after 10m
+</domain>
+3.3.10.42 retry-after-dns-error
+
+Specifies the retry interval for the domain/virtualMTA once the domain/virtualMTA is put in retry mode due to a DNS resolution error.
+
+Syntax:
+
+retry-after-dns-error TIME-INTERVAL
+Default: 1m
+
+Example:
+
+<domain example.com>
+    retry-after-dns-error 30s
+</domain>
+In the above example, PowerMTA would try every 30 seconds until the message is bounced. Typically this is set to be lesser than retry-after so that PowerMTA retries sooner in case of any temporary errors during DNS resolution (such as a timeout connecting to the DNS server, or a DNS misconfiguration).
+
+This directive also applies while the queue is in backoff mode.
+
+3.3.10.43 backoff-notify
+
+Specifies email addresses to notify when any of the queues for the given domain enters or leaves backoff mode. Multiple addresses may be specified in a comma separated list.
+
+Use empty string ("") to clear any inherited value.
+
+Syntax:
+
+backoff-notify EMAIL-ADDRESS-LIST
+Example:
+
+<domain *>
+    backoff-notify two@host.domain,one@host.domain
+</domain>
+3.3.10.44 disabled-source-ip-notify
+
+A comma separated list of email addresses that will be notified when a source IP is disabled, either via a command or through an smtp-pattern-list match, and when a source IP is enabled back again.
+
+Use empty string ("") to clear any inherited value.
+
+Syntax:
+
+disabled-source-ip-notify EMAIL-ADDRESS-LIST
+Example:
+
+<domain *>
+    disabled-source-ip-notify two@host.domain,one@host.domain
+</domain>
+3.3.10.45 backoff-to-normal-after
+
+Specifies a time interval after which a queue automatically goes back to normal mode. This directive is ignored if the queue was switched to backoff mode with the <smtp-pattern-list> action "mode=backoff", and there was an accompanying "backoff-to-normal-after" action.
+
+Syntax:
+
+backoff-to-normal-after { TIME-INTERVAL | never }
+Default: never
+
+Example:
+
+<domain hotmail.com>
+    backoff-to-normal-after 6h
+</domain>
+3.3.10.46 backoff-to-normal-after-delivery
+
+If enabled, this puts a queue back into normal mode after a successful delivery.
+
+Default: false
+
+Example:
+
+<domain hotmail.com>
+  backoff-to-normal-after-delivery true
+</domain>
+3.3.10.47 backoff-upon-all-sources-disabled
+
+If enabled, switches a queue into backoff mode when all source IPs become disabled, whether via command line command or when using the <smtp-pattern-list> function “disable-source-ip”. Note: SparkPost recommends using the “backoff-to-normal-after” directive in conjunction with this directive, since PowerMTA does not automatically put a queue back into normal mode when an IP address reverts back to being enabled.
+
+Default: false
+
+Example:
+
+<domain hotmail.com>
+  backoff-upon-all-sources-disabled true
+</domain>
+3.3.10.48 reenable-source-ip-after
+
+Sets the interval of time for when a source IP disabled with the <smtp-pattern-list> function “disable-source-ip” is to be re-enabled, when no “reenable-after=” option is defined in the pattern action. This directive is ignored however when the “disable-source-ip” actions are defined with the accompanying “reenable-after=” option.
+
+Syntax:
+
+reenable-source-ip-after { TIME-INTERVAL | never }
+Default: never
+
+Example:
+
+<domain hotmail.com>
+  reenable-source-ip-after 1h
+</domain>
+3.3.10.49 max-cold-virtual-mta-msg
+
+A per-domain "max-cold-virtual-mta-msg N/day", default of 0, specifies how many messages go to the "foo-cold" vmta when VirtualMTA "foo" is selected. Re-selection occurs at message reception and over SMTP only. The value specified is the first X messages for that domain. The defined amount is set for delivery upon injection.
+
+Note: When MX rollup rules are also active in the configuration, PowerMTA will use the max-cold-virtual-mta-msg setting from the rollup queue instead of the individual queues that got rolled up.
+
+Note: PowerMTA may route less traffic through cold vmtas when an <mx-rollup-list> tag exists in the configuration, even for domains that aren't rolled up.
+
+Please note that this setting is per domain, so 1000 emails will go to yahoo, 1000 will go to hotmail, etc. Auto increments are supported in the following manner:
+
+<domain yahoo.com>
+    max-cold-virtual-mta-msg 1/day,2/day,3/day,4/day
+</domain>
+In the example above, all cold vmtas will have 1 as their first day's limit for yahoo.com, 2 as the limit for second day to yahoo.com and so on. There is no restriction on the number of per-day limits that can be configured. The last limit value will continue to be used as the per-day limit after all the preceding limits have been used.
+
+Syntax:
+
+max-cold-virtual-mta-msg DAILY-LIMITS
+where DAILY-LIMITS is a list of one or more rates of the form N/{d|day}
+
+Default: 0/d
+
+Example:
+
+<virtual-mta vmta1>
+    smtp-source-host 1.2.3.4 vmta1.example.com
+    cold-virtual-mta vmta2
+    <domain *>
+        max-cold-virtual-mta-msg 1000/day
+    </domain>
+</virtual-mta>
+
+<virtual-mta vmta2>
+    smtp-source-host 5.6.7.8 vmta2.example.com
+    <domain *>
+        max-msg-rate 100/h
+    </domain>
+</virtual-mta>
+3.3.10.50 reroute-to-virtual-mta
+
+Specifies that PowerMTA should reroute messages to the given VirtualMTA or VirtualMTA pool (See Rerouting to VirtualMTA pool). This can be set globally.
+
+Use empty string ("") to clear any inherited value.
+
+Syntax:
+
+reroute-to-virtual-mta { VMTA-NAME | VMTA-POOL-NAME }
+Example:
+
+<virtual-mta vmta1>
+    ...
+</virtual-mta>
+
+<virtual-mta vmta2>
+    ...
+</virtual-mta>
+
+<virtual-mta-pool pool>
+    ...
+</virtual-mta-pool>
+
+<domain aol.com>
+    reroute-to-virtual-mta vmta2
+</domain>
+
+<domain yahoo.com>
+    reroute-to-virtual-mta pool
+</domain>
+Or, it may also make sense to use this directive on a per VirtualMTA basis:
+
+<virtual-mta vmta1>
+    ...
+    <domain aol.com>
+        reroute-to-virtual-mta vmta2
+    </domain>
+</virtual-mta>
+
+<virtual-mta vmta2>
+    ...
+</virtual-mta>
+3.3.10.51 backoff-reroute-to-virtual-mta
+
+Specifies that PowerMTA should reroute messages to the given VirtualMTA or VirtualMTA pool (See Rerouting to VirtualMTA pool) in case the queue enters backoff mode. For example, if messages are queued for example.port25.com/vmta1 and that queue enters backoff mode while backoff-reroute-to-virtual-mta is set to vmta2, all of its messages would be rerouted to the queue example.port25.com/vmta2. New messages entering the queue are also rerouted, as long as the queue remains in backoff mode.
+
+Use empty string ("") to clear any inherited value.
+
+It may also make sense to use this directive on a per VirtualMTA basis:
+
+<virtual-mta vmta1>
+    ...
+    <domain *>
+        backoff-reroute-to-virtual-mta vmta2
+    </domain>
+</virtual-mta>
+
+<virtual-mta vmta2>
+    ...
+</virtual-mta>
+WARNING: PowerMTA performs full loop detection on this directive. If a loop is detected, the queues that cause the loop are ignored (they do not receive any messages), and an error is written to the log file. A reroute from one VirtualMTA to itself is silently ignored.
+
+Syntax:
+
+backoff-reroute-to-virtual-mta { VMTA-NAME | VMTA-POOL-NAME }
+Example:
+
+<virtual-mta vmta1>
+</virtual-mta>
+
+<virtual-mta-pool pool>
+    virtual-mta vmta1
+</virtual-mta-pool>
+
+<domain *>
+    backoff-reroute-to-virtual-mta vmta1
+</domain>
+
+<domain yahoo.com>
+    backoff-reroute-to-virtual-mta pool
+</domain>
+3.3.10.52 type
+
+Determines whether email for this domain is to be delivered over SMTP, through the pipe delivery API, to a file, or discarded. The default type for a queue is smtp, which means email from the queue is delivered over SMTP. The other choices are
+
+file, in which case, the queue writes its messages to files.
+pipe, in which case the queue delivers its messages to a pipe program.
+discard in which case, the queue discards the email writing the corresponding accounting record
+http-delivery, in which case, the queue will deliver its messages to a HTTP(S) endpoint as a JSON object.
+Note: Change from one type of queue to another with messages in the given queue requires a restart of PowerMTA.
+
+Syntax:
+
+type { smtp | pipe | file | discard | http-delivery }
+Default: smtp
+
+Example:
+
+<domain hotmail.com>
+    type file
+</domain>
+3.3.10.53 allow-cancel-during-transfer
+
+Specifies whether PowerMTA should allow connections to this domain to be canceled (e.g., in order to shut down PowerMTA) while a message's contents (headers and body) are being transferred. Some mailers have been known to still deliver messages if the connection breaks before they are fully received, lastly causing partial and duplicate messages to be delivered as PowerMTA retries delivering. Setting this directive to false prevents PowerMTA from Canceling connections while messages are being transferred on it, but also possibly causes PowerMTA to take longer to shut down.
+
+Default: true
+
+Example:
+
+<domain hotmail.com>
+  allow-cancel-during-transfer true
+</domain>
+3.3.10.54 auth-username
+
+Specifies the user name to use when authenticating to the remote mailer. Authentication is attempted if the AUTH extension as well as a SASL authentication mechanism supported by PowerMTA are available at the remote mailer, and either auth-username or auth-password have non-empty values.
+
+Use empty string ("") to clear any inherited value.
+
+PowerMTA currently only supports the CRAM-MD5, LOGIN, and PLAIN authentication mechanisms.
+
+Example:
+
+<domain hotmail.com>
+  auth-username foo
+  auth-password 43rusdfdsi
+</domain>
+3.3.10.55 smtp-data-termination-timeout
+
+Allows for setting the amount of time that PowerMTA will wait for the final "250 ok" response after sending the message body. Setting this value too low is likely to cause duplicates.
+
+Syntax:
+
+smtp-data-termination-timeout TIME-INTERVAL
+Default: 10m
+
+Example:
+
+<domain hotmail.com>
+  smtp-data-termination-timeout 5m
+</domain>
+3.3.10.56 auth-password
+
+Specifies the password to use when authenticating to the remote mailer. Please see the auth-username directive above for more information. auth-password cannot contain a # as it will be interpreted as the start of comments.
+
+Example:
+
+<domain hotmail.com>
+  auth-password password
+</domain>
+3.3.10.57 use-unencrypted-plain-auth
+
+Specifies whether PowerMTA should use PLAIN and/or LOGIN for authentication in case the connection is not encrypted (i.e., if STARTTLS is not being used).
+
+Default: false
+
+Example:
+
+<domain hotmail.com>
+  use-unencrypted-plain-auth true
+</domain>
+3.3.10.58 smtp-553-means-invalid-mailbox
+
+Instructs PowerMTA whether to consider a 553 reply to a RCPT command as an 5.1.1 (invalid mailbox) error when enhanced status code is not returned by the remote gateway.
+
+Default: yes
+
+Example:
+
+<domain hotmail.com>
+  smtp-553-means-invalid-mailbox true
+</domain>
+3.3.10.59 smtp-421-means-mx-unavailable
+
+If set to “yes”, PowerMTA will immediately break the connection upon receiving a 421 error and subsequently attempt a new connection to the next MX record listed in DNS. The default setting of “no” will cause PowerMTA to reset the connection and then reuse the same connection for additional recipients.
+
+Default: no
+
+Example:
+
+<domain hotmail.com>
+  smtp-421-means-mx-unavailable true
+</domain>
+3.3.10.60 replace-smtp-421-service-response
+
+When enabled, this replaces the SMTP response after the 421 code and after any enhanced status code with "service unavailable", thus preventing any email addresses, etc. that may be included in that response from being used in bounces. The original message is still passed in for pattern matching, so that these continue to work normally.
+
+Default: false
+
+Example:
+
+<domain hotmail.com>
+  replace-smtp-421-service-response true
+</domain>
+3.3.10.61 bounce-upon-no-mx
+
+If set to "true" and no MX record(s) are found for the domain, all emails in the queue bounce immediately.
+
+If a time interval is specified, such as 30m, only messages that have been queued for that amount of time are bounced if no MX record(s) are found for the domain. Defining a time interval allows PowerMTA to attempt delivery to the domain by looking up its A/AAAA records.
+
+Note that this directive applies only to cases where a MX lookup is performed; if a host list is specified with the smtp-hosts directive, no MX lookup is performed.
+
+Syntax:
+
+bounce-upon-no-mx ( true | false | TIME-INTERVAL | never }
+Default: false
+
+Example:
+
+<domain example.com>
+    bounce-upon-no-mx true
+</domain>
+
+<domain *>
+    bounce-upon-no-mx 30m
+</domain>
+3.3.10.62 bounce-upon-5xx-greeting
+
+Specifies whether PowerMTA should immediately bounce all messages for the domain when receiving a 5xx SMTP greeting. email protocols mandate this default behavior, however there exist many misconfigured mailers on the network, causing email to be lost unnecessarily. If this directive is set to false, PowerMTA will regard 5xx greetings as a temporary error and try delivering the messages to any secondary MX mailers, as well continue retrying delivery until the bounce-after interval expires.
+
+Default: true
+
+Example:
+
+<domain hotmail.com>
+  bounce-upon-5xx-greeting true
+</domain>
+3.3.10.63 bounce-upon-pix-transfer-failure
+
+This directive is identical to the bounce-upon-transfer-failure directive below, except that the message is only bounced if a Cisco PIX Firewall is detected at the receiving site. Detection is performed based on the SMTP greeting line: if it contains at least ten asterisks, a PIX firewall is detected.
+
+Default: false
+
+Example:
+
+<domain hotmail.com>
+  bounce-upon-pix-transfer-failure true
+</domain>
+3.3.10.64 bounce-upon-transfer-failure
+
+Specifies whether PowerMTA should immediately bounce a message whose delivery failed while its contents (message headers and body) were being transferred. Normally, PowerMTA would not immediately bounce the message, but continue trying until it becomes older than the bounce-after interval. Due to deficiencies in the SMTP protocol (See RFC 1047) and in the receiving mail servers, if the TCP connection fails while the contents are being transmitted, there is some risk that various copies of the same message will be delivered, some of which possibly with only partial contents. By enabling this directive, you instruct PowerMTA to bounce the message immediately after the first failed transfer attempt. This effectively prevents sending out duplicates, but may also cause the recipient to never receive the message, or receive only one (possibly partial) copy of it.
+
+Default: false
+
+Example:
+
+<domain hotmail.com>
+  bounce-upon-transfer-failure true
+</domain>
+3.3.10.65 connect-timeout
+
+Specifies the maximum amount of time that PowerMTA waits for an outgoing SMTP connection to be established.
+
+Syntax:
+
+connect-timeout TIME-INTERVAL
+Default: 2m
+
+Example:
+
+<domain hotmail.com>
+  connect-timeout 5m
+</domain>
+3.3.10.66 smtp-greeting-timeout
+
+Specifies the amount of time to wait for the initial SMTP 220 greeting message to be received after the connection is accepted.
+
+Syntax:
+
+smtp-greeting-timeout TIME-INTERVAL
+Default: 5m
+
+Example:
+
+<domain hotmail.com>
+  smtp-greeting-timeout 10m
+</domain>
+3.3.10.67 data-send-timeout
+
+Specifies the maximum amount of time that PowerMTA waits for a chunk of data (message contents and body) to be sent over an outgoing SMTP connection. For full compliance with RFC 2821, this timeout needs to be at least three minutes.
+
+Syntax:
+
+data-send-timeout TIME-INTERVAL
+Default: 3m
+
+Example:
+
+<domain hotmail.com>
+  data-send-timeout 5m
+</domain>
+3.3.10.68 ignore-8bitmime
+
+Specifies whether PowerMTA should ignore the 8BITMIME extension even when supported by the receiving mailer. Setting this directive to true allows you to work around the problem of messages bouncing because a site's external MTA accepting 8BITMIME messages as such but unable to convert them to 7BIT when passing to an internal MTA which does not support 8BITMIME. The directive doesn’t change the encoding of the message, but rather, by default if a message has 8bit encoding and the feeding application passed that information along in the MAIL FROM command, PowerMTA passes that info along to the remote mail server via the MAIL FROM command. Setting the value to true tells PowerMTA to not pass along the information. This has nothing to do with anything declared in the body of the message. See RFC 1652 for more information http://www.ietf.org/rfc/rfc1652.txt.
+
+Default: false
+
+Example:
+
+<domain hotmail.com>
+  ignore-8bitmime true
+</domain>
+3.3.10.69 ignore-chunking
+
+Specifies whether PowerMTA should ignore the CHUNKING extension even when supported by the receiving mailer. Setting this directive to true may be useful for debugging message transfer problems.
+
+Default: false
+
+Example:
+
+<domain hotmail.com>
+  ignore-chunking true
+</domain>
+3.3.10.70 ignore-pipelining
+
+Specifies whether PowerMTA should ignore the PIPELINING extension even when supported by the receiving mailer. Setting this directive to true may be useful for debugging message transfer problems.
+
+Default: false
+
+Example:
+
+<domain hotmail.com>
+  ignore-pipelining true
+</domain>
+3.3.10.71 ignore-dsn
+
+Specifies whether PowerMTA should ignore the DSN extension even when supported by the receiving mailer (seen in the "250" responses after connecting).
+
+Default: false
+
+Example:
+
+<domain hotmail.com>
+  ignore-dsn true
+</domain>
+3.3.10.72 max-msg-per-connection
+
+Specifies the maximum number of messages delivered within a single connection. Normally it is most efficient to deliver as many messages as possible per connection, but in special circumstances it may be desirable to have PowerMTA close the connection and reconnect before delivering more messages. A value of zero means no limit is imposed.
+
+Default: 0
+
+Example:
+
+<domain hotmail.com>
+  max-msg-per-connection 5
+</domain>
+3.3.10.73 max-rcpt-per-transaction
+
+Specifies the maximum number of recipients passed with each message. For example, if a message is submitted including 5,000 recipients for a single domain, and max-rcpt-per-message for that domain is set to 3,000, PowerMTA will transfer the message twice, once for 3,000 recipients and again for the remaining 2,000 recipients. Smaller settings increase parallelism by allowing the same message to be transferred over several connections to the same domain, but also reduce efficiency, since the message contents are transferred several times. max-rcpt-per-transaction is an alias to max-rcpt-per-message.
+
+Default: 1000
+
+Example:
+
+<domain hotmail.com>
+  max-rcpt-per-transaction 100
+</domain>
+3.3.10.74 max-rcpt-per-message
+
+Specifies the maximum number of recipients accepted in each message. If set to zero or unlimited, no explicit limit is enforced.
+
+Syntax:
+
+max-rcpt-per-message { N | unlimited }
+Default: 0
+
+Example:
+
+<domain yahoo.com>
+  max-rcpt-per-message 10
+</domain>
+3.3.10.75 max-smtp-out
+
+Specifies the maximum number of simultaneous connections to be opened for this queue. This limit is independent of connections to the same domain but from a different VMTA.
+
+Default: 20
+
+Example:
+
+<domain hotmail.com>
+  max-smtp-out 30
+</domain>
+3.3.10.76 backoff-max-smtp-out
+
+Specifies the maximum number of simultaneous connections to be opened for this domain when in backoff mode.
+
+Default: 20
+
+Example:
+
+<domain hotmail.com>
+  backoff-max-smtp-out 30
+</domain>
+3.3.10.77 max-smtp-out-per-source-ip
+
+Deprecated Use source-ip-max-smtp-out instead
+
+3.3.10.78 source-ip-max-smtp-out
+
+Specifies the maximum number of simultaneous connections to be opened for this domain for a given local source IP.
+
+Syntax:
+
+source-ip-max-smtp-out CIDR N
+Default: unlimited
+
+Example:
+
+<domain comcast.net>
+    source-ip-max-smtp-out 1.2.3.4 10
+</domain>
+3.3.10.79 smtp-out-rampup-interval
+
+Specifies the minimum amount of time PowerMTA waits before opening another connection to deliver email from the queue. This can reduce the number of connections needed and help avoid hitting a connection limit.
+
+Syntax:
+
+smtp-out-rampup-interval TIME-INTERVAL
+Default: 0
+
+Example:
+
+<domain hotmail.com>
+  smtp-out-rampup-interval 1s
+</domain>
+3.3.10.80 max-connect-rate
+
+Specifies the maximum number of connections to be opened for this domain during the specified time period.
+
+See max-msg-rate for more examples on rate limit syntax that can be used with this directive.
+
+Syntax:
+
+max-connect-rate { unlimited | 0 | N/[M]{d|day|h|hr|m|min|s|sec} }
+where "d" or "day" means per-day, "h" or "hr" means per-hour, "m" or "min" means per-minute and "s" or "sec" means per-second. N is required and must be non-zero, but M is optional. If M is not specified, it defaults to 1.
+
+Default: unlimited
+
+Example:
+
+<domain hotmail.com>
+  max-connect-rate 10/m
+</domain>
+3.3.10.81 source-ip-max-connect-rate
+
+Specifies the maximum number of connections to be opened during the specified time period when using the given local source IP for this domain/vmta (i.e. queue).
+
+See max-msg-rate for more examples on rate limit syntax that can be used with this directive.
+
+Syntax:
+
+source-ip-max-connect-rate CIDR { unlimited | 0 | N/[M]{d|day|h|hr|m|min|s|sec} }
+where "d" or "day" means per-day, "h" or "hr" means per-hour, "m" or "min" means per-minute and "s" or "sec" means per-second. N is required and must be non-zero, but M is optional. If M is not specified, it defaults to 1.
+
+Default: unlimited
+
+Example:
+
+<domain hotmail.com>
+    source-ip-max-connect-rate 1.2.3.4 60/m
+</domain>
+3.3.10.82 connection-idle-timeout
+
+Specifies the maximum amount of time that PowerMTA waits for another email to be submitted for delivery once there is no remaining email to deliver in the queue. This can reduce the number of connections needed and help avoid hitting a connection limit for opening too many connections within a short interval. The maximum value is 10m. See also smtp-out-rampup-interval.
+
+Syntax:
+
+connection-idle-timeout TIME-INTERVAL
+Default: 0
+
+Example:
+
+<domain hotmail.com>
+  connection-idle-timeout 1m
+</domain>
+3.3.10.83 source-ip-max-msg-rate
+
+Specifies the maximum number of messages to be attempted for delivery during the specified time period when using the given local source IP for this domain/vmta (i.e. queue).
+
+See max-msg-rate for more examples on rate limit syntax that can be used with this directive.
+
+Syntax:
+
+source-ip-max-msg-rate CIDR { unlimited | 0 | N/[M]{d|day|h|hr|m|min|s|sec} }
+where "d" or "day" means per-day, "h" or "hr" means per-hour, "m" or "min" means per-minute and "s" or "sec" means per-second. N is required and must be non-zero, but M is optional. If M is not specified, it defaults to 1.
+
+Default: unlimited
+
+Example:
+
+<domain comcast.net>
+    source-ip-max-msg-rate 1.2.3.4 600/m
+</domain>
+3.3.10.84 source-ip-max-data-volume-rate
+
+Specifies maximum amount of data that will be transferred to this domain in the given time interval when using the given local source IP for this domain/vmta (i.e. queue).
+
+See max-data-volume-rate for more examples on rate limit syntax that can be used with this directive.
+
+Syntax:
+
+source-ip-max-data-volume-rate CIDR { unlimited | 0 | N [{b|B|k|K|m|M|g|G|t|T}] /[X]{d|day|h|hr|m|min|s|sec} }
+For the numerator, "b" or "B" means bytes, "k" or "K" means kilobytes, "m" or "M" means megabyte, "g" or "G" means gigabyte, "t" or "T" means terabyte. A number N must be specified in the numerator. If a data size suffix is not specified, it is assumed to mean bytes.
+
+For the denominator, "d" or "day" means per-day, "h" or "hr" means per-hour, "m" or "min" means per-minute and "s" or "sec" means per-second. X is optional, but must be a number if specified. If X is not specified, it defaults to 1.
+
+See max-data-volume-rate for more examples on rate limit syntax that can be used with this directive.
+
+Default: unlimited
+
+Example:
+
+<domain comcast.net>
+    source-ip-max-data-volume-rate 1.2.3.4 600/m
+</domain>
+3.3.10.85 backoff-max-connect-rate
+
+Specifies the maximum number of connections to be opened for this domain during the specified time period when in backoff mode.
+
+See max-msg-rate for more examples on rate limit syntax that can be used with this directive.
+
+Syntax:
+
+backoff-max-connect-rate { unlimited | 0 | N/[M]{d|day|h|hr|m|min|s|sec} }
+where "d" or "day" means per-day, "h" or "hr" means per-hour, "m" or "min" means per-minute and "s" or "sec" means per-second. N is required and must be non-zero, but M is optional. If M is not specified, it defaults to 1.
+
+Default: If max-connect-rate is also configured for the same queue, the default is equal to the configured max-connect-rate. Else, it is unlimited.
+
+Example:
+
+<domain hotmail.com>
+  # backoff-max-connect-rate  is 600/h
+  backoff-max-connect-rate 600/h
+</domain>
+
+<domain port25.com>
+  # backoff-max-connect-rate is unlimited
+</domain>
+
+<domain foo.com>
+  max-connect-rate 100/h
+
+  # backoff-max-connect-rate defaults to 100/h
+
+</domain>
+3.3.10.86 retry-upon-new-mail
+
+Specifies if PowerMTA should immediately schedule delivery of a message when it is received if the queue to which it is injected is already in retry mode. If set to true and a queue is in retry mode, new mail injected into that queue will cause the queue to be scheduled for delivery.
+
+Default: false
+
+Example:
+
+<domain hotmail.com>
+  retry-upon-new-mail true
+</domain>
+3.3.10.87 pix-bug-workaround
+
+Some versions of the Cisco PIX firewall have a bug (bug ID CSCds90792) in its "fixup smtp" command in that it rejects email (causing duplicates to be delivered) if the final . sequence is split across various TCP frames. This directive instructs PowerMTA, in case it detects a PIX firewall, to send the final . in a frame of its own, making it almost certain to arrive at the receiving site in a single frame. Detection is performed based on the SMTP greeting line: if it contains at least ten asterisks, a PIX firewall is detected.
+
+Default: true
+
+Example:
+
+<domain hotmail.com>
+  pix-bug-workaround true
+</domain>
+3.3.10.88 route
+
+Overrides or modifies the normal DNS-based routing, instructing PowerMTA to deliver to specific hosts or to look up an MX record for a different domain.
+
+Deprecated Use smtp-hosts instead.
+
+3.3.10.89 default-smtp-port
+
+Allows specifying the TCP port to use for delivering over SMTP (unless overridden by smtp-hosts). This can be used to simplify the setup when multiple PowerMTAs communicate through a NAT (network address translation) device, since the NAT configuration can key on the destination port rather than require individual local source IPs for each externally visible IP address.
+
+Default: 25
+
+Example:
+
+<virtual-mta vmta1>
+    <domain *>
+      default-smtp-port 9001
+    </domain>
+</virtual-mta>
+<virtual-mta vmta2>
+    <domain *>
+      default-smtp-port 9002
+    </domain>
+</virtual-mta>
+3.3.10.90 smtp-hosts
+
+Overrides or modifies the normal DNS-based routing, instructing PowerMTA to deliver to specific hosts or to look up an MX record for a different domain.
+
+Multiple host names or IP addresses can be entered. Commas separate hosts within a preference level, and semicolons separate preference levels. Email delivery is attempted by preference level (first to last), exactly as though those hosts had been obtained from MX records.
+
+An IP address may be entered in dotted-decimal notation instead of a host name, for example [10.1.0.2] for IPv4 or [IPv6:2001::1] for IPv6. Each host name or IP address may be followed by : and a number specifying an alternative TCP port number, as in h1.test.com:1025.
+
+To specify that a MX lookup be performed instead, specify lookup-mx: followed by the domain name to look up.
+
+Use the empty string ("") to clear any inherited value.
+
+Examples:
+
+<domain hotmail.com>
+    smtp-hosts lookup-mx:example.com
+</domain>
+In the following example, commas and semicolons are used to create a primary preference level containing hosts h1 and h2 (which will be used in round-robin fashion), a secondary preference level containing the IP address [10.1.1.1] and specifying an alternate TCP port, and a tertiary preference level (only used if unable to deliver to the first two levels) containing host last:
+
+<domain email.test.com>
+    smtp-hosts h1.test.com, h2.test.com; [10.1.1.1]:2525; last.test.com
+</domain>
+3.3.10.91 smtp-pattern-list
+
+Specifies that the given SMTP pattern list is to be used in connections to the given domain. See <smtp-pattern-list> Directives for more information.
+
+Syntax:
+
+smtp-pattern-list NAME
+Example:
+
+<smtp-pattern-list foo>
+</smtp-pattern-list>
+
+<domain hotmail.com>
+  smtp-pattern-list foo
+</domain>
+3.3.10.92 assume-delivery-upon-data-termination-timeout
+
+If enabled and the connection times out while waiting for the reply to the "." after a DATA or for the reply to the last BDAT segment, PowerMTA assumes that the delivery was successful. May result in duplicate messages if used when not needed.
+
+Default: false
+
+Example:
+
+<domain hotmail.com>
+  assume-delivery-upon-data-termination-timeout true
+</domain>
+3.3.10.93 disable-mx-rollup
+
+Controls whether MX rollup should be performed for the domain. When set to true, DNS results for the domain are not checked against any MX rollup patterns configured in the system.
+
+Default: false
+
+Example:
+
+<domain hotmail.com>
+  disable-mx-rollup true
+</domain>
+3.3.10.94 include
+
+This directive can be used at domain level to specify an additional configuration file to process. This can be used, for example, to facilitate maintenance of the configuration files across multiple hosts, by storing those settings which differ from host to host in a separate file and including it from the main (common) file. Wildcards may be used.
+
+A URL can be specified in place of a filename to obtain the file via HTTP. The URL must be an absolute URL, must be prefixed by either http or https, and should not contain any userinfo, query-string or fragment components.
+
+Syntax:
+
+include { FILENAME | scheme://host[:port][/path] }
+Example:
+
+<domain yahoo.com>
+   include /etc/pmta/yahoo-limits.txt
+   include https://mylocalhost.com:4000/domain/yahoo-limits.txt
+</domain>
+3.3.10.95 SSL/TLS Directives
+
+3.3.10.95.1 use-starttls
+
+Specifies whether PowerMTA should use the STARTTLS extension (if supported by the receiving mailer). Setting this directive to true instructs PowerMTA to use that extension to encrypt the connection to the remote mailer.
+
+Default: true
+
+Example:
+
+<domain hotmail.com>
+  use-starttls true
+</domain>
+3.3.10.95.2 require-starttls
+
+Only relevant if "use-starttls" is enabled. The STARTTLS extension may not be available at the remote host, or its use may fail for various reasons. If "require-starttls" is set to "true", PowerMTA will abort the connection, thus avoiding to send the message through a less secure connection. Otherwise, it will send the message anyway.
+
+Default: false
+
+Example:
+
+<domain hotmail.com>
+  require-starttls true
+</domain>
+3.3.10.95.3 use-dane
+
+Specifies whether PowerMTA should use DANE DNS records to verify whether the remote site requires the use of STARTTLS extension when transferring email to it. Setting this directive to true instructs PowerMTA to look up DANE DNS records for the remote site and attempt to verify the certificate presented by the remote site during STARTTLS based on the methods specified in the DANE DNS records. If the remote site requires the use of STARTTLS in its DANE DNS records, and the STARTTLS attempt to the remote site fails for any reason, PowerMTA will not transfer email to the remote site over plain text (in other words, downgrades to plain text on STARTTLS failures is not allowed). Note that PowerMTA has to be configured with a DNS resolver that supports DNSSEC. See DANE for more information about the use of DANE in PowerMTA.
+
+Default: false
+
+Example:
+
+# PowerMTA has to be configured with a DNS resolver that supports DNSSEC in order to use DANE.
+name-server 8.8.8.8
+
+<domain hotmail.com>
+  use-dane true
+</domain>
+3.3.10.95.4 use-mta-sts
+
+Specifies whether PowerMTA should validate the connection to remote site as per the MTA-STS policy for the recipient domain when transferring email to it. Setting this directive to true instructs PowerMTA to discover MTA-STS policy for the recipient domain and use it for validating the connection to the remote site. If the recipient domain enforces MTA-STS, PowerMTA transfers email to the remote site if and only if
+
+the connection is allowed as per the recipient domain's MTA-STS policy
+the connection is encrypted (via the use of STARTTLS)
+PowerMTA can authenticate both - the certificate chain presented by the server on the connection and server name in the certificate
+If the recipient domain enforces MTA-STS and any of the above checks fail, PowerMTA will not transfer email to the remote site.
+
+See MTA-STS for more information.
+
+Default: false
+
+Example:
+
+<domain hotmail.com>
+  use-mta-sts true
+</domain>
+3.3.10.95.5 reuse-ssl-session
+
+Session reuse is a mechanism to improve performance when establishing SSL/TLS sessions with a remote host. If PowerMTA is re-connecting to the same host within a short duration, it may be possible to reuse the previous SSL/TLS session details speeding up the initial handshake via an abbreviated protocol.
+
+Session reuse is not supported for TLSv1.3 connections. TLSv1.3 session establishment is faster than prior SSL/TLS versions. This directive will be ignored for TLSv1.3 sessions.
+
+This directive depends on the remote host's ability to support reusing SSL/TLS sessions. At present, only gmail.com is known to support. We suggest enabling the directive for only those domains that are known to support this feature.
+
+Default: false
+
+Example:
+
+<domain gmail.com>
+    reuse-ssl-session true
+</domain>
+3.3.10.95.6 smtp-tls-allow-tlsv1
+
+Allows PowerMTA to use TLSv1 when establishing a secure connection.
+
+Default: false
+
+Example:
+
+<domain hotmail.com>
+    smtp-tls-allow-tlsv1 false
+</domain>
+3.3.10.95.7 smtp-tls-allow-tlsv1.1
+
+Allows PowerMTA to use TLSv1.1 when establishing a secure connection.
+
+Default: true
+
+Example:
+
+<domain hotmail.com>
+    smtp-tls-allow-tlsv1.1 true
+</domain>
+3.3.10.95.8 smtp-tls-allow-tlsv1.2
+
+Allows PowerMTA to use TLSv1.2 when establishing a secure connection.
+
+Default: true
+
+Example:
+
+<domain hotmail.com>
+    smtp-tls-allow-tlsv1.2 true
+</domain>
+3.3.10.95.9 smtp-tls-allow-tlsv1.3
+
+Allows PowerMTA to use TLSv1.3 when establishing a secure connection.
+
+Default: true
+
+Example:
+
+<domain hotmail.com>
+    smtp-tls-allow-tlsv1.3 true
+</domain>
+3.3.10.95.10 smtp-tls-allow-sslv3
+
+This directive is no longer valid as PowerMTA no longer supports SSLv3.
+
+3.3.10.95.11 smtp-client-certificate directive
+
+Specifies the client-side certificate to be presented to the remote end on outbound SMTP connections from PMTA.
+
+Example:
+
+<domain hotmail.com>
+    smtp-client-certificate /path/to/certificate.pem password # password is optional
+</domain>
+3.3.10.95.12 smtp-tls-ca-file directive
+
+Specifies the location of a local text file containing one or more root certificates that will be used to verify remote server certificate chains. Used by senders to authenticate remote gateways when using TLS based delivery. If using opportunistic TLS and the certificate verification fails, PowerMTA will fall back to using plain text for the delivery. In contrast, if TLS is required and the certificate verification fails, PowerMTA will return a temporary 4xx error indicating the failure.
+
+Example:
+
+<domain hotmail.com>
+    smtp-tls-ca-file /etc/pmta/certchain.pem
+</domain>
+3.3.10.95.13 smtp-tls-ciphers
+
+Specifies the ciphers that PowerMTA is allowed to use when negotiating a session using a TLSv1.2 or earlier protocol with remote client during STARTTLS. Please see documentation for OpenSSL command ‘ciphers’ for valid cipher names that can be used with this directive.
+
+Default: "HIGH:!ADH:@STRENGTH"
+
+Example:
+
+<domain example.com>
+    smtp-tls-ciphers HIGH:!ADH:@STRENGTH
+</domain>
+3.3.10.95.14 smtp-tls-tlsv1.3-ciphersuites
+
+Specifies the ciphersuites that PowerMTA is allowed to use when negotiating a session using the TLSv1.3 protocol with remote client during STARTTLS. Please see documentation for OpenSSL command ‘ciphers’ for valid ciphersuite names that can be used with this directive.
+
+Default: TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256:TLS_AES_128_CCM_SHA256:TLS_AES_128_CCM_8_SHA256
+
+Example:
+
+<domain example.com>
+    smtp-tls-tlsv1.3-ciphersuites TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256
+</domain>
+3.3.10.95.15 log-tls
+
+Specifies whether PowerMTA should log information during negotiation of a TLS session with the remote during STARTTLS.
+
+Default: false
+
+Example:
+
+<domain hotmail.com>
+  log-tls true
+</domain>
+3.3.10.96 Discard Delivery Directives
+
+The directives in this Section are ignored if specified in non-discard delivery domains.
+
+3.3.10.96.1 discard-as-bounce
+
+Controls whether emails in a discard type queue should be recorded as bounces(‘b’). When set to true for a domain with type discard, all emails in the queue are recorded as bounces in the accounting file. When set to false, all emails in the queue are recorded as deliveries(‘d’) in the accounting file.
+
+Default: false
+
+Example:
+
+<domain undeliverable-domain.com>
+  type discard
+  discard-as-bounce true
+</domain>
+3.3.10.97 File Delivery Directives
+
+3.3.10.97.1 file-format
+
+Specifies the format of the file(s) to which PowerMTA delivers the messages:
+
+newfile-plain: A new file is created for each message, in the directory indicated by file-destination. The entire message is written to the file, including all headers, but no envelope information.
+
+newfile-pickup: A new file is created for each message, in the directory indicated by file-destination. In addition to the entire message body and headers, the special headers x-sender and x-receiver are included, containing the originator and recipient addresses from the message envelope.
+
+append-mbox: Messages are appended to the file indicated by file-destination, in the unix "mbox" format.
+
+PowerMTA creates new files with the initial "extension" of .tmp and renames them to .msg once done. If post-processing these files as they are created, you should code to ignore any .tmp files, to avoid processing a file which hasn't yet been completely written.
+
+When appending to a file (for append-mbox), interlocking is performed using flock on Unix-like platforms and with share options passed to CreateFile on Windows. In order to safely access the file while PowerMTA is running, SparkPost recommends using the pmtagetfile application.
+
+Syntax:
+
+file-format { newfile-plain | newfile-pickup | append-mbox }
+Default: newfile-plain
+
+Example:
+
+<domain bounce.mydomain.com>
+  type file
+  file-destination /opt/pickup/
+  file-format newfile-pickup
+</domain>
+3.3.10.97.2 file-destination
+
+Specifies the directory or file name for file delivery. The directory or file name is subjected to the same macro expansion as in the pipe delivery's command line:
+
+$bodytype: The message body type (7BIT, 8BITMIME or BINARYMIME).
+
+$ctime: The current date in Unix ctime format.
+
+$envid: The DSN envelope ID (from MAIL ... ENVID=...).
+
+$from: The envelope sender (MAIL FROM) address.
+
+$isodate: The current date in the format YYYY-MM-DD.
+
+$timet: The current time in numeric (time_t) format.
+
+$rfctime: The current date in RFC 822 format.
+
+$to: The envelope recipient (RCPT TO) address.
+
+$user: The recipient user. That is the local part (mailbox) in the recipient address, or, if the local part contains a '+' character, the portion of the mailbox to the left of the '+'. For example, in joe+xyzzy@company.com, the user would be joe.
+
+$domain: The recipient's domain.
+
+Whether $from and $to are lowercased depends on the setting of macro-variables-preserve-case. $user and $domain macros always expand in lower case, avoiding issues when those are used to create directories and files on case-sensitive file systems.
+
+Syntax:
+
+file-destination DIRECTORY
+Example:
+
+<domain bounce.mydomain.com>
+  type file
+  file-destination /opt/pickup/
+</domain>
+3.3.10.98 Pipe Delivery Directives
+
+The directives in this Section are ignored if specified in non-pipe domains.
+
+3.3.10.98.1 command
+
+Specifies the command to use to start the program which will read from the pipe. This directive is required for pipe domains. PowerMTA substitutes the following macros in the command line:
+
+$bodytype: The message body type (7BIT, 8BITMIME or BINARYMIME).
+
+$ctime: The current date in Unix ctime format.
+
+$envid: The DSN envelope ID (from MAIL ... ENVID=...).
+
+$from: The envelope sender (MAIL FROM) address.
+
+$isodate: The current date in the format YYYY-MM-DD.
+
+$timet: The current time in numeric (time_t) format.
+
+$rfctime: The current date in RFC 822 format.
+
+$to: The envelope recipient (RCPT TO) address.
+
+$user: The recipient user. That is the local part (mailbox) in the recipient address, or, if the local part contains a '+' character, the portion of the mailbox to the left of the '+'. For example, in joe+xyzzy@company.com, the user would be joe.
+
+$domain: The recipient's domain.
+
+To prevent any one of these macros from being interpreted as multiple arguments if they contain spaces, it is a good idea to enclose them in double quotes (like in the example below).
+
+Syntax:
+
+command STRING
+where STRING is the complete command that PowerMTA will use to start the program.
+
+Example:
+
+<domain bounces.xyz.com>
+    type pipe
+    command "/my/bounce/processor --envid \"$envid\" \"$user\""
+</domain>
+3.3.10.98.2 macro-variables-preserve-case
+
+When set to true prevents $to and $from from being changed to lowercase. $user and $domain are always changed to lowercase, as they are intended to facilitate integration with Linux environments.
+
+Default: false
+
+Example:
+
+<domain bounces.mydomain.com>
+   type pipe
+   command "/my/bounce/processor --envid \"$envid\" \"$user\""
+   macro-variables-preserve-case  true
+</domain>
+3.3.10.99 HTTP Delivery Directives
+
+3.3.10.99.1 http-delivery-url
+
+For a queue with its type set to http-delivery, this directive can be used to configure an HTTP destination endpoint where messages from the queue will be delivered as a JSON object. See HTTP Delivery Webhooks for more details on the JSON object format.
+
+The URL specified with this directive must be an absolute URL, not relative, must be prefixed by either http or https, and should not contain any userinfo, query-string or fragment components.
+
+Note: This directive is required when the queue type is http-delivery.
+
+Syntax:
+
+http-delivery-url scheme://host[:port][/path]
+where scheme can be one of https or http, the host must be either a hostname, or an IP address. IPv4 addresses must be in dot-decimal notation, and IPv6 addresses must be enclosed in brackets ([]). port is optional - if not specified, it defaults to 443 when scheme is https and 80 when scheme is http. The path component is optional, and if specified must consist of a sequence of path segments separated by a slash (/).
+
+Example:
+
+<domain yahoo.com>
+   type http-delivery
+   http-delivery-url http://webhooks.endpoint.com:8181/api/v1/email
+</domain>
+3.3.10.99.2 http-delivery-extra-headers
+
+For a queue with its type set to http-delivery, this optional directive can be used to configure a file containing HTTP headers that will be included in the headers of the HTTP request that PowerMTA will make when delivering messages from the queue. This could be useful, for example, for including a header such as Authorization as part of the HTTP request. See HTTP Delivery Webhooks for more details on the JSON object format.
+
+Syntax:
+
+http-delivery-extra-headers <file-name>
+where <file-name> is the name of a file containing the extra HTTP headers to include, each header on a line on its own.
+
+Example:
+
+<domain yahoo.com>
+   type http-delivery
+   http-delivery-url http://webhooks.endpoint.com:8181/api/v1/email
+   http-delivery-extra-headers /etc/pmta/http-delivery-headers.txt
+</domain>
+Sample content of the file: /etc/pmta/http-delivery-headers.txt:
+
+Authorization: 14ac5499cfdd2bb2859e4476d2e5b1d2bad079bfd
+Note PowerMTA does not check or interpret the content of the headers included in the file. It only does basic syntax checking of the header format.
+
+3.3.10.100 SparkPost Traffic Redirection Support Directives
+
+PowerMTA has special support for redirecting traffic for delivery through SparkPost. This may be desirable for various reasons, such as to seasonally add extra delivery capacity. Once your SparkPost setup is ready, you can have PowerMTA connect to it by creating a domain named {sparkpost} and setting it to authenticate using a SparkPost API key:
+
+<domain {sparkpost}>
+    auth-username SMTP_Injection
+    auth-password d41d8cd98f00b204e9800998ecf8427e # API key
+</domain>
+When redirecting to SparkPost, the value specified for auth-username must obey the syntax SMTP_Injection[:X-MSYS-SUBACCOUNT=N] where N is the SparkPost subaccount ID. If :X-MSYS-SUBACCOUNT=N part is omitted, messages are sent to the account associated with the API key specified by auth-password. If the API key specified is from a SparkPost primary account, specifying a subaccount ID with auth-username sends messages to that specific subaccount. If the API key belongs to a specific subaccount, then the subaccount specified in auth-username is ignored and messages are sent to the subaccount to which the specified API key belongs to.
+
+For example, to send messages to SparkPost primary account:
+
+<domain {sparkpost}>
+    auth-username SMTP_Injection
+    auth-password d41d8cd98f00b204e9800998ecf8427e # API key from SparkPost primary account
+</domain>
+To send messages to SparkPost subaccount 123:
+
+# specify subaccount with auth-username
+<domain {sparkpost}>
+    auth-username SMTP_Injection:X-MSYS-SUBACCOUNT=123
+    auth-password d41d8cd98f00b204e9800998ecf8427e # API key from SparkPost primary account
+</domain>
+
+# or specify the API key from the subaccount 123 with auth-password
+<domain {sparkpost}>
+    auth-username SMTP_Injection
+    auth-password zzzd8cd98f00b204e9800998ecf8427e # API key from SparkPost subaccount 123
+</domain>
+You can then redirect specific domains (or entire Virtual MTAs, as in the example below) to SparkPost by having PowerMTA place messages in the {sparkpost} queue:
+
+<virtual-mta ExtraCapacity>
+    <domain *>
+        queue-to {sparkpost}
+    </domain>
+</virtual-mta>
+3.3.10.100.1 add-x-msys-api-header
+
+Instructs PowerMTA to add a special X-MSYS-API header required to set SparkPost specific options, also setting SparkPost's campaign to the messages' JobID, if any. This directive is enabled by default for the {sparkpost} domain.
+
+If the header is already present in the message upon submission to PowerMTA, this directive is ignored i.e. the header value is not modified by PowerMTA.
+
+Default: true for {sparkpost} domain, false for all other domains.
+
+Example:
+
+<domain {sparkpost}>
+   add-x-msys-api-header true
+</domain>
+3.3.10.100.2 sparkpost-sandbox
+
+Sets the sandbox SparkPost option.
+
+Default: false
+
+Example:
+
+<domain {sparkpost}>
+   sparkpost-sandbox true
+</domain>
+3.3.10.100.3 sparkpost-ip-pool
+
+Sets the IP pool from which SparkPost is to send messages.
+
+Syntax:
+
+sparkpost-ip-pool STRING
+Example:
+
+<domain {sparkpost}>
+    sparkpost-ip-pool shared-pool
+</domain>

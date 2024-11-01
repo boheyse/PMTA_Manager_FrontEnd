@@ -17,6 +17,12 @@ export interface Subdomain {
   queueStatus: QueueStatus;
   queueName: string;
   queues: Queue[];
+  recipientDomains: {
+    name: string;
+    settings: {
+      [key: string]: string;
+    };
+  }[];
 }
 
 export interface Domain {

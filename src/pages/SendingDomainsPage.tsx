@@ -68,8 +68,12 @@ export function SendingDomainsPage() {
           const subdomains = allVirtualMtas.map((mta: any) => ({
             name: mta.smtp_source.subdomain,
             ipAddress: mta.smtp_source.ip_address,
-            queueStatus: 'Active' as QueueStatus, // Default status
+            queueStatus: 'Active' as QueueStatus,
             queueName: mta.name,
+            recipientDomains: mta['recipient-domains'].map((rd: any) => ({
+              name: rd.name,
+              settings: rd.settings
+            })),
             queues: [
               // Gmail queue settings
               {
@@ -370,8 +374,8 @@ export function SendingDomainsPage() {
                               </tr>
                             </thead>
                             <tbody>
-                              {domain.subdomains.map((subdomain) => (
-                                <tr key={subdomain.name} className="text-sm">
+                              {domain.subdomains.map((subdomain, subIndex) => (
+                                <tr key={`${domain.domain}-${subdomain.name}-${subIndex}`} className="text-sm">
                                   <td className="py-2">{subdomain.name}</td>
                                   <td className="py-2">
                                     <button
