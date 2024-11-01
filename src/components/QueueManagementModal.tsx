@@ -1,130 +1,214 @@
-import React, { useState } from 'react';
-import { Modal, Button, Form, Row, Col } from 'react-bootstrap';
-import type { Queue, ISPTarget, QueueType } from '../types/domain';
+import React, { useState, useEffect } from 'react';
+import { Modal, Button, Form, Row, Col, Table } from 'react-bootstrap';
+import type { Queue, ISPTarget, QueueType, Subdomain } from '../types/domain';
 
 interface QueueManagementModalProps {
   isOpen: boolean;
   onClose: () => void;
   domain: string;
-  queues: Queue[];
+  subdomain: Subdomain;
   onSave: (queues: Queue[]) => void;
 }
 
-const ISP_TARGETS = ['Gmail', 'Yahoo/AOL', 'Hotmail'];
-const QUEUE_TYPES = ['Fresh', 'Engaged'];
+interface RecipientDomainSettings {
+  maxSmtpOut?: string;
+  maxMsgPerConnection?: string;
+  maxMsgRate?: string;
+  smtpHosts?: string;
+  useStartTLS?: string;
+  queueTo?: string;
+}
 
-export function QueueManagementModal({ isOpen, onClose, domain, queues, onSave }: QueueManagementModalProps) {
-  const [queueList, setQueueList] = useState<Queue[]>(queues);
+interface RecipientDomain {
+  name: string;
+  settings: RecipientDomainSettings;
+}
 
-  const addQueue = () => {
-    setQueueList([...queueList, {
-      name: '',
-      ispTarget: 'Gmail' as ISPTarget,
-      type: 'Fresh' as QueueType,
-      speed: 0,
-      messageCount: 0,
-      status: 'Active'
-    }]);
-  };
+export function QueueManagementModal({ 
+  isOpen, 
+  onClose, 
+  domain,
+  subdomain,
+  onSave 
+}: QueueManagementModalProps) {
+  const [recipientDomains, setRecipientDomains] = useState<RecipientDomain[]>([]);
+  const [selectedDomain, setSelectedDomain] = useState<string>('');
 
-  const updateQueue = (index: number, field: keyof Queue, value: string | number) => {
-    const newQueues = [...queueList];
-    newQueues[index] = { ...newQueues[index], [field]: value };
-    
-    // Auto-generate name based on ISP and type
-    if (field === 'ispTarget' || field === 'type') {
-      newQueues[index].name = `${domain}-${newQueues[index].ispTarget}-${newQueues[index].type}`.toLowerCase();
+  useEffect(() => {
+    if (isOpen && subdomain) {
+      // Initialize recipient domains from the subdomain data
+      const domains = [
+        {
+          name: 'gmail.rollup',
+          settings: {
+            maxSmtpOut: '5',
+            maxMsgPerConnection: '50',
+            maxMsgRate: '1/m',
+            smtpHosts: 'aspmx.l.google.com, alt1.aspmx.l.google.com',
+            useStartTLS: 'yes'
+          }
+        },
+        {
+          name: 'hotmail.rollup',
+          settings: {
+            maxMsgRate: '120/h',
+            smtpHosts: 'lookup-mx:outlook.com'
+          }
+        },
+        {
+          name: 'yahooaol.rollup',
+          settings: {
+            maxSmtpOut: '20',
+            maxMsgPerConnection: '20',
+            maxMsgRate: '60/h',
+            smtpHosts: 'mta5.am0.yahoodns.net, mta6.am0.yahoodns.net'
+          }
+        }
+      ];
+      setRecipientDomains(domains);
     }
-    
-    setQueueList(newQueues);
-  };
+  }, [isOpen, subdomain]);
 
-  const emptyQueue = (index: number) => {
-    const newQueues = [...queueList];
-    newQueues[index].messageCount = 0;
-    setQueueList(newQueues);
+  const handleSettingChange = (domainName: string, setting: keyof RecipientDomainSettings, value: string) => {
+    setRecipientDomains(prev => prev.map(domain => {
+      if (domain.name === domainName) {
+        return {
+          ...domain,
+          settings: {
+            ...domain.settings,
+            [setting]: value
+          }
+        };
+      }
+      return domain;
+    }));
   };
 
   return (
-    <Modal show={isOpen} onHide={onClose} size="lg">
+    <Modal show={isOpen} onHide={onClose} size="xl">
       <Modal.Header closeButton>
-        <Modal.Title>Queue Management - {domain}</Modal.Title>
+        <Modal.Title>Queue Settings - {subdomain.name}</Modal.Title>
       </Modal.Header>
 
       <Modal.Body>
-        <div className="space-y-4">
-          {queueList.map((queue, index) => (
-            <div key={index} className="border rounded p-3 mb-3">
+        <Form>
+          <Form.Group className="mb-4">
+            <Form.Label>Select Recipient Domain</Form.Label>
+            <Form.Select
+              value={selectedDomain}
+              onChange={(e) => setSelectedDomain(e.target.value)}
+            >
+              <option value="">Select a domain</option>
+              {recipientDomains.map(domain => (
+                <option key={domain.name} value={domain.name}>
+                  {domain.name}
+                </option>
+              ))}
+            </Form.Select>
+          </Form.Group>
+
+          {selectedDomain && (
+            <div className="border rounded p-3">
+              <h6 className="mb-3">Settings for {selectedDomain}</h6>
               <Row>
                 <Col md={6}>
                   <Form.Group className="mb-3">
-                    <Form.Label>ISP Target</Form.Label>
-                    <Form.Select
-                      value={queue.ispTarget}
-                      onChange={(e) => updateQueue(index, 'ispTarget', e.target.value as ISPTarget)}
-                    >
-                      {ISP_TARGETS.map(isp => (
-                        <option key={isp} value={isp}>{isp}</option>
-                      ))}
-                    </Form.Select>
-                  </Form.Group>
-                </Col>
-
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Type</Form.Label>
-                    <Form.Select
-                      value={queue.type}
-                      onChange={(e) => updateQueue(index, 'type', e.target.value as QueueType)}
-                    >
-                      {QUEUE_TYPES.map(type => (
-                        <option key={type} value={type}>{type}</option>
-                      ))}
-                    </Form.Select>
-                  </Form.Group>
-                </Col>
-
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Speed (msg/hr)</Form.Label>
+                    <Form.Label>Max SMTP Out</Form.Label>
                     <Form.Control
-                      type="number"
-                      value={queue.speed}
-                      onChange={(e) => updateQueue(index, 'speed', parseInt(e.target.value))}
+                      type="text"
+                      value={recipientDomains.find(d => d.name === selectedDomain)?.settings.maxSmtpOut || ''}
+                      onChange={(e) => handleSettingChange(selectedDomain, 'maxSmtpOut', e.target.value)}
                     />
                   </Form.Group>
                 </Col>
-
                 <Col md={6}>
                   <Form.Group className="mb-3">
-                    <Form.Label>Messages in Queue</Form.Label>
-                    <div className="d-flex gap-2">
-                      <Form.Control
-                        type="number"
-                        value={queue.messageCount}
-                        readOnly
-                        className="bg-light"
-                      />
-                      <Button
-                        variant="danger"
-                        onClick={() => emptyQueue(index)}
-                      >
-                        Empty
-                      </Button>
-                    </div>
+                    <Form.Label>Max Messages Per Connection</Form.Label>
+                    <Form.Control
+                      type="text"
+                      value={recipientDomains.find(d => d.name === selectedDomain)?.settings.maxMsgPerConnection || ''}
+                      onChange={(e) => handleSettingChange(selectedDomain, 'maxMsgPerConnection', e.target.value)}
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Max Message Rate</Form.Label>
+                    <Form.Control
+                      type="text"
+                      value={recipientDomains.find(d => d.name === selectedDomain)?.settings.maxMsgRate || ''}
+                      onChange={(e) => handleSettingChange(selectedDomain, 'maxMsgRate', e.target.value)}
+                      placeholder="e.g., 60/h, 1/m"
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Use StartTLS</Form.Label>
+                    <Form.Select
+                      value={recipientDomains.find(d => d.name === selectedDomain)?.settings.useStartTLS || ''}
+                      onChange={(e) => handleSettingChange(selectedDomain, 'useStartTLS', e.target.value)}
+                    >
+                      <option value="">Select option</option>
+                      <option value="yes">Yes</option>
+                      <option value="no">No</option>
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+                <Col md={12}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>SMTP Hosts</Form.Label>
+                    <Form.Control
+                      as="textarea"
+                      rows={2}
+                      value={recipientDomains.find(d => d.name === selectedDomain)?.settings.smtpHosts || ''}
+                      onChange={(e) => handleSettingChange(selectedDomain, 'smtpHosts', e.target.value)}
+                      placeholder="Comma-separated list of SMTP hosts"
+                    />
                   </Form.Group>
                 </Col>
               </Row>
             </div>
-          ))}
-        </div>
+          )}
+
+          <div className="mt-4">
+            <h6>All Recipient Domains</h6>
+            <Table striped bordered hover>
+              <thead>
+                <tr>
+                  <th>Domain</th>
+                  <th>Max Rate</th>
+                  <th>Max SMTP Out</th>
+                  <th>Messages Per Conn</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recipientDomains.map(domain => (
+                  <tr key={domain.name}>
+                    <td>{domain.name}</td>
+                    <td>{domain.settings.maxMsgRate || '-'}</td>
+                    <td>{domain.settings.maxSmtpOut || '-'}</td>
+                    <td>{domain.settings.maxMsgPerConnection || '-'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </div>
+        </Form>
       </Modal.Body>
 
       <Modal.Footer>
-        <Button variant="secondary" onClick={addQueue}>
-          Add Queue
+        <Button variant="secondary" onClick={onClose}>
+          Cancel
         </Button>
-        <Button variant="primary" onClick={() => onSave(queueList)}>
+        <Button 
+          variant="primary" 
+          onClick={() => {
+            // Transform recipient domains back to queues format if needed
+            onSave(subdomain.queues);
+            onClose();
+          }}
+        >
           Save Changes
         </Button>
       </Modal.Footer>

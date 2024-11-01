@@ -3,7 +3,7 @@ import { PlusCircle, Trash2, Search, ChevronRight, ChevronDown, Play, Pause, Squ
 import { Table, Button, Form, InputGroup, Badge, Spinner } from 'react-bootstrap';
 import { DomainModal } from '../components/DomainModal';
 import { QueueManagementModal } from '../components/QueueManagementModal';
-import type { Domain, QueueStatus, ISPTarget } from '../types/domain';
+import type { Domain, QueueStatus, ISPTarget, Subdomain } from '../types/domain';
 
 export function SendingDomainsPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -16,6 +16,7 @@ export function SendingDomainsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [availableIPs, setAvailableIPs] = useState<string[]>([]);
+  const [selectedSubdomain, setSelectedSubdomain] = useState<Subdomain | undefined>();
 
   // Fetch domains on component mount
   useEffect(() => {
@@ -47,7 +48,10 @@ export function SendingDomainsPage() {
       });
       setAvailableIPs([...allIPs]);
 
-      // Transform the API response to match our Domain interface
+      /**
+       * Transform the API response to match our Domain interface
+       * virtual-mta-pools = queues
+       */
       const transformedDomains: Domain[] = data['host-domains']
         .filter((hostDomain: any) => hostDomain.name !== '@*')
         .map((hostDomain: any) => {
@@ -189,8 +193,9 @@ export function SendingDomainsPage() {
     }
   };
 
-  const handleQueueManagement = async (domain: Domain) => {
+  const handleQueueManagement = async (domain: Domain, subdomain: Subdomain) => {
     setSelectedDomain(domain);
+    setSelectedSubdomain(subdomain);
     setIsQueueModalOpen(true);
   };
 
@@ -333,15 +338,6 @@ export function SendingDomainsPage() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleQueueManagement(domain);
-                          }}
-                          className="text-blue-500 hover:text-blue-700"
-                        >
-                          Manage Queues
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
                             handleEdit(domain);
                           }}
                           className="text-blue-500 hover:text-blue-700"
@@ -377,7 +373,17 @@ export function SendingDomainsPage() {
                               {domain.subdomains.map((subdomain) => (
                                 <tr key={subdomain.name} className="text-sm">
                                   <td className="py-2">{subdomain.name}</td>
-                                  <td className="py-2">{subdomain.queueName}</td>
+                                  <td className="py-2">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleQueueManagement(domain, subdomain);
+                                      }}
+                                      className="text-blue-500 hover:text-blue-700"
+                                    >
+                                      {subdomain.queueName}
+                                    </button>
+                                  </td>
                                   <td className="py-2">{subdomain.ipAddress}</td>
                                   <td className="py-2">
                                     {subdomain.queues.reduce((total, queue) => total + queue.messageCount, 0)}
@@ -408,15 +414,17 @@ export function SendingDomainsPage() {
         availableIPs={availableIPs}
       />
 
-      {selectedDomain && (
+      {selectedDomain && selectedSubdomain && (
         <QueueManagementModal
           isOpen={isQueueModalOpen}
           onClose={() => {
             setIsQueueModalOpen(false);
             setSelectedDomain(undefined);
+            setSelectedSubdomain(undefined);
           }}
           domain={selectedDomain.domain}
-          queues={selectedDomain.subdomains[0].queues}
+          subdomain={selectedSubdomain}
+          recipientDomains={selectedSubdomain.recipientDomains}
           onSave={(queues) => {
             const domainIndex = domains.findIndex(d => d.domain === selectedDomain.domain);
             handleSaveQueues(domainIndex, queues);
