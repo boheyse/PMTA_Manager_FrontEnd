@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { PlusCircle, Trash2, Search, ChevronRight, ChevronDown, Play, Pause, Square, Edit, AlertCircle } from 'lucide-react';
-import { Table, Button, Form, InputGroup, Badge, Spinner } from 'react-bootstrap';
+import { PlusCircle, Trash2, ChevronRight, ChevronDown, Edit } from 'lucide-react';
+import { Table, Button, Spinner } from 'react-bootstrap';
 import { DomainModal } from '../components/DomainModal';
 import { QueueManagementModal } from '../components/QueueManagementModal';
+import { SearchableSelect } from '../components/SearchableSelect';
 import type { Domain, QueueStatus, ISPTarget, Subdomain } from '../types/domain';
 
 export function SendingDomainsPage() {
@@ -18,7 +19,6 @@ export function SendingDomainsPage() {
   const [availableIPs, setAvailableIPs] = useState<string[]>([]);
   const [selectedSubdomain, setSelectedSubdomain] = useState<Subdomain | undefined>();
 
-  // Fetch domains on component mount
   useEffect(() => {
     fetchDomains();
   }, []);
@@ -35,7 +35,6 @@ export function SendingDomainsPage() {
       
       const data = await response.json();
       
-      // Collect all unique IP addresses from the response
       const allIPs = new Set<string>();
       data['host-domains'].forEach((hostDomain: any) => {
         hostDomain['virtual-mta-pools'].forEach((pool: any) => {
@@ -48,10 +47,6 @@ export function SendingDomainsPage() {
       });
       setAvailableIPs([...allIPs]);
 
-      /**
-       * Transform the API response to match our Domain interface
-       * virtual-mta-pools = queues
-       */
       const transformedDomains: Domain[] = data['host-domains']
         .filter((hostDomain: any) => hostDomain.name !== '@*')
         .map((hostDomain: any) => {
@@ -59,12 +54,10 @@ export function SendingDomainsPage() {
           const allVirtualMtas = hostDomain['virtual-mta-pools']
             .flatMap((pool: any) => pool['virtual_mtas'] || []);
 
-          // Get unique IP addresses from all virtual MTAs
           const ipAddresses = [...new Set(
             allVirtualMtas.map((mta: any) => mta.smtp_source.ip_address)
           )];
 
-          // Transform subdomains from virtual MTAs
           const subdomains = allVirtualMtas.map((mta: any) => ({
             name: mta.smtp_source.subdomain,
             ipAddress: mta.smtp_source.ip_address,
@@ -75,7 +68,6 @@ export function SendingDomainsPage() {
               settings: rd.settings
             })),
             queues: [
-              // Gmail queue settings
               {
                 name: `${domainName}-Gmail-Fresh`,
                 ispTarget: 'Gmail' as ISPTarget,
@@ -83,10 +75,9 @@ export function SendingDomainsPage() {
                 speed: parseInt(mta['recipient-domains']
                   .find((rd: any) => rd.name === 'gmail.rollup')
                   ?.settings.max_msg_rate?.split('/')[0] || '0'),
-                messageCount: 0, // This would need to come from another API endpoint
+                messageCount: 0,
                 status: 'Active' as QueueStatus
               },
-              // Hotmail queue settings
               {
                 name: `${domainName}-Hotmail-Fresh`,
                 ispTarget: 'Hotmail' as ISPTarget,
@@ -97,7 +88,6 @@ export function SendingDomainsPage() {
                 messageCount: 0,
                 status: 'Active' as QueueStatus
               },
-              // Yahoo/AOL queue settings
               {
                 name: `${domainName}-Yahoo/AOL-Fresh`,
                 ispTarget: 'Yahoo/AOL' as ISPTarget,
@@ -111,11 +101,10 @@ export function SendingDomainsPage() {
             ]
           }));
 
-          // Create the domain object
           return {
             domain: domainName,
             ipAddresses,
-            emailsSent: 0, // This would need to come from another API endpoint
+            emailsSent: 0,
             queue: 'Delivering',
             healthStatus: 'healthy',
             ispStatus: {
@@ -158,7 +147,6 @@ export function SendingDomainsPage() {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      // Refresh the domains list
       await fetchDomains();
       setIsModalOpen(false);
       setEditingDomain(undefined);
@@ -187,7 +175,6 @@ export function SendingDomainsPage() {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      // Refresh the domains list
       await fetchDomains();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete domain');
@@ -221,7 +208,6 @@ export function SendingDomainsPage() {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      // Refresh the domains list
       await fetchDomains();
       setIsQueueModalOpen(false);
       setSelectedDomain(undefined);
@@ -231,26 +217,6 @@ export function SendingDomainsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const getHealthStatusColor = (status: Domain['healthStatus']) => {
-    switch (status) {
-      case 'healthy':
-        return 'text-green-500';
-      case 'warning':
-        return 'text-yellow-500';
-      case 'error':
-        return 'text-red-500';
-    }
-  };
-
-  const toggleISPStatus = (domainIndex: number, isp: ISPTarget) => {
-    setDomains(prevDomains => {
-      const newDomains = [...prevDomains];
-      const currentStatus = newDomains[domainIndex].ispStatus[isp];
-      newDomains[domainIndex].ispStatus[isp] = currentStatus === 'Active' ? 'Paused' : 'Active';
-      return newDomains;
-    });
   };
 
   const handleEdit = (domain: Domain) => {
@@ -293,16 +259,12 @@ export function SendingDomainsPage() {
       </div>
 
       <div className="mb-6">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <input
-            type="text"
-            placeholder="Search domains..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
+        <SearchableSelect
+          options={domains.map(domain => domain.domain)}
+          placeholder="Search domains..."
+          onChange={(selected) => setSearchTerm(selected[0] || '')}
+          className="w-full"
+        />
       </div>
 
       {isLoading ? (
@@ -323,7 +285,7 @@ export function SendingDomainsPage() {
               </tr>
             </thead>
             <tbody>
-              {domains.map((domain, domainIndex) => (
+              {filteredDomains.map((domain, domainIndex) => (
                 <React.Fragment key={domain.domain}>
                   <tr 
                     className="border-b hover:bg-gray-50 cursor-pointer"
