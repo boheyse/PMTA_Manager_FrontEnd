@@ -5,6 +5,7 @@ import { DomainModal } from '../components/DomainModal';
 import { QueueManagementModal } from '../components/QueueManagementModal';
 import { SearchableSelect } from '../components/SearchableSelect';
 import type { Domain, QueueStatus, ISPTarget, Subdomain } from '../types/domain';
+import { useNavigate } from 'react-router-dom';
 
 export function SendingDomainsPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -18,6 +19,7 @@ export function SendingDomainsPage() {
   const [error, setError] = useState<string | null>(null);
   const [availableIPs, setAvailableIPs] = useState<string[]>([]);
   const [selectedSubdomain, setSelectedSubdomain] = useState<Subdomain | undefined>();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchDomains();
@@ -220,8 +222,12 @@ export function SendingDomainsPage() {
   };
 
   const handleEdit = (domain: Domain) => {
-    setEditingDomain(domain);
-    setIsModalOpen(true);
+    navigate(`/domain-editor/${domain.domain}`, {
+      state: { 
+        domain,
+        availableIPs
+      }
+    });
   };
 
   const toggleDomain = (domain: string) => {
@@ -236,6 +242,14 @@ export function SendingDomainsPage() {
     domain.domain.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const handleAdd = () => {
+    navigate('/domain-editor', {
+      state: { 
+        availableIPs
+      }
+    });
+  };
+
   return (
     <div className="p-6">
       {error && (
@@ -248,10 +262,7 @@ export function SendingDomainsPage() {
         <h1 className="text-2xl font-semibold">Sending Domains</h1>
         <button 
           className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-          onClick={() => {
-            setEditingDomain(undefined);
-            setIsModalOpen(true);
-          }}
+          onClick={handleAdd}
         >
           <PlusCircle className="w-4 h-4 mr-2" />
           Add Domain
