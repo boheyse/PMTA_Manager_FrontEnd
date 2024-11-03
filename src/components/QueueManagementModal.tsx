@@ -9,8 +9,8 @@ interface QueueManagementModalProps {
   isOpen: boolean;
   onClose: () => void;
   domain: string;
-  subdomain: Subdomain;
-  recipientDomains: {
+  queue: Queue;
+  targetIsps: {
     name: string;
     settings: {
       [key: string]: string;
@@ -32,8 +32,8 @@ export function QueueManagementModal({
   isOpen, 
   onClose, 
   domain,
-  subdomain,
-  recipientDomains,
+  queue,
+  targetIsps,
   onSave 
 }: QueueManagementModalProps) {
   const [localRecipientDomains, setLocalRecipientDomains] = useState<RecipientDomain[]>([]);
@@ -43,10 +43,10 @@ export function QueueManagementModal({
   const [showNewSettingForm, setShowNewSettingForm] = useState(false);
 
   useEffect(() => {
-    if (isOpen && recipientDomains) {
-      setLocalRecipientDomains(recipientDomains);
+    if (isOpen && targetIsps) {
+      setLocalRecipientDomains(targetIsps);
     }
-  }, [isOpen, recipientDomains]);
+  }, [isOpen, targetIsps]);
 
   const handleSettingChange = (domainName: string, setting: string, value: string) => {
     setLocalRecipientDomains(prev => prev.map(domain => {
@@ -117,7 +117,7 @@ export function QueueManagementModal({
   return (
     <Modal show={isOpen} onHide={onClose} size="xl">
       <Modal.Header closeButton>
-        <Modal.Title>Queue Settings - {subdomain.name}</Modal.Title>
+        <Modal.Title>Queue Settings - {queue.name}</Modal.Title>
       </Modal.Header>
 
       <Modal.Body>
@@ -258,7 +258,7 @@ export function QueueManagementModal({
         <Button 
           variant="primary" 
           onClick={() => {
-            onSave(subdomain.queues);
+            onSave(queue.queues);
             onClose();
           }}
         >

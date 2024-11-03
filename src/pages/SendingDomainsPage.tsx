@@ -39,10 +39,10 @@ export function SendingDomainsPage() {
       
       const allIPs = new Set<string>();
       data['host-domains'].forEach((hostDomain: any) => {
-        hostDomain['virtual-mta-pools'].forEach((pool: any) => {
-          (pool['virtual_mtas'] || []).forEach((mta: any) => {
-            if (mta.smtp_source?.ip_address) {
-              allIPs.add(mta.smtp_source.ip_address);
+        hostDomain['queue-pools'].forEach((pool: any) => {
+          (pool['queues'] || []).forEach((queue: any) => {
+            if (queue.smtp_source?.ip_address) {
+              allIPs.add(queue.smtp_source.ip_address);
             }
           });
         });
@@ -53,68 +53,37 @@ export function SendingDomainsPage() {
         .filter((hostDomain: any) => hostDomain.name !== '@*')
         .map((hostDomain: any) => {
           const domainName = hostDomain.name.replace('@', '');
-          const allVirtualMtas = hostDomain['virtual-mta-pools']
-            .flatMap((pool: any) => pool['virtual_mtas'] || []);
+          const allQueues = hostDomain['queue-pools']
+            .flatMap((pool: any) => pool['queues'] || []);
 
           const ipAddresses = [...new Set(
-            allVirtualMtas.map((mta: any) => mta.smtp_source.ip_address)
+            allQueues.map((queue: any) => queue.smtp_source.ip_address)
           )];
 
-          const subdomains = allVirtualMtas.map((mta: any) => ({
-            name: mta.smtp_source.subdomain,
-            ipAddress: mta.smtp_source.ip_address,
+          const queues = allQueues.map((queue: any) => ({
+            name: queue.name,
+            ipAddress: queue.smtp_source.ip_address,
+            subdomain: queue.smtp_source.subdomain,
+            type: queue.type || '',
             queueStatus: 'Active' as QueueStatus,
-            queueName: mta.name,
-            recipientDomains: mta['recipient-domains'].map((rd: any) => ({
-              name: rd.name,
-              settings: rd.settings
-            })),
-            queues: [
-              {
-                name: `${domainName}-Gmail-Fresh`,
-                ispTarget: 'Gmail' as ISPTarget,
-                type: 'Fresh',
-                speed: parseInt(mta['recipient-domains']
-                  .find((rd: any) => rd.name === 'gmail.rollup')
-                  ?.settings.max_msg_rate?.split('/')[0] || '0'),
-                messageCount: 0,
-                status: 'Active' as QueueStatus
-              },
-              {
-                name: `${domainName}-Hotmail-Fresh`,
-                ispTarget: 'Hotmail' as ISPTarget,
-                type: 'Fresh',
-                speed: parseInt(mta['recipient-domains']
-                  .find((rd: any) => rd.name === 'hotmail.rollup')
-                  ?.settings.max_msg_rate?.split('/')[0] || '0'),
-                messageCount: 0,
-                status: 'Active' as QueueStatus
-              },
-              {
-                name: `${domainName}-Yahoo/AOL-Fresh`,
-                ispTarget: 'Yahoo/AOL' as ISPTarget,
-                type: 'Fresh',
-                speed: parseInt(mta['recipient-domains']
-                  .find((rd: any) => rd.name === 'yahooaol.rollup')
-                  ?.settings.max_msg_rate?.split('/')[0] || '0'),
-                messageCount: 0,
-                status: 'Active' as QueueStatus
-              }
-            ]
+            targetIsps: queue['target-isps'].map((isp: any) => ({
+              name: isp.name,
+              settings: isp.settings
+            }))
           }));
 
           return {
             domain: domainName,
             ipAddresses,
             emailsSent: 0,
-            queue: 'Delivering',
+            queueStatus: 'Delivering',
             healthStatus: 'healthy',
             ispStatus: {
               'Gmail': 'Active',
               'Yahoo/AOL': 'Active',
               'Hotmail': 'Active'
             },
-            subdomains
+            queues
           };
         });
 
@@ -343,28 +312,26 @@ export function SendingDomainsPage() {
                                 <th className="text-left py-2">Subdomain</th>
                                 <th className="text-left py-2">Queue Name</th>
                                 <th className="text-left py-2">IP Address</th>
-                                <th className="text-left py-2">Messages in Queue</th>
+                                <th className="text-left py-2">Type</th>
                               </tr>
                             </thead>
                             <tbody>
-                              {domain.subdomains.map((subdomain, subIndex) => (
-                                <tr key={`${domain.domain}-${subdomain.name}-${subIndex}`} className="text-sm">
-                                  <td className="py-2">{subdomain.name}</td>
+                              {domain.queues.map((queue, index) => (
+                                <tr key={`${domain.domain}-${queue.subdomain}-${index}`} className="text-sm">
+                                  <td className="py-2">{queue.subdomain}</td>
                                   <td className="py-2">
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        handleQueueManagement(domain, subdomain);
+                                        handleQueueManagement(domain, queue);
                                       }}
                                       className="text-blue-500 hover:text-blue-700"
                                     >
-                                      {subdomain.queueName}
+                                      {queue.name}
                                     </button>
                                   </td>
-                                  <td className="py-2">{subdomain.ipAddress}</td>
-                                  <td className="py-2">
-                                    {subdomain.queues.reduce((total, queue) => total + queue.messageCount, 0)}
-                                  </td>
+                                  <td className="py-2">{queue.ipAddress}</td>
+                                  <td className="py-2">{queue.type}</td>
                                 </tr>
                               ))}
                             </tbody>

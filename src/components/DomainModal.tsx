@@ -14,22 +14,31 @@ interface DomainModalProps {
 export interface DomainFormData {
   domain: string;
   ipAddresses: string[];
-  subdomains: {
+  queues: {
     name: string;
     ipAddress: string;
-    queueName: string;
+    subdomain: string;
+    type?: string;
     queueStatus: QueueStatus;
+    targetIsps: {
+      name: string;
+      settings: {
+        [key: string]: string;
+      };
+    }[];
   }[];
 }
 
 const initialFormData: DomainFormData = {
   domain: '',
   ipAddresses: [],
-  subdomains: [{
+  queues: [{
     name: '',
     ipAddress: '',
-    queueName: '',
-    queueStatus: 'Active' as QueueStatus
+    subdomain: '',
+    type: '',
+    queueStatus: 'Active' as QueueStatus,
+    targetIsps: []
   }]
 };
 
@@ -44,11 +53,16 @@ export function DomainModal({ isOpen, onClose, onSave, editData, availableIPs }:
         setFormData({
           domain: editData.domain,
           ipAddresses: editData.ipAddresses,
-          subdomains: editData.subdomains.map(sub => ({
-            name: sub.name,
-            ipAddress: sub.ipAddress,
-            queueName: sub.queueName,
-            queueStatus: sub.queueStatus
+          queues: editData.queues.map(queue => ({
+            name: queue.name,
+            ipAddress: queue.ipAddress,
+            subdomain: queue.subdomain,
+            type: queue.type,
+            queueStatus: queue.queueStatus,
+            targetIsps: queue.targetIsps.map(isp => ({
+              name: isp.name,
+              settings: isp.settings
+            }))
           }))
         });
       } else {
@@ -76,9 +90,9 @@ export function DomainModal({ isOpen, onClose, onSave, editData, availableIPs }:
       ...prev,
       ipAddresses: prev.ipAddresses.filter(existingIP => existingIP !== ip),
       // Clear IP address from subdomains using this IP
-      subdomains: prev.subdomains.map(sub => ({
-        ...sub,
-        ipAddress: sub.ipAddress === ip ? '' : sub.ipAddress
+      queues: prev.queues.map(queue => ({
+        ...queue,
+        ipAddress: queue.ipAddress === ip ? '' : queue.ipAddress
       }))
     }));
   };
@@ -86,11 +100,13 @@ export function DomainModal({ isOpen, onClose, onSave, editData, availableIPs }:
   const addSubdomain = () => {
     setFormData(prev => ({
       ...prev,
-      subdomains: [...prev.subdomains, {
+      queues: [...prev.queues, {
         name: '',
         ipAddress: '',
-        queueName: '',
-        queueStatus: 'Active' as QueueStatus
+        subdomain: '',
+        type: '',
+        queueStatus: 'Active' as QueueStatus,
+        targetIsps: []
       }]
     }));
   };
@@ -98,15 +114,15 @@ export function DomainModal({ isOpen, onClose, onSave, editData, availableIPs }:
   const removeSubdomain = (index: number) => {
     setFormData(prev => ({
       ...prev,
-      subdomains: prev.subdomains.filter((_, i) => i !== index)
+      queues: prev.queues.filter((_, i) => i !== index)
     }));
   };
 
   const updateSubdomain = (index: number, field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
-      subdomains: prev.subdomains.map((sub, i) => 
-        i === index ? { ...sub, [field]: value } : sub
+      queues: prev.queues.map((queue, i) => 
+        i === index ? { ...queue, [field]: value } : queue
       )
     }));
   };
@@ -207,11 +223,11 @@ export function DomainModal({ isOpen, onClose, onSave, editData, availableIPs }:
               </Button>
             </div>
 
-            {formData.subdomains.map((subdomain, index) => (
+            {formData.queues.map((queue, index) => (
               <div key={index} className="border rounded p-3 mb-3">
                 <div className="d-flex justify-content-between mb-3">
                   <h6 className="mb-0">Subdomain {index + 1}</h6>
-                  {formData.subdomains.length > 1 && (
+                  {formData.queues.length > 1 && (
                     <Button
                       variant="link"
                       className="p-0 text-danger"
@@ -228,7 +244,7 @@ export function DomainModal({ isOpen, onClose, onSave, editData, availableIPs }:
                       <Form.Label>Subdomain Name</Form.Label>
                       <Form.Control
                         type="text"
-                        value={subdomain.name}
+                        value={queue.name}
                         onChange={(e) => updateSubdomain(index, 'name', e.target.value)}
                         placeholder="mail.example.com"
                         required
@@ -240,7 +256,7 @@ export function DomainModal({ isOpen, onClose, onSave, editData, availableIPs }:
                     <Form.Group className="mb-3">
                       <Form.Label>IP Address</Form.Label>
                       <Form.Select
-                        value={subdomain.ipAddress}
+                        value={queue.ipAddress}
                         onChange={(e) => updateSubdomain(index, 'ipAddress', e.target.value)}
                         required
                       >
@@ -257,8 +273,8 @@ export function DomainModal({ isOpen, onClose, onSave, editData, availableIPs }:
                       <Form.Label>Queue Name</Form.Label>
                       <Form.Control
                         type="text"
-                        value={subdomain.queueName}
-                        onChange={(e) => updateSubdomain(index, 'queueName', e.target.value)}
+                        value={queue.name}
+                        onChange={(e) => updateSubdomain(index, 'name', e.target.value)}
                         placeholder="example.com-fresh"
                         required
                       />

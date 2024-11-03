@@ -1,0 +1,2627 @@
+{
+    "host-domains": [
+        {
+            "name": "@gleemate.com",
+            "queue-pools": [
+                {
+                    "queue-pool-name": "gleemate.com-pool-unthrottled",
+                    "queues": [
+                        {
+                            "host-domain_key": {
+                                "host-domain": "gleemate.com",
+                                "key": "102524135452859585361",
+                                "path": "/etc/pmta/dkim/102524135452859585361.gleemate.com"
+                            },
+                            "name": "154.22.55.8-gleemate.com-unthrottled",
+                            "smtp_source": {
+                                "ip_address": "154.22.55.8",
+                                "subdomain": "alexis.gleemate.com"
+                            },
+                            "target-isps": [
+                                {
+                                    "name": "*",
+                                    "settings": {
+                                        "deliver-local-dsn": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$gmail",
+                                    "settings": {
+                                        "queue-to": "gmail.rollup",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "gmail.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "50",
+                                        "max-msg-rate": "240/h",
+                                        "max-smtp-out": "5",
+                                        "smtp-hosts": "aspmx.l.google.com, alt1.aspmx.l.google.com, alt2.aspmx.l.google.com, gmail-smtp-in.l.google.com, alt4.gmail-smtp-in.l.google.com, alt1.gmail-smtp-in.l.google.com, alt3.gmail-smtp-in.l.google.com, alt2.gmail-smtp-in.l.google.com",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$hotmail_isp.$isp_tld",
+                                    "settings": {
+                                        "queue-to": "hotmail.rollup"
+                                    }
+                                },
+                                {
+                                    "name": "hotmail.rollup",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "route": "hotmail.com",
+                                        "smtp-hosts": "lookup-mx:outlook.com"
+                                    }
+                                },
+                                {
+                                    "name": "yahooaol.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "20",
+                                        "max-msg-rate": "60/h",
+                                        "max-rcpt-per-message": "50",
+                                        "max-smtp-out": "20",
+                                        "smtp-hosts": "mta5.am0.yahoodns.net, mta6.am0.yahoodns.net, mta7.am0.yahoodns.net"
+                                    }
+                                },
+                                {
+                                    "name": "comcast.net",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "max-rcpt-per-message": "100",
+                                        "max-smtp-out-per-source-ip": "5"
+                                    }
+                                }
+                            ],
+                            "type": "unthrottled"
+                        },
+                        {
+                            "host-domain_key": {
+                                "host-domain": "gleemate.com",
+                                "key": "102524135453873161959",
+                                "path": "/etc/pmta/dkim/102524135453873161959.gleemate.com"
+                            },
+                            "name": "154.22.55.12-gleemate.com-unthrottled",
+                            "smtp_source": {
+                                "ip_address": "154.22.55.12",
+                                "subdomain": "alaiya.gleemate.com"
+                            },
+                            "target-isps": [
+                                {
+                                    "name": "*",
+                                    "settings": {
+                                        "deliver-local-dsn": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$gmail",
+                                    "settings": {
+                                        "queue-to": "gmail.rollup",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "gmail.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "50",
+                                        "max-msg-rate": "240/h",
+                                        "max-smtp-out": "5",
+                                        "smtp-hosts": "aspmx.l.google.com, alt1.aspmx.l.google.com, alt2.aspmx.l.google.com, gmail-smtp-in.l.google.com, alt4.gmail-smtp-in.l.google.com, alt1.gmail-smtp-in.l.google.com, alt3.gmail-smtp-in.l.google.com, alt2.gmail-smtp-in.l.google.com",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$hotmail_isp.$isp_tld",
+                                    "settings": {
+                                        "queue-to": "hotmail.rollup"
+                                    }
+                                },
+                                {
+                                    "name": "hotmail.rollup",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "route": "hotmail.com",
+                                        "smtp-hosts": "lookup-mx:outlook.com"
+                                    }
+                                },
+                                {
+                                    "name": "yahooaol.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "20",
+                                        "max-msg-rate": "60/h",
+                                        "max-rcpt-per-message": "50",
+                                        "max-smtp-out": "20",
+                                        "smtp-hosts": "mta5.am0.yahoodns.net, mta6.am0.yahoodns.net, mta7.am0.yahoodns.net"
+                                    }
+                                },
+                                {
+                                    "name": "comcast.net",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "max-rcpt-per-message": "100",
+                                        "max-smtp-out-per-source-ip": "5"
+                                    }
+                                }
+                            ],
+                            "type": "unthrottled"
+                        },
+                        {
+                            "host-domain_key": {
+                                "host-domain": "gleemate.com",
+                                "key": "102524135454919678230",
+                                "path": "/etc/pmta/dkim/102524135454919678230.gleemate.com"
+                            },
+                            "name": "154.22.55.7-gleemate.com-unthrottled",
+                            "smtp_source": {
+                                "ip_address": "154.22.55.7",
+                                "subdomain": "oaklyn.gleemate.com"
+                            },
+                            "target-isps": [
+                                {
+                                    "name": "*",
+                                    "settings": {
+                                        "deliver-local-dsn": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$gmail",
+                                    "settings": {
+                                        "queue-to": "gmail.rollup",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "gmail.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "50",
+                                        "max-msg-rate": "240/h",
+                                        "max-smtp-out": "5",
+                                        "smtp-hosts": "aspmx.l.google.com, alt1.aspmx.l.google.com, alt2.aspmx.l.google.com, gmail-smtp-in.l.google.com, alt4.gmail-smtp-in.l.google.com, alt1.gmail-smtp-in.l.google.com, alt3.gmail-smtp-in.l.google.com, alt2.gmail-smtp-in.l.google.com",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$hotmail_isp.$isp_tld",
+                                    "settings": {
+                                        "queue-to": "hotmail.rollup"
+                                    }
+                                },
+                                {
+                                    "name": "hotmail.rollup",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "route": "hotmail.com",
+                                        "smtp-hosts": "lookup-mx:outlook.com"
+                                    }
+                                },
+                                {
+                                    "name": "yahooaol.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "20",
+                                        "max-msg-rate": "60/h",
+                                        "max-rcpt-per-message": "50",
+                                        "max-smtp-out": "20",
+                                        "smtp-hosts": "mta5.am0.yahoodns.net, mta6.am0.yahoodns.net, mta7.am0.yahoodns.net"
+                                    }
+                                },
+                                {
+                                    "name": "comcast.net",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "max-rcpt-per-message": "100",
+                                        "max-smtp-out-per-source-ip": "5"
+                                    }
+                                }
+                            ],
+                            "type": "unthrottled"
+                        },
+                        {
+                            "host-domain_key": {
+                                "host-domain": "gleemate.com",
+                                "key": "102524135456114963339",
+                                "path": "/etc/pmta/dkim/102524135456114963339.gleemate.com"
+                            },
+                            "name": "154.22.55.3-gleemate.com-unthrottled",
+                            "smtp_source": {
+                                "ip_address": "154.22.55.3",
+                                "subdomain": "river.gleemate.com"
+                            },
+                            "target-isps": [
+                                {
+                                    "name": "*",
+                                    "settings": {
+                                        "deliver-local-dsn": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$gmail",
+                                    "settings": {
+                                        "queue-to": "gmail.rollup",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "gmail.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "50",
+                                        "max-msg-rate": "240/h",
+                                        "max-smtp-out": "5",
+                                        "smtp-hosts": "aspmx.l.google.com, alt1.aspmx.l.google.com, alt2.aspmx.l.google.com, gmail-smtp-in.l.google.com, alt4.gmail-smtp-in.l.google.com, alt1.gmail-smtp-in.l.google.com, alt3.gmail-smtp-in.l.google.com, alt2.gmail-smtp-in.l.google.com",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$hotmail_isp.$isp_tld",
+                                    "settings": {
+                                        "queue-to": "hotmail.rollup"
+                                    }
+                                },
+                                {
+                                    "name": "hotmail.rollup",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "route": "hotmail.com",
+                                        "smtp-hosts": "lookup-mx:outlook.com"
+                                    }
+                                },
+                                {
+                                    "name": "yahooaol.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "20",
+                                        "max-msg-rate": "60/h",
+                                        "max-rcpt-per-message": "50",
+                                        "max-smtp-out": "20",
+                                        "smtp-hosts": "mta5.am0.yahoodns.net, mta6.am0.yahoodns.net, mta7.am0.yahoodns.net"
+                                    }
+                                },
+                                {
+                                    "name": "comcast.net",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "max-rcpt-per-message": "100",
+                                        "max-smtp-out-per-source-ip": "5"
+                                    }
+                                }
+                            ],
+                            "type": "unthrottled"
+                        }
+                    ],
+                    "type": "unthrottled"
+                },
+                {
+                    "queue-pool-name": "gleemate.com-pool-fresh",
+                    "queues": [
+                        {
+                            "host-domain_key": {
+                                "host-domain": "gleemate.com",
+                                "key": "102524135452859585361",
+                                "path": "/etc/pmta/dkim/102524135452859585361.gleemate.com"
+                            },
+                            "name": "154.22.55.8-gleemate.com-fresh",
+                            "smtp_source": {
+                                "ip_address": "154.22.55.8",
+                                "subdomain": "alexis.gleemate.com"
+                            },
+                            "target-isps": [
+                                {
+                                    "name": "*",
+                                    "settings": {
+                                        "bounce-after": "180h",
+                                        "deliver-local-dsn": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$gmail",
+                                    "settings": {
+                                        "queue-to": "gmail.rollup",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "gmail.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "50",
+                                        "max-msg-rate": "1/m",
+                                        "max-smtp-out": "5",
+                                        "smtp-hosts": "aspmx.l.google.com, alt1.aspmx.l.google.com, alt2.aspmx.l.google.com, gmail-smtp-in.l.google.com, alt4.gmail-smtp-in.l.google.com, alt1.gmail-smtp-in.l.google.com, alt3.gmail-smtp-in.l.google.com, alt2.gmail-smtp-in.l.google.com",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$hotmail_isp.$isp_tld",
+                                    "settings": {
+                                        "queue-to": "hotmail.rollup"
+                                    }
+                                },
+                                {
+                                    "name": "hotmail.rollup",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "route": "hotmail.com",
+                                        "smtp-hosts": "lookup-mx:outlook.com"
+                                    }
+                                },
+                                {
+                                    "name": "yahooaol.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "20",
+                                        "max-msg-rate": "60/h",
+                                        "max-rcpt-per-message": "50",
+                                        "max-smtp-out": "20",
+                                        "smtp-hosts": "mta5.am0.yahoodns.net, mta6.am0.yahoodns.net, mta7.am0.yahoodns.net"
+                                    }
+                                },
+                                {
+                                    "name": "comcast.net",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "max-rcpt-per-message": "100",
+                                        "max-smtp-out-per-source-ip": "5"
+                                    }
+                                }
+                            ],
+                            "type": "fresh"
+                        },
+                        {
+                            "host-domain_key": {
+                                "host-domain": "gleemate.com",
+                                "key": "102524135453873161959",
+                                "path": "/etc/pmta/dkim/102524135453873161959.gleemate.com"
+                            },
+                            "name": "154.22.55.12-gleemate.com-fresh",
+                            "smtp_source": {
+                                "ip_address": "154.22.55.12",
+                                "subdomain": "alaiya.gleemate.com"
+                            },
+                            "target-isps": [
+                                {
+                                    "name": "*",
+                                    "settings": {
+                                        "bounce-after": "180h",
+                                        "deliver-local-dsn": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$gmail",
+                                    "settings": {
+                                        "queue-to": "gmail.rollup",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "gmail.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "50",
+                                        "max-msg-rate": "1/m",
+                                        "max-smtp-out": "5",
+                                        "smtp-hosts": "aspmx.l.google.com, alt1.aspmx.l.google.com, alt2.aspmx.l.google.com, gmail-smtp-in.l.google.com, alt4.gmail-smtp-in.l.google.com, alt1.gmail-smtp-in.l.google.com, alt3.gmail-smtp-in.l.google.com, alt2.gmail-smtp-in.l.google.com",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$hotmail_isp.$isp_tld",
+                                    "settings": {
+                                        "queue-to": "hotmail.rollup"
+                                    }
+                                },
+                                {
+                                    "name": "hotmail.rollup",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "route": "hotmail.com",
+                                        "smtp-hosts": "lookup-mx:outlook.com"
+                                    }
+                                },
+                                {
+                                    "name": "yahooaol.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "20",
+                                        "max-msg-rate": "60/h",
+                                        "max-rcpt-per-message": "50",
+                                        "max-smtp-out": "20",
+                                        "smtp-hosts": "mta5.am0.yahoodns.net, mta6.am0.yahoodns.net, mta7.am0.yahoodns.net"
+                                    }
+                                },
+                                {
+                                    "name": "comcast.net",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "max-rcpt-per-message": "100",
+                                        "max-smtp-out-per-source-ip": "5"
+                                    }
+                                }
+                            ],
+                            "type": "fresh"
+                        },
+                        {
+                            "host-domain_key": {
+                                "host-domain": "gleemate.com",
+                                "key": "102524135454919678230",
+                                "path": "/etc/pmta/dkim/102524135454919678230.gleemate.com"
+                            },
+                            "name": "154.22.55.7-gleemate.com-fresh",
+                            "smtp_source": {
+                                "ip_address": "154.22.55.7",
+                                "subdomain": "oaklyn.gleemate.com"
+                            },
+                            "target-isps": [
+                                {
+                                    "name": "*",
+                                    "settings": {
+                                        "bounce-after": "180h",
+                                        "deliver-local-dsn": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$gmail",
+                                    "settings": {
+                                        "queue-to": "gmail.rollup",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "gmail.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "50",
+                                        "max-msg-rate": "1/m",
+                                        "max-smtp-out": "5",
+                                        "smtp-hosts": "aspmx.l.google.com, alt1.aspmx.l.google.com, alt2.aspmx.l.google.com, gmail-smtp-in.l.google.com, alt4.gmail-smtp-in.l.google.com, alt1.gmail-smtp-in.l.google.com, alt3.gmail-smtp-in.l.google.com, alt2.gmail-smtp-in.l.google.com",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$hotmail_isp.$isp_tld",
+                                    "settings": {
+                                        "queue-to": "hotmail.rollup"
+                                    }
+                                },
+                                {
+                                    "name": "hotmail.rollup",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "route": "hotmail.com",
+                                        "smtp-hosts": "lookup-mx:outlook.com"
+                                    }
+                                },
+                                {
+                                    "name": "yahooaol.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "20",
+                                        "max-msg-rate": "60/h",
+                                        "max-rcpt-per-message": "50",
+                                        "max-smtp-out": "20",
+                                        "smtp-hosts": "mta5.am0.yahoodns.net, mta6.am0.yahoodns.net, mta7.am0.yahoodns.net"
+                                    }
+                                },
+                                {
+                                    "name": "comcast.net",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "max-rcpt-per-message": "100",
+                                        "max-smtp-out-per-source-ip": "5"
+                                    }
+                                }
+                            ],
+                            "type": "fresh"
+                        },
+                        {
+                            "host-domain_key": {
+                                "host-domain": "gleemate.com",
+                                "key": "102524135456114963339",
+                                "path": "/etc/pmta/dkim/102524135456114963339.gleemate.com"
+                            },
+                            "name": "154.22.55.3-gleemate.com-fresh",
+                            "smtp_source": {
+                                "ip_address": "154.22.55.3",
+                                "subdomain": "river.gleemate.com"
+                            },
+                            "target-isps": [
+                                {
+                                    "name": "*",
+                                    "settings": {
+                                        "bounce-after": "180h",
+                                        "deliver-local-dsn": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$gmail",
+                                    "settings": {
+                                        "queue-to": "gmail.rollup",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "gmail.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "50",
+                                        "max-msg-rate": "1/m",
+                                        "max-smtp-out": "5",
+                                        "smtp-hosts": "aspmx.l.google.com, alt1.aspmx.l.google.com, alt2.aspmx.l.google.com, gmail-smtp-in.l.google.com, alt4.gmail-smtp-in.l.google.com, alt1.gmail-smtp-in.l.google.com, alt3.gmail-smtp-in.l.google.com, alt2.gmail-smtp-in.l.google.com",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$hotmail_isp.$isp_tld",
+                                    "settings": {
+                                        "queue-to": "hotmail.rollup"
+                                    }
+                                },
+                                {
+                                    "name": "hotmail.rollup",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "route": "hotmail.com",
+                                        "smtp-hosts": "lookup-mx:outlook.com"
+                                    }
+                                },
+                                {
+                                    "name": "yahooaol.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "20",
+                                        "max-msg-rate": "60/h",
+                                        "max-rcpt-per-message": "50",
+                                        "max-smtp-out": "20",
+                                        "smtp-hosts": "mta5.am0.yahoodns.net, mta6.am0.yahoodns.net, mta7.am0.yahoodns.net"
+                                    }
+                                },
+                                {
+                                    "name": "comcast.net",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "max-rcpt-per-message": "100",
+                                        "max-smtp-out-per-source-ip": "5"
+                                    }
+                                }
+                            ],
+                            "type": "fresh"
+                        }
+                    ],
+                    "type": "fresh"
+                },
+                {
+                    "queue-pool-name": "gleemate.com-pool",
+                    "queues": [
+                        {
+                            "host-domain_key": {
+                                "host-domain": "gleemate.com",
+                                "key": "102524135452859585361",
+                                "path": "/etc/pmta/dkim/102524135452859585361.gleemate.com"
+                            },
+                            "name": "154.22.55.8-gleemate.com",
+                            "smtp_source": {
+                                "ip_address": "154.22.55.8",
+                                "subdomain": "alexis.gleemate.com"
+                            },
+                            "target-isps": [
+                                {
+                                    "name": "*",
+                                    "settings": {
+                                        "bounce-after": "48h",
+                                        "deliver-local-dsn": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$gmail",
+                                    "settings": {
+                                        "queue-to": "gmail.rollup",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "gmail.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "50",
+                                        "max-msg-rate": "1/m",
+                                        "max-smtp-out": "5",
+                                        "smtp-hosts": "aspmx.l.google.com, alt1.aspmx.l.google.com, alt2.aspmx.l.google.com, gmail-smtp-in.l.google.com, alt4.gmail-smtp-in.l.google.com, alt1.gmail-smtp-in.l.google.com, alt3.gmail-smtp-in.l.google.com, alt2.gmail-smtp-in.l.google.com",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$hotmail_isp.$isp_tld",
+                                    "settings": {
+                                        "queue-to": "hotmail.rollup"
+                                    }
+                                },
+                                {
+                                    "name": "hotmail.rollup",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "route": "hotmail.com",
+                                        "smtp-hosts": "lookup-mx:outlook.com"
+                                    }
+                                },
+                                {
+                                    "name": "yahooaol.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "20",
+                                        "max-msg-rate": "60/h",
+                                        "max-rcpt-per-message": "50",
+                                        "max-smtp-out": "20",
+                                        "smtp-hosts": "mta5.am0.yahoodns.net, mta6.am0.yahoodns.net, mta7.am0.yahoodns.net"
+                                    }
+                                },
+                                {
+                                    "name": "comcast.net",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "max-rcpt-per-message": "100",
+                                        "max-smtp-out-per-source-ip": "5"
+                                    }
+                                }
+                            ],
+                            "type": ""
+                        },
+                        {
+                            "host-domain_key": {
+                                "host-domain": "gleemate.com",
+                                "key": "102524135453873161959",
+                                "path": "/etc/pmta/dkim/102524135453873161959.gleemate.com"
+                            },
+                            "name": "154.22.55.12-gleemate.com",
+                            "smtp_source": {
+                                "ip_address": "154.22.55.12",
+                                "subdomain": "alaiya.gleemate.com"
+                            },
+                            "target-isps": [
+                                {
+                                    "name": "*",
+                                    "settings": {
+                                        "bounce-after": "48h",
+                                        "deliver-local-dsn": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$gmail",
+                                    "settings": {
+                                        "queue-to": "gmail.rollup",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "gmail.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "50",
+                                        "max-msg-rate": "1/m",
+                                        "max-smtp-out": "5",
+                                        "smtp-hosts": "aspmx.l.google.com, alt1.aspmx.l.google.com, alt2.aspmx.l.google.com, gmail-smtp-in.l.google.com, alt4.gmail-smtp-in.l.google.com, alt1.gmail-smtp-in.l.google.com, alt3.gmail-smtp-in.l.google.com, alt2.gmail-smtp-in.l.google.com",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$hotmail_isp.$isp_tld",
+                                    "settings": {
+                                        "queue-to": "hotmail.rollup"
+                                    }
+                                },
+                                {
+                                    "name": "hotmail.rollup",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "route": "hotmail.com",
+                                        "smtp-hosts": "lookup-mx:outlook.com"
+                                    }
+                                },
+                                {
+                                    "name": "yahooaol.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "20",
+                                        "max-msg-rate": "60/h",
+                                        "max-rcpt-per-message": "50",
+                                        "max-smtp-out": "20",
+                                        "smtp-hosts": "mta5.am0.yahoodns.net, mta6.am0.yahoodns.net, mta7.am0.yahoodns.net"
+                                    }
+                                },
+                                {
+                                    "name": "comcast.net",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "max-rcpt-per-message": "100",
+                                        "max-smtp-out-per-source-ip": "5"
+                                    }
+                                }
+                            ],
+                            "type": ""
+                        },
+                        {
+                            "host-domain_key": {
+                                "host-domain": "gleemate.com",
+                                "key": "102524135454919678230",
+                                "path": "/etc/pmta/dkim/102524135454919678230.gleemate.com"
+                            },
+                            "name": "154.22.55.7-gleemate.com",
+                            "smtp_source": {
+                                "ip_address": "154.22.55.7",
+                                "subdomain": "oaklyn.gleemate.com"
+                            },
+                            "target-isps": [
+                                {
+                                    "name": "*",
+                                    "settings": {
+                                        "bounce-after": "48h",
+                                        "deliver-local-dsn": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$gmail",
+                                    "settings": {
+                                        "queue-to": "gmail.rollup",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "gmail.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "50",
+                                        "max-msg-rate": "1/m",
+                                        "max-smtp-out": "5",
+                                        "smtp-hosts": "aspmx.l.google.com, alt1.aspmx.l.google.com, alt2.aspmx.l.google.com, gmail-smtp-in.l.google.com, alt4.gmail-smtp-in.l.google.com, alt1.gmail-smtp-in.l.google.com, alt3.gmail-smtp-in.l.google.com, alt2.gmail-smtp-in.l.google.com",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$hotmail_isp.$isp_tld",
+                                    "settings": {
+                                        "queue-to": "hotmail.rollup"
+                                    }
+                                },
+                                {
+                                    "name": "hotmail.rollup",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "route": "hotmail.com",
+                                        "smtp-hosts": "lookup-mx:outlook.com"
+                                    }
+                                },
+                                {
+                                    "name": "yahooaol.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "20",
+                                        "max-msg-rate": "60/h",
+                                        "max-rcpt-per-message": "50",
+                                        "max-smtp-out": "20",
+                                        "smtp-hosts": "mta5.am0.yahoodns.net, mta6.am0.yahoodns.net, mta7.am0.yahoodns.net"
+                                    }
+                                },
+                                {
+                                    "name": "comcast.net",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "max-rcpt-per-message": "100",
+                                        "max-smtp-out-per-source-ip": "5"
+                                    }
+                                }
+                            ],
+                            "type": ""
+                        },
+                        {
+                            "host-domain_key": {
+                                "host-domain": "gleemate.com",
+                                "key": "102524135456114963339",
+                                "path": "/etc/pmta/dkim/102524135456114963339.gleemate.com"
+                            },
+                            "name": "154.22.55.3-gleemate.com",
+                            "smtp_source": {
+                                "ip_address": "154.22.55.3",
+                                "subdomain": "river.gleemate.com"
+                            },
+                            "target-isps": [
+                                {
+                                    "name": "*",
+                                    "settings": {
+                                        "bounce-after": "48h",
+                                        "deliver-local-dsn": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$gmail",
+                                    "settings": {
+                                        "queue-to": "gmail.rollup",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "gmail.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "50",
+                                        "max-msg-rate": "1/m",
+                                        "max-smtp-out": "5",
+                                        "smtp-hosts": "aspmx.l.google.com, alt1.aspmx.l.google.com, alt2.aspmx.l.google.com, gmail-smtp-in.l.google.com, alt4.gmail-smtp-in.l.google.com, alt1.gmail-smtp-in.l.google.com, alt3.gmail-smtp-in.l.google.com, alt2.gmail-smtp-in.l.google.com",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$hotmail_isp.$isp_tld",
+                                    "settings": {
+                                        "queue-to": "hotmail.rollup"
+                                    }
+                                },
+                                {
+                                    "name": "hotmail.rollup",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "route": "hotmail.com",
+                                        "smtp-hosts": "lookup-mx:outlook.com"
+                                    }
+                                },
+                                {
+                                    "name": "yahooaol.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "20",
+                                        "max-msg-rate": "60/h",
+                                        "max-rcpt-per-message": "50",
+                                        "max-smtp-out": "20",
+                                        "smtp-hosts": "mta5.am0.yahoodns.net, mta6.am0.yahoodns.net, mta7.am0.yahoodns.net"
+                                    }
+                                },
+                                {
+                                    "name": "comcast.net",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "max-rcpt-per-message": "100",
+                                        "max-smtp-out-per-source-ip": "5"
+                                    }
+                                }
+                            ],
+                            "type": ""
+                        }
+                    ],
+                    "type": ""
+                }
+            ]
+        },
+        {
+            "name": "@securesoulmate.com",
+            "queue-pools": [
+                {
+                    "queue-pool-name": "securesoulmate.com-pool-unthrottled",
+                    "queues": [
+                        {
+                            "host-domain_key": {
+                                "host-domain": "securesoulmate.com",
+                                "key": "102524135445625635272",
+                                "path": "/etc/pmta/dkim/102524135445625635272.securesoulmate.com"
+                            },
+                            "name": "154.22.55.6-securesoulmate.com-unthrottled",
+                            "smtp_source": {
+                                "ip_address": "154.22.55.6",
+                                "subdomain": "kamden.securesoulmate.com"
+                            },
+                            "target-isps": [
+                                {
+                                    "name": "*",
+                                    "settings": {
+                                        "deliver-local-dsn": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$gmail",
+                                    "settings": {
+                                        "queue-to": "gmail.rollup",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "gmail.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "50",
+                                        "max-msg-rate": "240/h",
+                                        "max-smtp-out": "5",
+                                        "smtp-hosts": "aspmx.l.google.com, alt1.aspmx.l.google.com, alt2.aspmx.l.google.com, gmail-smtp-in.l.google.com, alt4.gmail-smtp-in.l.google.com, alt1.gmail-smtp-in.l.google.com, alt3.gmail-smtp-in.l.google.com, alt2.gmail-smtp-in.l.google.com",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$hotmail_isp.$isp_tld",
+                                    "settings": {
+                                        "queue-to": "hotmail.rollup"
+                                    }
+                                },
+                                {
+                                    "name": "hotmail.rollup",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "route": "hotmail.com",
+                                        "smtp-hosts": "lookup-mx:outlook.com"
+                                    }
+                                },
+                                {
+                                    "name": "yahooaol.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "20",
+                                        "max-msg-rate": "60/h",
+                                        "max-rcpt-per-message": "50",
+                                        "max-smtp-out": "20",
+                                        "smtp-hosts": "mta5.am0.yahoodns.net, mta6.am0.yahoodns.net, mta7.am0.yahoodns.net"
+                                    }
+                                },
+                                {
+                                    "name": "comcast.net",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "max-rcpt-per-message": "100",
+                                        "max-smtp-out-per-source-ip": "5"
+                                    }
+                                }
+                            ],
+                            "type": "unthrottled"
+                        },
+                        {
+                            "host-domain_key": {
+                                "host-domain": "securesoulmate.com",
+                                "key": "102524135446610470335",
+                                "path": "/etc/pmta/dkim/102524135446610470335.securesoulmate.com"
+                            },
+                            "name": "154.22.55.13-securesoulmate.com-unthrottled",
+                            "smtp_source": {
+                                "ip_address": "154.22.55.13",
+                                "subdomain": "ari.securesoulmate.com"
+                            },
+                            "target-isps": [
+                                {
+                                    "name": "*",
+                                    "settings": {
+                                        "deliver-local-dsn": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$gmail",
+                                    "settings": {
+                                        "queue-to": "gmail.rollup",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "gmail.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "50",
+                                        "max-msg-rate": "240/h",
+                                        "max-smtp-out": "5",
+                                        "smtp-hosts": "aspmx.l.google.com, alt1.aspmx.l.google.com, alt2.aspmx.l.google.com, gmail-smtp-in.l.google.com, alt4.gmail-smtp-in.l.google.com, alt1.gmail-smtp-in.l.google.com, alt3.gmail-smtp-in.l.google.com, alt2.gmail-smtp-in.l.google.com",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$hotmail_isp.$isp_tld",
+                                    "settings": {
+                                        "queue-to": "hotmail.rollup"
+                                    }
+                                },
+                                {
+                                    "name": "hotmail.rollup",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "route": "hotmail.com",
+                                        "smtp-hosts": "lookup-mx:outlook.com"
+                                    }
+                                },
+                                {
+                                    "name": "yahooaol.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "20",
+                                        "max-msg-rate": "60/h",
+                                        "max-rcpt-per-message": "50",
+                                        "max-smtp-out": "20",
+                                        "smtp-hosts": "mta5.am0.yahoodns.net, mta6.am0.yahoodns.net, mta7.am0.yahoodns.net"
+                                    }
+                                },
+                                {
+                                    "name": "comcast.net",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "max-rcpt-per-message": "100",
+                                        "max-smtp-out-per-source-ip": "5"
+                                    }
+                                }
+                            ],
+                            "type": "unthrottled"
+                        },
+                        {
+                            "host-domain_key": {
+                                "host-domain": "securesoulmate.com",
+                                "key": "102524135447572587128",
+                                "path": "/etc/pmta/dkim/102524135447572587128.securesoulmate.com"
+                            },
+                            "name": "154.22.55.14-securesoulmate.com-unthrottled",
+                            "smtp_source": {
+                                "ip_address": "154.22.55.14",
+                                "subdomain": "myles.securesoulmate.com"
+                            },
+                            "target-isps": [
+                                {
+                                    "name": "*",
+                                    "settings": {
+                                        "deliver-local-dsn": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$gmail",
+                                    "settings": {
+                                        "queue-to": "gmail.rollup",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "gmail.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "50",
+                                        "max-msg-rate": "240/h",
+                                        "max-smtp-out": "5",
+                                        "smtp-hosts": "aspmx.l.google.com, alt1.aspmx.l.google.com, alt2.aspmx.l.google.com, gmail-smtp-in.l.google.com, alt4.gmail-smtp-in.l.google.com, alt1.gmail-smtp-in.l.google.com, alt3.gmail-smtp-in.l.google.com, alt2.gmail-smtp-in.l.google.com",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$hotmail_isp.$isp_tld",
+                                    "settings": {
+                                        "queue-to": "hotmail.rollup"
+                                    }
+                                },
+                                {
+                                    "name": "hotmail.rollup",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "route": "hotmail.com",
+                                        "smtp-hosts": "lookup-mx:outlook.com"
+                                    }
+                                },
+                                {
+                                    "name": "yahooaol.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "20",
+                                        "max-msg-rate": "60/h",
+                                        "max-rcpt-per-message": "50",
+                                        "max-smtp-out": "20",
+                                        "smtp-hosts": "mta5.am0.yahoodns.net, mta6.am0.yahoodns.net, mta7.am0.yahoodns.net"
+                                    }
+                                },
+                                {
+                                    "name": "comcast.net",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "max-rcpt-per-message": "100",
+                                        "max-smtp-out-per-source-ip": "5"
+                                    }
+                                }
+                            ],
+                            "type": "unthrottled"
+                        },
+                        {
+                            "host-domain_key": {
+                                "host-domain": "securesoulmate.com",
+                                "key": "102524135448534804040",
+                                "path": "/etc/pmta/dkim/102524135448534804040.securesoulmate.com"
+                            },
+                            "name": "154.22.55.2-securesoulmate.com-unthrottled",
+                            "smtp_source": {
+                                "ip_address": "154.22.55.2",
+                                "subdomain": "sarah.securesoulmate.com"
+                            },
+                            "target-isps": [
+                                {
+                                    "name": "*",
+                                    "settings": {
+                                        "deliver-local-dsn": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$gmail",
+                                    "settings": {
+                                        "queue-to": "gmail.rollup",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "gmail.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "50",
+                                        "max-msg-rate": "240/h",
+                                        "max-smtp-out": "5",
+                                        "smtp-hosts": "aspmx.l.google.com, alt1.aspmx.l.google.com, alt2.aspmx.l.google.com, gmail-smtp-in.l.google.com, alt4.gmail-smtp-in.l.google.com, alt1.gmail-smtp-in.l.google.com, alt3.gmail-smtp-in.l.google.com, alt2.gmail-smtp-in.l.google.com",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$hotmail_isp.$isp_tld",
+                                    "settings": {
+                                        "queue-to": "hotmail.rollup"
+                                    }
+                                },
+                                {
+                                    "name": "hotmail.rollup",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "route": "hotmail.com",
+                                        "smtp-hosts": "lookup-mx:outlook.com"
+                                    }
+                                },
+                                {
+                                    "name": "yahooaol.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "20",
+                                        "max-msg-rate": "60/h",
+                                        "max-rcpt-per-message": "50",
+                                        "max-smtp-out": "20",
+                                        "smtp-hosts": "mta5.am0.yahoodns.net, mta6.am0.yahoodns.net, mta7.am0.yahoodns.net"
+                                    }
+                                },
+                                {
+                                    "name": "comcast.net",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "max-rcpt-per-message": "100",
+                                        "max-smtp-out-per-source-ip": "5"
+                                    }
+                                }
+                            ],
+                            "type": "unthrottled"
+                        }
+                    ],
+                    "type": "unthrottled"
+                },
+                {
+                    "queue-pool-name": "securesoulmate.com-pool-fresh",
+                    "queues": [
+                        {
+                            "host-domain_key": {
+                                "host-domain": "securesoulmate.com",
+                                "key": "102524135445625635272",
+                                "path": "/etc/pmta/dkim/102524135445625635272.securesoulmate.com"
+                            },
+                            "name": "154.22.55.6-securesoulmate.com-fresh",
+                            "smtp_source": {
+                                "ip_address": "154.22.55.6",
+                                "subdomain": "kamden.securesoulmate.com"
+                            },
+                            "target-isps": [
+                                {
+                                    "name": "*",
+                                    "settings": {
+                                        "bounce-after": "180h",
+                                        "deliver-local-dsn": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$gmail",
+                                    "settings": {
+                                        "queue-to": "gmail.rollup",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "gmail.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "50",
+                                        "max-msg-rate": "1/m",
+                                        "max-smtp-out": "5",
+                                        "smtp-hosts": "aspmx.l.google.com, alt1.aspmx.l.google.com, alt2.aspmx.l.google.com, gmail-smtp-in.l.google.com, alt4.gmail-smtp-in.l.google.com, alt1.gmail-smtp-in.l.google.com, alt3.gmail-smtp-in.l.google.com, alt2.gmail-smtp-in.l.google.com",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$hotmail_isp.$isp_tld",
+                                    "settings": {
+                                        "queue-to": "hotmail.rollup"
+                                    }
+                                },
+                                {
+                                    "name": "hotmail.rollup",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "route": "hotmail.com",
+                                        "smtp-hosts": "lookup-mx:outlook.com"
+                                    }
+                                },
+                                {
+                                    "name": "yahooaol.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "20",
+                                        "max-msg-rate": "60/h",
+                                        "max-rcpt-per-message": "50",
+                                        "max-smtp-out": "20",
+                                        "smtp-hosts": "mta5.am0.yahoodns.net, mta6.am0.yahoodns.net, mta7.am0.yahoodns.net"
+                                    }
+                                },
+                                {
+                                    "name": "comcast.net",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "max-rcpt-per-message": "100",
+                                        "max-smtp-out-per-source-ip": "5"
+                                    }
+                                }
+                            ],
+                            "type": "fresh"
+                        },
+                        {
+                            "host-domain_key": {
+                                "host-domain": "securesoulmate.com",
+                                "key": "102524135446610470335",
+                                "path": "/etc/pmta/dkim/102524135446610470335.securesoulmate.com"
+                            },
+                            "name": "154.22.55.13-securesoulmate.com-fresh",
+                            "smtp_source": {
+                                "ip_address": "154.22.55.13",
+                                "subdomain": "ari.securesoulmate.com"
+                            },
+                            "target-isps": [
+                                {
+                                    "name": "*",
+                                    "settings": {
+                                        "bounce-after": "180h",
+                                        "deliver-local-dsn": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$gmail",
+                                    "settings": {
+                                        "queue-to": "gmail.rollup",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "gmail.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "50",
+                                        "max-msg-rate": "1/m",
+                                        "max-smtp-out": "5",
+                                        "smtp-hosts": "aspmx.l.google.com, alt1.aspmx.l.google.com, alt2.aspmx.l.google.com, gmail-smtp-in.l.google.com, alt4.gmail-smtp-in.l.google.com, alt1.gmail-smtp-in.l.google.com, alt3.gmail-smtp-in.l.google.com, alt2.gmail-smtp-in.l.google.com",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$hotmail_isp.$isp_tld",
+                                    "settings": {
+                                        "queue-to": "hotmail.rollup"
+                                    }
+                                },
+                                {
+                                    "name": "hotmail.rollup",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "route": "hotmail.com",
+                                        "smtp-hosts": "lookup-mx:outlook.com"
+                                    }
+                                },
+                                {
+                                    "name": "yahooaol.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "20",
+                                        "max-msg-rate": "60/h",
+                                        "max-rcpt-per-message": "50",
+                                        "max-smtp-out": "20",
+                                        "smtp-hosts": "mta5.am0.yahoodns.net, mta6.am0.yahoodns.net, mta7.am0.yahoodns.net"
+                                    }
+                                },
+                                {
+                                    "name": "comcast.net",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "max-rcpt-per-message": "100",
+                                        "max-smtp-out-per-source-ip": "5"
+                                    }
+                                }
+                            ],
+                            "type": "fresh"
+                        },
+                        {
+                            "host-domain_key": {
+                                "host-domain": "securesoulmate.com",
+                                "key": "102524135447572587128",
+                                "path": "/etc/pmta/dkim/102524135447572587128.securesoulmate.com"
+                            },
+                            "name": "154.22.55.14-securesoulmate.com-fresh",
+                            "smtp_source": {
+                                "ip_address": "154.22.55.14",
+                                "subdomain": "myles.securesoulmate.com"
+                            },
+                            "target-isps": [
+                                {
+                                    "name": "*",
+                                    "settings": {
+                                        "bounce-after": "180h",
+                                        "deliver-local-dsn": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$gmail",
+                                    "settings": {
+                                        "queue-to": "gmail.rollup",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "gmail.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "50",
+                                        "max-msg-rate": "1/m",
+                                        "max-smtp-out": "5",
+                                        "smtp-hosts": "aspmx.l.google.com, alt1.aspmx.l.google.com, alt2.aspmx.l.google.com, gmail-smtp-in.l.google.com, alt4.gmail-smtp-in.l.google.com, alt1.gmail-smtp-in.l.google.com, alt3.gmail-smtp-in.l.google.com, alt2.gmail-smtp-in.l.google.com",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$hotmail_isp.$isp_tld",
+                                    "settings": {
+                                        "queue-to": "hotmail.rollup"
+                                    }
+                                },
+                                {
+                                    "name": "hotmail.rollup",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "route": "hotmail.com",
+                                        "smtp-hosts": "lookup-mx:outlook.com"
+                                    }
+                                },
+                                {
+                                    "name": "yahooaol.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "20",
+                                        "max-msg-rate": "60/h",
+                                        "max-rcpt-per-message": "50",
+                                        "max-smtp-out": "20",
+                                        "smtp-hosts": "mta5.am0.yahoodns.net, mta6.am0.yahoodns.net, mta7.am0.yahoodns.net"
+                                    }
+                                },
+                                {
+                                    "name": "comcast.net",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "max-rcpt-per-message": "100",
+                                        "max-smtp-out-per-source-ip": "5"
+                                    }
+                                }
+                            ],
+                            "type": "fresh"
+                        },
+                        {
+                            "host-domain_key": {
+                                "host-domain": "securesoulmate.com",
+                                "key": "102524135448534804040",
+                                "path": "/etc/pmta/dkim/102524135448534804040.securesoulmate.com"
+                            },
+                            "name": "154.22.55.2-securesoulmate.com-fresh",
+                            "smtp_source": {
+                                "ip_address": "154.22.55.2",
+                                "subdomain": "sarah.securesoulmate.com"
+                            },
+                            "target-isps": [
+                                {
+                                    "name": "*",
+                                    "settings": {
+                                        "bounce-after": "180h",
+                                        "deliver-local-dsn": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$gmail",
+                                    "settings": {
+                                        "queue-to": "gmail.rollup",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "gmail.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "50",
+                                        "max-msg-rate": "1/m",
+                                        "max-smtp-out": "5",
+                                        "smtp-hosts": "aspmx.l.google.com, alt1.aspmx.l.google.com, alt2.aspmx.l.google.com, gmail-smtp-in.l.google.com, alt4.gmail-smtp-in.l.google.com, alt1.gmail-smtp-in.l.google.com, alt3.gmail-smtp-in.l.google.com, alt2.gmail-smtp-in.l.google.com",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$hotmail_isp.$isp_tld",
+                                    "settings": {
+                                        "queue-to": "hotmail.rollup"
+                                    }
+                                },
+                                {
+                                    "name": "hotmail.rollup",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "route": "hotmail.com",
+                                        "smtp-hosts": "lookup-mx:outlook.com"
+                                    }
+                                },
+                                {
+                                    "name": "yahooaol.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "20",
+                                        "max-msg-rate": "60/h",
+                                        "max-rcpt-per-message": "50",
+                                        "max-smtp-out": "20",
+                                        "smtp-hosts": "mta5.am0.yahoodns.net, mta6.am0.yahoodns.net, mta7.am0.yahoodns.net"
+                                    }
+                                },
+                                {
+                                    "name": "comcast.net",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "max-rcpt-per-message": "100",
+                                        "max-smtp-out-per-source-ip": "5"
+                                    }
+                                }
+                            ],
+                            "type": "fresh"
+                        }
+                    ],
+                    "type": "fresh"
+                },
+                {
+                    "queue-pool-name": "securesoulmate.com-pool",
+                    "queues": [
+                        {
+                            "host-domain_key": {
+                                "host-domain": "securesoulmate.com",
+                                "key": "102524135445625635272",
+                                "path": "/etc/pmta/dkim/102524135445625635272.securesoulmate.com"
+                            },
+                            "name": "154.22.55.6-securesoulmate.com",
+                            "smtp_source": {
+                                "ip_address": "154.22.55.6",
+                                "subdomain": "kamden.securesoulmate.com"
+                            },
+                            "target-isps": [
+                                {
+                                    "name": "*",
+                                    "settings": {
+                                        "bounce-after": "48h",
+                                        "deliver-local-dsn": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$gmail",
+                                    "settings": {
+                                        "queue-to": "gmail.rollup",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "gmail.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "50",
+                                        "max-msg-rate": "1/m",
+                                        "max-smtp-out": "5",
+                                        "smtp-hosts": "aspmx.l.google.com, alt1.aspmx.l.google.com, alt2.aspmx.l.google.com, gmail-smtp-in.l.google.com, alt4.gmail-smtp-in.l.google.com, alt1.gmail-smtp-in.l.google.com, alt3.gmail-smtp-in.l.google.com, alt2.gmail-smtp-in.l.google.com",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$hotmail_isp.$isp_tld",
+                                    "settings": {
+                                        "queue-to": "hotmail.rollup"
+                                    }
+                                },
+                                {
+                                    "name": "hotmail.rollup",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "route": "hotmail.com",
+                                        "smtp-hosts": "lookup-mx:outlook.com"
+                                    }
+                                },
+                                {
+                                    "name": "yahooaol.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "20",
+                                        "max-msg-rate": "60/h",
+                                        "max-rcpt-per-message": "50",
+                                        "max-smtp-out": "20",
+                                        "smtp-hosts": "mta5.am0.yahoodns.net, mta6.am0.yahoodns.net, mta7.am0.yahoodns.net"
+                                    }
+                                },
+                                {
+                                    "name": "comcast.net",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "max-rcpt-per-message": "100",
+                                        "max-smtp-out-per-source-ip": "5"
+                                    }
+                                }
+                            ],
+                            "type": ""
+                        },
+                        {
+                            "host-domain_key": {
+                                "host-domain": "securesoulmate.com",
+                                "key": "102524135446610470335",
+                                "path": "/etc/pmta/dkim/102524135446610470335.securesoulmate.com"
+                            },
+                            "name": "154.22.55.13-securesoulmate.com",
+                            "smtp_source": {
+                                "ip_address": "154.22.55.13",
+                                "subdomain": "ari.securesoulmate.com"
+                            },
+                            "target-isps": [
+                                {
+                                    "name": "*",
+                                    "settings": {
+                                        "bounce-after": "48h",
+                                        "deliver-local-dsn": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$gmail",
+                                    "settings": {
+                                        "queue-to": "gmail.rollup",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "gmail.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "50",
+                                        "max-msg-rate": "1/m",
+                                        "max-smtp-out": "5",
+                                        "smtp-hosts": "aspmx.l.google.com, alt1.aspmx.l.google.com, alt2.aspmx.l.google.com, gmail-smtp-in.l.google.com, alt4.gmail-smtp-in.l.google.com, alt1.gmail-smtp-in.l.google.com, alt3.gmail-smtp-in.l.google.com, alt2.gmail-smtp-in.l.google.com",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$hotmail_isp.$isp_tld",
+                                    "settings": {
+                                        "queue-to": "hotmail.rollup"
+                                    }
+                                },
+                                {
+                                    "name": "hotmail.rollup",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "route": "hotmail.com",
+                                        "smtp-hosts": "lookup-mx:outlook.com"
+                                    }
+                                },
+                                {
+                                    "name": "yahooaol.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "20",
+                                        "max-msg-rate": "60/h",
+                                        "max-rcpt-per-message": "50",
+                                        "max-smtp-out": "20",
+                                        "smtp-hosts": "mta5.am0.yahoodns.net, mta6.am0.yahoodns.net, mta7.am0.yahoodns.net"
+                                    }
+                                },
+                                {
+                                    "name": "comcast.net",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "max-rcpt-per-message": "100",
+                                        "max-smtp-out-per-source-ip": "5"
+                                    }
+                                }
+                            ],
+                            "type": ""
+                        },
+                        {
+                            "host-domain_key": {
+                                "host-domain": "securesoulmate.com",
+                                "key": "102524135447572587128",
+                                "path": "/etc/pmta/dkim/102524135447572587128.securesoulmate.com"
+                            },
+                            "name": "154.22.55.14-securesoulmate.com",
+                            "smtp_source": {
+                                "ip_address": "154.22.55.14",
+                                "subdomain": "myles.securesoulmate.com"
+                            },
+                            "target-isps": [
+                                {
+                                    "name": "*",
+                                    "settings": {
+                                        "bounce-after": "48h",
+                                        "deliver-local-dsn": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$gmail",
+                                    "settings": {
+                                        "queue-to": "gmail.rollup",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "gmail.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "50",
+                                        "max-msg-rate": "1/m",
+                                        "max-smtp-out": "5",
+                                        "smtp-hosts": "aspmx.l.google.com, alt1.aspmx.l.google.com, alt2.aspmx.l.google.com, gmail-smtp-in.l.google.com, alt4.gmail-smtp-in.l.google.com, alt1.gmail-smtp-in.l.google.com, alt3.gmail-smtp-in.l.google.com, alt2.gmail-smtp-in.l.google.com",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$hotmail_isp.$isp_tld",
+                                    "settings": {
+                                        "queue-to": "hotmail.rollup"
+                                    }
+                                },
+                                {
+                                    "name": "hotmail.rollup",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "route": "hotmail.com",
+                                        "smtp-hosts": "lookup-mx:outlook.com"
+                                    }
+                                },
+                                {
+                                    "name": "yahooaol.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "20",
+                                        "max-msg-rate": "60/h",
+                                        "max-rcpt-per-message": "50",
+                                        "max-smtp-out": "20",
+                                        "smtp-hosts": "mta5.am0.yahoodns.net, mta6.am0.yahoodns.net, mta7.am0.yahoodns.net"
+                                    }
+                                },
+                                {
+                                    "name": "comcast.net",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "max-rcpt-per-message": "100",
+                                        "max-smtp-out-per-source-ip": "5"
+                                    }
+                                }
+                            ],
+                            "type": ""
+                        },
+                        {
+                            "host-domain_key": {
+                                "host-domain": "securesoulmate.com",
+                                "key": "102524135448534804040",
+                                "path": "/etc/pmta/dkim/102524135448534804040.securesoulmate.com"
+                            },
+                            "name": "154.22.55.2-securesoulmate.com",
+                            "smtp_source": {
+                                "ip_address": "154.22.55.2",
+                                "subdomain": "sarah.securesoulmate.com"
+                            },
+                            "target-isps": [
+                                {
+                                    "name": "*",
+                                    "settings": {
+                                        "bounce-after": "48h",
+                                        "deliver-local-dsn": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$gmail",
+                                    "settings": {
+                                        "queue-to": "gmail.rollup",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "gmail.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "50",
+                                        "max-msg-rate": "1/m",
+                                        "max-smtp-out": "5",
+                                        "smtp-hosts": "aspmx.l.google.com, alt1.aspmx.l.google.com, alt2.aspmx.l.google.com, gmail-smtp-in.l.google.com, alt4.gmail-smtp-in.l.google.com, alt1.gmail-smtp-in.l.google.com, alt3.gmail-smtp-in.l.google.com, alt2.gmail-smtp-in.l.google.com",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$hotmail_isp.$isp_tld",
+                                    "settings": {
+                                        "queue-to": "hotmail.rollup"
+                                    }
+                                },
+                                {
+                                    "name": "hotmail.rollup",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "route": "hotmail.com",
+                                        "smtp-hosts": "lookup-mx:outlook.com"
+                                    }
+                                },
+                                {
+                                    "name": "yahooaol.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "20",
+                                        "max-msg-rate": "60/h",
+                                        "max-rcpt-per-message": "50",
+                                        "max-smtp-out": "20",
+                                        "smtp-hosts": "mta5.am0.yahoodns.net, mta6.am0.yahoodns.net, mta7.am0.yahoodns.net"
+                                    }
+                                },
+                                {
+                                    "name": "comcast.net",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "max-rcpt-per-message": "100",
+                                        "max-smtp-out-per-source-ip": "5"
+                                    }
+                                }
+                            ],
+                            "type": ""
+                        }
+                    ],
+                    "type": ""
+                }
+            ]
+        },
+        {
+            "name": "@soulmateplay.com",
+            "queue-pools": [
+                {
+                    "queue-pool-name": "soulmateplay.com-pool-unthrottled",
+                    "queues": [
+                        {
+                            "host-domain_key": {
+                                "host-domain": "soulmateplay.com",
+                                "key": "102524135438311730211",
+                                "path": "/etc/pmta/dkim/102524135438311730211.soulmateplay.com"
+                            },
+                            "name": "154.22.55.4-soulmateplay.com-unthrottled",
+                            "smtp_source": {
+                                "ip_address": "154.22.55.4",
+                                "subdomain": "alisson.soulmateplay.com"
+                            },
+                            "target-isps": [
+                                {
+                                    "name": "*",
+                                    "settings": {
+                                        "deliver-local-dsn": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$gmail",
+                                    "settings": {
+                                        "queue-to": "gmail.rollup",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "gmail.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "50",
+                                        "max-msg-rate": "240/h",
+                                        "max-smtp-out": "5",
+                                        "smtp-hosts": "aspmx.l.google.com, alt1.aspmx.l.google.com, alt2.aspmx.l.google.com, gmail-smtp-in.l.google.com, alt4.gmail-smtp-in.l.google.com, alt1.gmail-smtp-in.l.google.com, alt3.gmail-smtp-in.l.google.com, alt2.gmail-smtp-in.l.google.com",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$hotmail_isp.$isp_tld",
+                                    "settings": {
+                                        "queue-to": "hotmail.rollup"
+                                    }
+                                },
+                                {
+                                    "name": "hotmail.rollup",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "route": "hotmail.com",
+                                        "smtp-hosts": "lookup-mx:outlook.com"
+                                    }
+                                },
+                                {
+                                    "name": "yahooaol.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "20",
+                                        "max-msg-rate": "60/h",
+                                        "max-rcpt-per-message": "50",
+                                        "max-smtp-out": "20",
+                                        "smtp-hosts": "mta5.am0.yahoodns.net, mta6.am0.yahoodns.net, mta7.am0.yahoodns.net"
+                                    }
+                                },
+                                {
+                                    "name": "comcast.net",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "max-rcpt-per-message": "100",
+                                        "max-smtp-out-per-source-ip": "5"
+                                    }
+                                }
+                            ],
+                            "type": "unthrottled"
+                        },
+                        {
+                            "host-domain_key": {
+                                "host-domain": "soulmateplay.com",
+                                "key": "102524135439393639739",
+                                "path": "/etc/pmta/dkim/102524135439393639739.soulmateplay.com"
+                            },
+                            "name": "154.22.55.5-soulmateplay.com-unthrottled",
+                            "smtp_source": {
+                                "ip_address": "154.22.55.5",
+                                "subdomain": "allie.soulmateplay.com"
+                            },
+                            "target-isps": [
+                                {
+                                    "name": "*",
+                                    "settings": {
+                                        "deliver-local-dsn": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$gmail",
+                                    "settings": {
+                                        "queue-to": "gmail.rollup",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "gmail.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "50",
+                                        "max-msg-rate": "240/h",
+                                        "max-smtp-out": "5",
+                                        "smtp-hosts": "aspmx.l.google.com, alt1.aspmx.l.google.com, alt2.aspmx.l.google.com, gmail-smtp-in.l.google.com, alt4.gmail-smtp-in.l.google.com, alt1.gmail-smtp-in.l.google.com, alt3.gmail-smtp-in.l.google.com, alt2.gmail-smtp-in.l.google.com",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$hotmail_isp.$isp_tld",
+                                    "settings": {
+                                        "queue-to": "hotmail.rollup"
+                                    }
+                                },
+                                {
+                                    "name": "hotmail.rollup",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "route": "hotmail.com",
+                                        "smtp-hosts": "lookup-mx:outlook.com"
+                                    }
+                                },
+                                {
+                                    "name": "yahooaol.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "20",
+                                        "max-msg-rate": "60/h",
+                                        "max-rcpt-per-message": "50",
+                                        "max-smtp-out": "20",
+                                        "smtp-hosts": "mta5.am0.yahoodns.net, mta6.am0.yahoodns.net, mta7.am0.yahoodns.net"
+                                    }
+                                },
+                                {
+                                    "name": "comcast.net",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "max-rcpt-per-message": "100",
+                                        "max-smtp-out-per-source-ip": "5"
+                                    }
+                                }
+                            ],
+                            "type": "unthrottled"
+                        },
+                        {
+                            "host-domain_key": {
+                                "host-domain": "soulmateplay.com",
+                                "key": "102524135440419680577",
+                                "path": "/etc/pmta/dkim/102524135440419680577.soulmateplay.com"
+                            },
+                            "name": "154.22.55.10-soulmateplay.com-unthrottled",
+                            "smtp_source": {
+                                "ip_address": "154.22.55.10",
+                                "subdomain": "emmett.soulmateplay.com"
+                            },
+                            "target-isps": [
+                                {
+                                    "name": "*",
+                                    "settings": {
+                                        "deliver-local-dsn": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$gmail",
+                                    "settings": {
+                                        "queue-to": "gmail.rollup",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "gmail.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "50",
+                                        "max-msg-rate": "240/h",
+                                        "max-smtp-out": "5",
+                                        "smtp-hosts": "aspmx.l.google.com, alt1.aspmx.l.google.com, alt2.aspmx.l.google.com, gmail-smtp-in.l.google.com, alt4.gmail-smtp-in.l.google.com, alt1.gmail-smtp-in.l.google.com, alt3.gmail-smtp-in.l.google.com, alt2.gmail-smtp-in.l.google.com",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$hotmail_isp.$isp_tld",
+                                    "settings": {
+                                        "queue-to": "hotmail.rollup"
+                                    }
+                                },
+                                {
+                                    "name": "hotmail.rollup",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "route": "hotmail.com",
+                                        "smtp-hosts": "lookup-mx:outlook.com"
+                                    }
+                                },
+                                {
+                                    "name": "yahooaol.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "20",
+                                        "max-msg-rate": "60/h",
+                                        "max-rcpt-per-message": "50",
+                                        "max-smtp-out": "20",
+                                        "smtp-hosts": "mta5.am0.yahoodns.net, mta6.am0.yahoodns.net, mta7.am0.yahoodns.net"
+                                    }
+                                },
+                                {
+                                    "name": "comcast.net",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "max-rcpt-per-message": "100",
+                                        "max-smtp-out-per-source-ip": "5"
+                                    }
+                                }
+                            ],
+                            "type": "unthrottled"
+                        },
+                        {
+                            "host-domain_key": {
+                                "host-domain": "soulmateplay.com",
+                                "key": "102524135441450215057",
+                                "path": "/etc/pmta/dkim/102524135441450215057.soulmateplay.com"
+                            },
+                            "name": "154.22.55.9-soulmateplay.com-unthrottled",
+                            "smtp_source": {
+                                "ip_address": "154.22.55.9",
+                                "subdomain": "gunnar.soulmateplay.com"
+                            },
+                            "target-isps": [
+                                {
+                                    "name": "*",
+                                    "settings": {
+                                        "deliver-local-dsn": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$gmail",
+                                    "settings": {
+                                        "queue-to": "gmail.rollup",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "gmail.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "50",
+                                        "max-msg-rate": "240/h",
+                                        "max-smtp-out": "5",
+                                        "smtp-hosts": "aspmx.l.google.com, alt1.aspmx.l.google.com, alt2.aspmx.l.google.com, gmail-smtp-in.l.google.com, alt4.gmail-smtp-in.l.google.com, alt1.gmail-smtp-in.l.google.com, alt3.gmail-smtp-in.l.google.com, alt2.gmail-smtp-in.l.google.com",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$hotmail_isp.$isp_tld",
+                                    "settings": {
+                                        "queue-to": "hotmail.rollup"
+                                    }
+                                },
+                                {
+                                    "name": "hotmail.rollup",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "route": "hotmail.com",
+                                        "smtp-hosts": "lookup-mx:outlook.com"
+                                    }
+                                },
+                                {
+                                    "name": "yahooaol.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "20",
+                                        "max-msg-rate": "60/h",
+                                        "max-rcpt-per-message": "50",
+                                        "max-smtp-out": "20",
+                                        "smtp-hosts": "mta5.am0.yahoodns.net, mta6.am0.yahoodns.net, mta7.am0.yahoodns.net"
+                                    }
+                                },
+                                {
+                                    "name": "comcast.net",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "max-rcpt-per-message": "100",
+                                        "max-smtp-out-per-source-ip": "5"
+                                    }
+                                }
+                            ],
+                            "type": "unthrottled"
+                        }
+                    ],
+                    "type": "unthrottled"
+                },
+                {
+                    "queue-pool-name": "soulmateplay.com-pool-fresh",
+                    "queues": [
+                        {
+                            "host-domain_key": {
+                                "host-domain": "soulmateplay.com",
+                                "key": "102524135438311730211",
+                                "path": "/etc/pmta/dkim/102524135438311730211.soulmateplay.com"
+                            },
+                            "name": "154.22.55.4-soulmateplay.com-fresh",
+                            "smtp_source": {
+                                "ip_address": "154.22.55.4",
+                                "subdomain": "alisson.soulmateplay.com"
+                            },
+                            "target-isps": [
+                                {
+                                    "name": "*",
+                                    "settings": {
+                                        "bounce-after": "180h",
+                                        "deliver-local-dsn": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$gmail",
+                                    "settings": {
+                                        "queue-to": "gmail.rollup",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "gmail.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "50",
+                                        "max-msg-rate": "1/m",
+                                        "max-smtp-out": "5",
+                                        "smtp-hosts": "aspmx.l.google.com, alt1.aspmx.l.google.com, alt2.aspmx.l.google.com, gmail-smtp-in.l.google.com, alt4.gmail-smtp-in.l.google.com, alt1.gmail-smtp-in.l.google.com, alt3.gmail-smtp-in.l.google.com, alt2.gmail-smtp-in.l.google.com",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$hotmail_isp.$isp_tld",
+                                    "settings": {
+                                        "queue-to": "hotmail.rollup"
+                                    }
+                                },
+                                {
+                                    "name": "hotmail.rollup",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "route": "hotmail.com",
+                                        "smtp-hosts": "lookup-mx:outlook.com"
+                                    }
+                                },
+                                {
+                                    "name": "yahooaol.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "20",
+                                        "max-msg-rate": "60/h",
+                                        "max-rcpt-per-message": "50",
+                                        "max-smtp-out": "20",
+                                        "smtp-hosts": "mta5.am0.yahoodns.net, mta6.am0.yahoodns.net, mta7.am0.yahoodns.net"
+                                    }
+                                },
+                                {
+                                    "name": "comcast.net",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "max-rcpt-per-message": "100",
+                                        "max-smtp-out-per-source-ip": "5"
+                                    }
+                                }
+                            ],
+                            "type": "fresh"
+                        },
+                        {
+                            "host-domain_key": {
+                                "host-domain": "soulmateplay.com",
+                                "key": "102524135439393639739",
+                                "path": "/etc/pmta/dkim/102524135439393639739.soulmateplay.com"
+                            },
+                            "name": "154.22.55.5-soulmateplay.com-fresh",
+                            "smtp_source": {
+                                "ip_address": "154.22.55.5",
+                                "subdomain": "allie.soulmateplay.com"
+                            },
+                            "target-isps": [
+                                {
+                                    "name": "*",
+                                    "settings": {
+                                        "bounce-after": "180h",
+                                        "deliver-local-dsn": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$gmail",
+                                    "settings": {
+                                        "queue-to": "gmail.rollup",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "gmail.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "50",
+                                        "max-msg-rate": "1/m",
+                                        "max-smtp-out": "5",
+                                        "smtp-hosts": "aspmx.l.google.com, alt1.aspmx.l.google.com, alt2.aspmx.l.google.com, gmail-smtp-in.l.google.com, alt4.gmail-smtp-in.l.google.com, alt1.gmail-smtp-in.l.google.com, alt3.gmail-smtp-in.l.google.com, alt2.gmail-smtp-in.l.google.com",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$hotmail_isp.$isp_tld",
+                                    "settings": {
+                                        "queue-to": "hotmail.rollup"
+                                    }
+                                },
+                                {
+                                    "name": "hotmail.rollup",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "route": "hotmail.com",
+                                        "smtp-hosts": "lookup-mx:outlook.com"
+                                    }
+                                },
+                                {
+                                    "name": "yahooaol.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "20",
+                                        "max-msg-rate": "60/h",
+                                        "max-rcpt-per-message": "50",
+                                        "max-smtp-out": "20",
+                                        "smtp-hosts": "mta5.am0.yahoodns.net, mta6.am0.yahoodns.net, mta7.am0.yahoodns.net"
+                                    }
+                                },
+                                {
+                                    "name": "comcast.net",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "max-rcpt-per-message": "100",
+                                        "max-smtp-out-per-source-ip": "5"
+                                    }
+                                }
+                            ],
+                            "type": "fresh"
+                        },
+                        {
+                            "host-domain_key": {
+                                "host-domain": "soulmateplay.com",
+                                "key": "102524135440419680577",
+                                "path": "/etc/pmta/dkim/102524135440419680577.soulmateplay.com"
+                            },
+                            "name": "154.22.55.10-soulmateplay.com-fresh",
+                            "smtp_source": {
+                                "ip_address": "154.22.55.10",
+                                "subdomain": "emmett.soulmateplay.com"
+                            },
+                            "target-isps": [
+                                {
+                                    "name": "*",
+                                    "settings": {
+                                        "bounce-after": "180h",
+                                        "deliver-local-dsn": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$gmail",
+                                    "settings": {
+                                        "queue-to": "gmail.rollup",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "gmail.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "50",
+                                        "max-msg-rate": "1/m",
+                                        "max-smtp-out": "5",
+                                        "smtp-hosts": "aspmx.l.google.com, alt1.aspmx.l.google.com, alt2.aspmx.l.google.com, gmail-smtp-in.l.google.com, alt4.gmail-smtp-in.l.google.com, alt1.gmail-smtp-in.l.google.com, alt3.gmail-smtp-in.l.google.com, alt2.gmail-smtp-in.l.google.com",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$hotmail_isp.$isp_tld",
+                                    "settings": {
+                                        "queue-to": "hotmail.rollup"
+                                    }
+                                },
+                                {
+                                    "name": "hotmail.rollup",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "route": "hotmail.com",
+                                        "smtp-hosts": "lookup-mx:outlook.com"
+                                    }
+                                },
+                                {
+                                    "name": "yahooaol.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "20",
+                                        "max-msg-rate": "60/h",
+                                        "max-rcpt-per-message": "50",
+                                        "max-smtp-out": "20",
+                                        "smtp-hosts": "mta5.am0.yahoodns.net, mta6.am0.yahoodns.net, mta7.am0.yahoodns.net"
+                                    }
+                                },
+                                {
+                                    "name": "comcast.net",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "max-rcpt-per-message": "100",
+                                        "max-smtp-out-per-source-ip": "5"
+                                    }
+                                }
+                            ],
+                            "type": "fresh"
+                        },
+                        {
+                            "host-domain_key": {
+                                "host-domain": "soulmateplay.com",
+                                "key": "102524135441450215057",
+                                "path": "/etc/pmta/dkim/102524135441450215057.soulmateplay.com"
+                            },
+                            "name": "154.22.55.9-soulmateplay.com-fresh",
+                            "smtp_source": {
+                                "ip_address": "154.22.55.9",
+                                "subdomain": "gunnar.soulmateplay.com"
+                            },
+                            "target-isps": [
+                                {
+                                    "name": "*",
+                                    "settings": {
+                                        "bounce-after": "180h",
+                                        "deliver-local-dsn": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$gmail",
+                                    "settings": {
+                                        "queue-to": "gmail.rollup",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "gmail.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "50",
+                                        "max-msg-rate": "1/m",
+                                        "max-smtp-out": "5",
+                                        "smtp-hosts": "aspmx.l.google.com, alt1.aspmx.l.google.com, alt2.aspmx.l.google.com, gmail-smtp-in.l.google.com, alt4.gmail-smtp-in.l.google.com, alt1.gmail-smtp-in.l.google.com, alt3.gmail-smtp-in.l.google.com, alt2.gmail-smtp-in.l.google.com",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$hotmail_isp.$isp_tld",
+                                    "settings": {
+                                        "queue-to": "hotmail.rollup"
+                                    }
+                                },
+                                {
+                                    "name": "hotmail.rollup",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "route": "hotmail.com",
+                                        "smtp-hosts": "lookup-mx:outlook.com"
+                                    }
+                                },
+                                {
+                                    "name": "yahooaol.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "20",
+                                        "max-msg-rate": "60/h",
+                                        "max-rcpt-per-message": "50",
+                                        "max-smtp-out": "20",
+                                        "smtp-hosts": "mta5.am0.yahoodns.net, mta6.am0.yahoodns.net, mta7.am0.yahoodns.net"
+                                    }
+                                },
+                                {
+                                    "name": "comcast.net",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "max-rcpt-per-message": "100",
+                                        "max-smtp-out-per-source-ip": "5"
+                                    }
+                                }
+                            ],
+                            "type": "fresh"
+                        }
+                    ],
+                    "type": "fresh"
+                },
+                {
+                    "queue-pool-name": "soulmateplay.com-pool",
+                    "queues": [
+                        {
+                            "host-domain_key": {
+                                "host-domain": "soulmateplay.com",
+                                "key": "102524135438311730211",
+                                "path": "/etc/pmta/dkim/102524135438311730211.soulmateplay.com"
+                            },
+                            "name": "154.22.55.4-soulmateplay.com",
+                            "smtp_source": {
+                                "ip_address": "154.22.55.4",
+                                "subdomain": "alisson.soulmateplay.com"
+                            },
+                            "target-isps": [
+                                {
+                                    "name": "*",
+                                    "settings": {
+                                        "bounce-after": "48h",
+                                        "deliver-local-dsn": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$gmail",
+                                    "settings": {
+                                        "queue-to": "gmail.rollup",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "gmail.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "50",
+                                        "max-msg-rate": "1/m",
+                                        "max-smtp-out": "5",
+                                        "smtp-hosts": "aspmx.l.google.com, alt1.aspmx.l.google.com, alt2.aspmx.l.google.com, gmail-smtp-in.l.google.com, alt4.gmail-smtp-in.l.google.com, alt1.gmail-smtp-in.l.google.com, alt3.gmail-smtp-in.l.google.com, alt2.gmail-smtp-in.l.google.com",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$hotmail_isp.$isp_tld",
+                                    "settings": {
+                                        "queue-to": "hotmail.rollup"
+                                    }
+                                },
+                                {
+                                    "name": "hotmail.rollup",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "route": "hotmail.com",
+                                        "smtp-hosts": "lookup-mx:outlook.com"
+                                    }
+                                },
+                                {
+                                    "name": "yahooaol.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "20",
+                                        "max-msg-rate": "60/h",
+                                        "max-rcpt-per-message": "50",
+                                        "max-smtp-out": "20",
+                                        "smtp-hosts": "mta5.am0.yahoodns.net, mta6.am0.yahoodns.net, mta7.am0.yahoodns.net"
+                                    }
+                                },
+                                {
+                                    "name": "comcast.net",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "max-rcpt-per-message": "100",
+                                        "max-smtp-out-per-source-ip": "5"
+                                    }
+                                }
+                            ],
+                            "type": ""
+                        },
+                        {
+                            "host-domain_key": {
+                                "host-domain": "soulmateplay.com",
+                                "key": "102524135439393639739",
+                                "path": "/etc/pmta/dkim/102524135439393639739.soulmateplay.com"
+                            },
+                            "name": "154.22.55.5-soulmateplay.com",
+                            "smtp_source": {
+                                "ip_address": "154.22.55.5",
+                                "subdomain": "allie.soulmateplay.com"
+                            },
+                            "target-isps": [
+                                {
+                                    "name": "*",
+                                    "settings": {
+                                        "bounce-after": "48h",
+                                        "deliver-local-dsn": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$gmail",
+                                    "settings": {
+                                        "queue-to": "gmail.rollup",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "gmail.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "50",
+                                        "max-msg-rate": "1/m",
+                                        "max-smtp-out": "5",
+                                        "smtp-hosts": "aspmx.l.google.com, alt1.aspmx.l.google.com, alt2.aspmx.l.google.com, gmail-smtp-in.l.google.com, alt4.gmail-smtp-in.l.google.com, alt1.gmail-smtp-in.l.google.com, alt3.gmail-smtp-in.l.google.com, alt2.gmail-smtp-in.l.google.com",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$hotmail_isp.$isp_tld",
+                                    "settings": {
+                                        "queue-to": "hotmail.rollup"
+                                    }
+                                },
+                                {
+                                    "name": "hotmail.rollup",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "route": "hotmail.com",
+                                        "smtp-hosts": "lookup-mx:outlook.com"
+                                    }
+                                },
+                                {
+                                    "name": "yahooaol.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "20",
+                                        "max-msg-rate": "60/h",
+                                        "max-rcpt-per-message": "50",
+                                        "max-smtp-out": "20",
+                                        "smtp-hosts": "mta5.am0.yahoodns.net, mta6.am0.yahoodns.net, mta7.am0.yahoodns.net"
+                                    }
+                                },
+                                {
+                                    "name": "comcast.net",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "max-rcpt-per-message": "100",
+                                        "max-smtp-out-per-source-ip": "5"
+                                    }
+                                }
+                            ],
+                            "type": ""
+                        },
+                        {
+                            "host-domain_key": {
+                                "host-domain": "soulmateplay.com",
+                                "key": "102524135440419680577",
+                                "path": "/etc/pmta/dkim/102524135440419680577.soulmateplay.com"
+                            },
+                            "name": "154.22.55.10-soulmateplay.com",
+                            "smtp_source": {
+                                "ip_address": "154.22.55.10",
+                                "subdomain": "emmett.soulmateplay.com"
+                            },
+                            "target-isps": [
+                                {
+                                    "name": "*",
+                                    "settings": {
+                                        "bounce-after": "48h",
+                                        "deliver-local-dsn": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$gmail",
+                                    "settings": {
+                                        "queue-to": "gmail.rollup",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "gmail.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "50",
+                                        "max-msg-rate": "1/m",
+                                        "max-smtp-out": "5",
+                                        "smtp-hosts": "aspmx.l.google.com, alt1.aspmx.l.google.com, alt2.aspmx.l.google.com, gmail-smtp-in.l.google.com, alt4.gmail-smtp-in.l.google.com, alt1.gmail-smtp-in.l.google.com, alt3.gmail-smtp-in.l.google.com, alt2.gmail-smtp-in.l.google.com",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$hotmail_isp.$isp_tld",
+                                    "settings": {
+                                        "queue-to": "hotmail.rollup"
+                                    }
+                                },
+                                {
+                                    "name": "hotmail.rollup",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "route": "hotmail.com",
+                                        "smtp-hosts": "lookup-mx:outlook.com"
+                                    }
+                                },
+                                {
+                                    "name": "yahooaol.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "20",
+                                        "max-msg-rate": "60/h",
+                                        "max-rcpt-per-message": "50",
+                                        "max-smtp-out": "20",
+                                        "smtp-hosts": "mta5.am0.yahoodns.net, mta6.am0.yahoodns.net, mta7.am0.yahoodns.net"
+                                    }
+                                },
+                                {
+                                    "name": "comcast.net",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "max-rcpt-per-message": "100",
+                                        "max-smtp-out-per-source-ip": "5"
+                                    }
+                                }
+                            ],
+                            "type": ""
+                        },
+                        {
+                            "host-domain_key": {
+                                "host-domain": "soulmateplay.com",
+                                "key": "102524135441450215057",
+                                "path": "/etc/pmta/dkim/102524135441450215057.soulmateplay.com"
+                            },
+                            "name": "154.22.55.9-soulmateplay.com",
+                            "smtp_source": {
+                                "ip_address": "154.22.55.9",
+                                "subdomain": "gunnar.soulmateplay.com"
+                            },
+                            "target-isps": [
+                                {
+                                    "name": "*",
+                                    "settings": {
+                                        "bounce-after": "48h",
+                                        "deliver-local-dsn": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$gmail",
+                                    "settings": {
+                                        "queue-to": "gmail.rollup",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "gmail.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "50",
+                                        "max-msg-rate": "1/m",
+                                        "max-smtp-out": "5",
+                                        "smtp-hosts": "aspmx.l.google.com, alt1.aspmx.l.google.com, alt2.aspmx.l.google.com, gmail-smtp-in.l.google.com, alt4.gmail-smtp-in.l.google.com, alt1.gmail-smtp-in.l.google.com, alt3.gmail-smtp-in.l.google.com, alt2.gmail-smtp-in.l.google.com",
+                                        "use-starttls": "yes"
+                                    }
+                                },
+                                {
+                                    "name": "$hotmail_isp.$isp_tld",
+                                    "settings": {
+                                        "queue-to": "hotmail.rollup"
+                                    }
+                                },
+                                {
+                                    "name": "hotmail.rollup",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "route": "hotmail.com",
+                                        "smtp-hosts": "lookup-mx:outlook.com"
+                                    }
+                                },
+                                {
+                                    "name": "yahooaol.rollup",
+                                    "settings": {
+                                        "max-msg-per-connection": "20",
+                                        "max-msg-rate": "60/h",
+                                        "max-rcpt-per-message": "50",
+                                        "max-smtp-out": "20",
+                                        "smtp-hosts": "mta5.am0.yahoodns.net, mta6.am0.yahoodns.net, mta7.am0.yahoodns.net"
+                                    }
+                                },
+                                {
+                                    "name": "comcast.net",
+                                    "settings": {
+                                        "max-msg-rate": "120/h",
+                                        "max-rcpt-per-message": "100",
+                                        "max-smtp-out-per-source-ip": "5"
+                                    }
+                                }
+                            ],
+                            "type": ""
+                        }
+                    ],
+                    "type": ""
+                }
+            ]
+        },
+        {
+            "name": "@*",
+            "queue-pools": [
+                {
+                    "queue-pool-name": "discard-mta",
+                    "queues": [],
+                    "type": ""
+                }
+            ]
+        }
+    ]
+}
