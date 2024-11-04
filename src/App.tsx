@@ -8,6 +8,7 @@ import { EmailLogsPage } from './pages/EmailLogsPage';
 import { SendingDomainsPage } from './pages/SendingDomainsPage';
 import { MailboxesPage } from './pages/MailboxesPage';
 import { DomainEditorPage } from './pages/DomainEditorPage';
+import { IPAddressesPage } from './pages/IPAddressesPage';
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
             <Route path="/mailboxes" element={<MailboxesPage />} />
             <Route path="/domain-editor" element={<DomainEditorPage />} />
             <Route path="/domain-editor/:domainId" element={<DomainEditorPage />} />
+            <Route path="/ip-addresses" element={<IPAddressesPage />} />
           </Routes>
         </div>
       </div>

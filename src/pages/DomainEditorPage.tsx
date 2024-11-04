@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Form, Row, Col, Button, Badge, Tabs, Tab } from 'react-bootstrap';
 import { X, Plus, Trash2, ArrowLeft } from 'lucide-react';
 import type { Domain, QueueStatus, Subdomain, Queue } from '../types/domain';
 import { SearchableSelect } from '../components/SearchableSelect';
 import { recipientDomainSettings } from '../config/recipientDomainSettings';
+import { StringInterpreter } from '../components/StringInterpreter';
 
 interface LocationState {
   domain?: Domain;
@@ -25,6 +26,7 @@ export function DomainEditorPage() {
   const [customIP, setCustomIP] = useState('');
   const [selectedQueue, setSelectedQueue] = useState<string | null>(null);
   const [activeRecipientDomain, setActiveRecipientDomain] = useState<string>('rd-0');
+  const [domainString, setDomainString] = useState<string>('');
 
   // Initialize the first queue tab if exists
   useState(() => {
@@ -96,6 +98,39 @@ export function DomainEditorPage() {
     if (!ip || !domain) return '';
     return type ? `${ip}-${domain}-${type}` : `${ip}-${domain}`;
   };
+
+  // Generate domain string whenever relevant data changes
+  useEffect(() => {
+    const generateDomainString = () => {
+      let str = '';
+      
+      // Add domain settings
+      str += `<domain ${domain}>\n`;
+      str += `  ip-addresses ${ipAddresses.join(', ')}\n\n`;
+
+      // Add queues
+      queues.forEach(queue => {
+        str += `  <queue ${queue.name}>\n`;
+        str += `    smtp-source-host ${queue.ipAddress} ${queue.subdomain}\n`;
+        
+        // Add target ISPs
+        queue.targetIsps.forEach(isp => {
+          str += `    <target-isp ${isp.name}>\n`;
+          Object.entries(isp.settings).forEach(([key, value]) => {
+            str += `      ${key} ${value}\n`;
+          });
+          str += `    </target-isp>\n`;
+        });
+        
+        str += `  </queue>\n\n`;
+      });
+
+      str += `</domain>`;
+      setDomainString(str);
+    };
+
+    generateDomainString();
+  }, [domain, ipAddresses, queues]);
 
   return (
     <div className="p-6">
@@ -455,6 +490,14 @@ export function DomainEditorPage() {
             Save Changes
           </Button>
         </div>
+      </div>
+
+      {/* Add StringInterpreter at the bottom */}
+      <div className="mt-6">
+        <StringInterpreter 
+          inputString={domainString}
+          readOnly
+        />
       </div>
     </div>
   );
