@@ -1,8 +1,13 @@
 import React from 'react';
 import { Home, BarChart2, Mail, Network, Globe, Ban, InboxIcon, Inbox } from 'lucide-react';
 import { NavLink } from './NavLink';
+import { useSidebar } from '../context/SidebarContext';
 
 export function Sidebar() {
+  const { showSidebar } = useSidebar();
+
+  if (!showSidebar) return null;
+  
   return (
     <div className="w-64 bg-[#1b2a4e] min-h-screen text-gray-300 p-4">
       <div className="flex items-center mb-8">
