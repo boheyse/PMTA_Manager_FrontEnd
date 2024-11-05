@@ -1,22 +1,26 @@
 import React from 'react';
-import { ChevronDown, Search } from 'lucide-react';
+import Form from 'react-bootstrap/Form';
 
 interface SelectProps {
   options: string[];
-  defaultValue: string;
+  placeholder: string;
+  value?: string;
+  onChange?: (value: string) => void;
 }
 
-export function Select({ options, defaultValue }: SelectProps) {
+export function Select({ options, placeholder, value, onChange }: SelectProps) {
   return (
-    <div className="relative">
-      <select className="appearance-none px-3 py-1.5 pr-8 border rounded-lg bg-white">
-        {options.map((option) => (
-          <option key={option} value={option}>
-            {option}
-          </option>
-        ))}
-      </select>
-      <ChevronDown className="w-4 h-4 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500" />
-    </div>
+    <Form.Select
+      value={value}
+      onChange={(e) => onChange?.(e.target.value)}
+      className="rounded-lg"
+    >
+      <option value="">{placeholder}</option>
+      {options.map((option) => (
+        <option key={option} value={option}>
+          {option}
+        </option>
+      ))}
+    </Form.Select>
   );
 }
