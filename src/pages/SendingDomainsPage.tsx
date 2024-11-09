@@ -115,7 +115,7 @@ export function SendingDomainsPage() {
 
   const handleQueueClick = (queuePool: QueuePool) => {
     // Handle queue click - implement as needed
-    console.log('Queue clicked:', queuePool);
+    // console.log('Queue clicked:', queuePool);
   };
 
   // Filter domains based on search term

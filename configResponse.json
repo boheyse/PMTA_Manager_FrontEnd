@@ -24,8 +24,8 @@
             ],
             "index": 0,
             "key": "virtual-mta",
-            "name": "154.22.55.6-securesoulmate.com",
-            "type": "section_start"
+            "type": "section_start",
+            "value": "154.22.55.6-securesoulmate.com"
         },
         {
             "content": [
@@ -42,8 +42,8 @@
             ],
             "index": 1,
             "key": "domain",
-            "name": "*",
-            "type": "section_start"
+            "type": "section_start",
+            "value": "*"
         },
         {
             "index": 2,
@@ -69,8 +69,8 @@
             ],
             "index": 4,
             "key": "domain",
-            "name": "$gmail",
-            "type": "section_start"
+            "type": "section_start",
+            "value": "$gmail"
         },
         {
             "index": 5,
@@ -111,8 +111,8 @@
             ],
             "index": 7,
             "key": "domain",
-            "name": "gmail.rollup",
-            "type": "section_start"
+            "type": "section_start",
+            "value": "gmail.rollup"
         },
         {
             "index": 8,
@@ -133,8 +133,8 @@
             ],
             "index": 10,
             "key": "domain",
-            "name": "$hotmail_isp.$isp_tld",
-            "type": "section_start"
+            "type": "section_start",
+            "value": "$hotmail_isp.$isp_tld"
         },
         {
             "index": 11,
@@ -165,8 +165,8 @@
             ],
             "index": 13,
             "key": "domain",
-            "name": "hotmail.rollup",
-            "type": "section_start"
+            "type": "section_start",
+            "value": "hotmail.rollup"
         },
         {
             "index": 14,
@@ -207,8 +207,8 @@
             ],
             "index": 16,
             "key": "domain",
-            "name": "yahooaol.rollup",
-            "type": "section_start"
+            "type": "section_start",
+            "value": "yahooaol.rollup"
         },
         {
             "index": 17,
@@ -239,8 +239,8 @@
             ],
             "index": 19,
             "key": "domain",
-            "name": "comcast.net",
-            "type": "section_start"
+            "type": "section_start",
+            "value": "comcast.net"
         },
         {
             "index": 20,
@@ -284,8 +284,8 @@
             ],
             "index": 24,
             "key": "virtual-mta",
-            "name": "154.22.55.13-securesoulmate.com",
-            "type": "section_start"
+            "type": "section_start",
+            "value": "154.22.55.13-securesoulmate.com"
         },
         {
             "content": [
@@ -302,8 +302,8 @@
             ],
             "index": 25,
             "key": "domain",
-            "name": "*",
-            "type": "section_start"
+            "type": "section_start",
+            "value": "*"
         },
         {
             "index": 26,
@@ -329,8 +329,8 @@
             ],
             "index": 28,
             "key": "domain",
-            "name": "$gmail",
-            "type": "section_start"
+            "type": "section_start",
+            "value": "$gmail"
         },
         {
             "index": 29,
@@ -371,8 +371,8 @@
             ],
             "index": 31,
             "key": "domain",
-            "name": "gmail.rollup",
-            "type": "section_start"
+            "type": "section_start",
+            "value": "gmail.rollup"
         },
         {
             "index": 32,
@@ -393,8 +393,8 @@
             ],
             "index": 34,
             "key": "domain",
-            "name": "$hotmail_isp.$isp_tld",
-            "type": "section_start"
+            "type": "section_start",
+            "value": "$hotmail_isp.$isp_tld"
         },
         {
             "index": 35,
@@ -425,8 +425,8 @@
             ],
             "index": 37,
             "key": "domain",
-            "name": "hotmail.rollup",
-            "type": "section_start"
+            "type": "section_start",
+            "value": "hotmail.rollup"
         },
         {
             "index": 38,
@@ -467,8 +467,8 @@
             ],
             "index": 40,
             "key": "domain",
-            "name": "yahooaol.rollup",
-            "type": "section_start"
+            "type": "section_start",
+            "value": "yahooaol.rollup"
         },
         {
             "index": 41,
@@ -499,8 +499,8 @@
             ],
             "index": 43,
             "key": "domain",
-            "name": "comcast.net",
-            "type": "section_start"
+            "type": "section_start",
+            "value": "comcast.net"
         },
         {
             "index": 44,
@@ -544,8 +544,8 @@
             ],
             "index": 48,
             "key": "virtual-mta",
-            "name": "154.22.55.14-securesoulmate.com",
-            "type": "section_start"
+            "type": "section_start",
+            "value": "154.22.55.14-securesoulmate.com"
         },
         {
             "content": [
@@ -562,8 +562,8 @@
             ],
             "index": 49,
             "key": "domain",
-            "name": "*",
-            "type": "section_start"
+            "type": "section_start",
+            "value": "*"
         },
         {
             "index": 50,
@@ -589,8 +589,8 @@
             ],
             "index": 52,
             "key": "domain",
-            "name": "$gmail",
-            "type": "section_start"
+            "type": "section_start",
+            "value": "$gmail"
         },
         {
             "index": 53,
@@ -631,8 +631,8 @@
             ],
             "index": 55,
             "key": "domain",
-            "name": "gmail.rollup",
-            "type": "section_start"
+            "type": "section_start",
+            "value": "gmail.rollup"
         },
         {
             "index": 56,
@@ -653,8 +653,8 @@
             ],
             "index": 58,
             "key": "domain",
-            "name": "$hotmail_isp.$isp_tld",
-            "type": "section_start"
+            "type": "section_start",
+            "value": "$hotmail_isp.$isp_tld"
         },
         {
             "index": 59,
@@ -685,8 +685,8 @@
             ],
             "index": 61,
             "key": "domain",
-            "name": "hotmail.rollup",
-            "type": "section_start"
+            "type": "section_start",
+            "value": "hotmail.rollup"
         },
         {
             "index": 62,
@@ -727,8 +727,8 @@
             ],
             "index": 64,
             "key": "domain",
-            "name": "yahooaol.rollup",
-            "type": "section_start"
+            "type": "section_start",
+            "value": "yahooaol.rollup"
         },
         {
             "index": 65,
@@ -759,8 +759,8 @@
             ],
             "index": 67,
             "key": "domain",
-            "name": "comcast.net",
-            "type": "section_start"
+            "type": "section_start",
+            "value": "comcast.net"
         },
         {
             "index": 68,
@@ -804,8 +804,8 @@
             ],
             "index": 72,
             "key": "virtual-mta",
-            "name": "154.22.55.2-securesoulmate.com",
-            "type": "section_start"
+            "type": "section_start",
+            "value": "154.22.55.2-securesoulmate.com"
         },
         {
             "content": [
@@ -822,8 +822,8 @@
             ],
             "index": 73,
             "key": "domain",
-            "name": "*",
-            "type": "section_start"
+            "type": "section_start",
+            "value": "*"
         },
         {
             "index": 74,
@@ -849,8 +849,8 @@
             ],
             "index": 76,
             "key": "domain",
-            "name": "$gmail",
-            "type": "section_start"
+            "type": "section_start",
+            "value": "$gmail"
         },
         {
             "index": 77,
@@ -891,8 +891,8 @@
             ],
             "index": 79,
             "key": "domain",
-            "name": "gmail.rollup",
-            "type": "section_start"
+            "type": "section_start",
+            "value": "gmail.rollup"
         },
         {
             "index": 80,
@@ -913,8 +913,8 @@
             ],
             "index": 82,
             "key": "domain",
-            "name": "$hotmail_isp.$isp_tld",
-            "type": "section_start"
+            "type": "section_start",
+            "value": "$hotmail_isp.$isp_tld"
         },
         {
             "index": 83,
@@ -945,8 +945,8 @@
             ],
             "index": 85,
             "key": "domain",
-            "name": "hotmail.rollup",
-            "type": "section_start"
+            "type": "section_start",
+            "value": "hotmail.rollup"
         },
         {
             "index": 86,
@@ -987,8 +987,8 @@
             ],
             "index": 88,
             "key": "domain",
-            "name": "yahooaol.rollup",
-            "type": "section_start"
+            "type": "section_start",
+            "value": "yahooaol.rollup"
         },
         {
             "index": 89,
@@ -1019,8 +1019,8 @@
             ],
             "index": 91,
             "key": "domain",
-            "name": "comcast.net",
-            "type": "section_start"
+            "type": "section_start",
+            "value": "comcast.net"
         },
         {
             "index": 92,
@@ -1065,8 +1065,8 @@
             ],
             "index": 96,
             "key": "virtual-mta-pool",
-            "name": "securesoulmate.com-pool",
-            "type": "section_start"
+            "type": "section_start",
+            "value": "securesoulmate.com-pool"
         },
         {
             "index": 97,

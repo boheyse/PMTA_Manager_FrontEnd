@@ -1,42 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Form, Row, Col, Button, Badge, Tabs, Tab } from 'react-bootstrap';
 import { X, Plus, ArrowLeft } from 'lucide-react';
-import type { Domain, Queue, QueuePool } from '../types/domain';
-import { StringInterpreter } from '../components/StringInterpreter';
 import { useSidebar } from '../context/SidebarContext';
+import { StringInterpreter } from '../components/StringInterpreter';
+import type { Domain, QueuePool, Section, Setting } from '../types/domain';
 
 interface LocationState {
   domain?: Domain;
   availableIPs: string[];
-}
-
-interface ConfigSection {
-  key?: string | null;
-  content: ConfigContent[];
-  name?: string | null;
-  type: string;
-  index: number;
-}
-
-interface ConfigContent {
-  key?: string | null;
-  type: string;
-  value?: string | null;
-}
-
-interface ConfigState {
-  sections: ConfigSection[];
-  editHistory: {
-    index: number;
-    type: 'add' | 'update' | 'delete';
-    timestamp: number;
-  }[];
-}
-
-interface ConfigResponse {
-  data: ConfigSection[];
-  status: string;
 }
 
 export function DomainEditorPage() {
@@ -46,213 +18,179 @@ export function DomainEditorPage() {
   const { domain: existingDomain, availableIPs } = location.state as LocationState;
   const { setShowSidebar } = useSidebar();
 
-  const [domain, setDomain] = useState<string>(existingDomain?.domainName || '');
-  const [ipAddresses, setIpAddresses] = useState<string[]>(existingDomain?.ipAddresses || []);
-  const [queuePools, setQueuePools] = useState<QueuePool[]>([]);
+  const [domain, setDomain] = useState(existingDomain?.domainName || '');
+  const [ipAddresses, setIpAddresses] = useState(existingDomain?.ipAddresses || []);
   const [newIP, setNewIP] = useState('');
   const [customIP, setCustomIP] = useState('');
-  const [activePoolTab, setActivePoolTab] = useState<string>('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [domainConfig, setDomainConfig] = useState<any>(null);
-  const [poolConfigs, setPoolConfigs] = useState<Record<string, any>>({});
-  const [configState, setConfigState] = useState<ConfigState>({
-    sections: [],
-    editHistory: []
-  });
   const [activeQueueTab, setActiveQueueTab] = useState<string>('');
+  const [poolData, setPoolData] = useState<{ [key: string]: Section[] }>({});
+  const [updatedPoolData, setUpdatedPoolData] = useState<{ [key: string]: Section[] }>({});
+  const [poolName, setPoolName] = useState<string>('');
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [originalString, setOriginalString] = useState<string>('');
+  const [modifiedString, setModifiedString] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Hide sidebar when component mounts
   useEffect(() => {
     setShowSidebar(false);
     return () => setShowSidebar(true);
   }, [setShowSidebar]);
 
-  // Initialize queue pools from existing domain
   useEffect(() => {
-    if (existingDomain?.queuePools) {
-      setQueuePools(existingDomain.queuePools);
-      if (existingDomain.queuePools.length > 0) {
-        const firstPool = existingDomain.queuePools[0];
-        setActivePoolTab(firstPool.queuePoolName);
-        fetchDomainConfig(
-          existingDomain.domainName,
-          firstPool.queuePoolName,
-          firstPool.type || ''
+    const fetchData = async () => {
+      try {
+        const responses = await Promise.all(
+          existingDomain?.queuePools.map(pool => {
+            const fileName = pool.type ? `${existingDomain?.domainName}-${pool.type}.vmta.json` : `${existingDomain?.domainName}.vmta.json`;
+            return fetch(`http://127.0.0.1:5000/domain-config/${fileName}`);
+          }) || []
         );
+        const results = await Promise.all(responses.map(res => res.json()));
+        const poolDataResult: { [key: string]: Section[] } = {};
+        existingDomain?.queuePools.forEach((pool, index) => {
+          poolDataResult[pool.queuePoolName] = results[index].status === 'success' ? results[index].data : [];
+        });
+        setPoolData(poolDataResult);
+      } catch (error) {
+        console.error('Error fetching data:', error);
       }
-    }
+    };
+    fetchData();
   }, [existingDomain]);
 
-  const handleAddIP = () => {
-    const ipToAdd = newIP || customIP;
-    if (ipToAdd && !ipAddresses.includes(ipToAdd)) {
-      setIpAddresses(prev => [...prev, ipToAdd]);
-      setNewIP('');
-      setCustomIP('');
+  useEffect(() => {
+    if (Object.keys(poolData).length > 0) {
+      setUpdatedPoolData(poolData);
     }
-  };
+  }, [poolData]);
 
-  const handleRemoveIP = (ip: string) => {
-    setIpAddresses(prev => prev.filter(existingIP => existingIP !== ip));
-  };
-
-  const handleAddQueuePool = () => {
-    const newPool: QueuePool = {
-      queuePoolName: `${domain}-pool-${queuePools.length + 1}`,
-      queues: [],
-      type: ''
-    };
-    setQueuePools(prev => [...prev, newPool]);
-    setActivePoolTab(newPool.queuePoolName);
-  };
-
-  const handleRemoveQueuePool = (poolName: string) => {
-    setQueuePools(prev => prev.filter(pool => pool.queuePoolName !== poolName));
-  };
-
-  const handleAddQueueToPool = (poolName: string) => {
-    setQueuePools(prev => prev.map(pool => {
-      if (pool.queuePoolName === poolName) {
-        const newQueue: Queue = {
-          queueName: '',
-          ipAddress: '',
-          subdomain: '',
-          type: pool.type,
-        };
-        return {
-          ...pool,
-          queues: [...pool.queues, newQueue]
-        };
+  useEffect(() => {
+    for (const pool of existingDomain?.queuePools || []) {
+      if (pool.queues.some(queue => queue.queueName === activeQueueTab)) {
+        setPoolName(pool.queuePoolName);
+        console.log(JSON.stringify(updatedPoolData[pool.queuePoolName], null, 2)); 
       }
-      return pool;
-    }));
+    }
+
+    
+  }, [activeQueueTab]);
+
+  useEffect(() => {
+    if (!poolName) return;
+
+    setIsLoading(true);
+    
+    // Fetch original string
+    const fetchOriginal = fetch('http://127.0.0.1:5000/config-string', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ data: poolData[poolName] || [] }),
+    });
+
+    // Fetch modified string
+    const fetchModified = fetch('http://127.0.0.1:5000/config-string', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ data: updatedPoolData[poolName] || [] }),
+    });
+
+    // Fetch both strings in parallel
+    Promise.all([fetchOriginal, fetchModified])
+      .then(([originalRes, modifiedRes]) => Promise.all([originalRes.json(), modifiedRes.json()]))
+      .then(([originalData, modifiedData]) => {
+        setOriginalString(JSON.stringify(originalData['config_string'], null, 2));
+        setModifiedString(JSON.stringify(modifiedData['config_string'], null, 2));
+        setIsLoading(false);
+      })
+      .catch(error => {
+        console.error('Error fetching strings:', error);
+        setIsLoading(false);
+      });
+  }, [poolName, poolData, updatedPoolData]);
+
+  // Function to determine the file name
+  const getFileName = (poolName: string): string => {
+    // Construct the file name based on your logic
+    // For example, using the domain name and pool type
+    const pool = existingDomain?.queuePools.find(p => p.queuePoolName === poolName);
+    return pool?.type ? `${existingDomain?.domainName}-${pool.type}.vmta.json` : `${existingDomain?.domainName}.vmta.json`;
   };
 
-  const fetchDomainConfig = async (domainName: string, poolName: string, poolType: string) => {
-    try {
-      const fileName = poolType 
-        ? `${domainName}-${poolType}.vmta.json`
-        : `${domainName}.vmta.json`;
-
-      const response = await fetch(
-        `http://127.0.0.1:5000/domain-config/${fileName}`
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const rawData = await response.json();
-      
-      const transformedData: ConfigSection[] = rawData.data.map((section: any) => ({
-        name: section.name ?? null,
-        content: Array.isArray(section.content) 
-          ? section.content.map((item: any) => ({
-              key: item?.key ?? null,
-              type: item?.type ?? 'unknown',
-              value: item?.value ?? null
-            }))
-          : [],
-        index: section.index,
-        key: section.key ?? null,
-        type: section.type ?? 'unknown'
-      }));
-
-      setPoolConfigs(prev => ({
-        ...prev,
-        [poolName]: {
-          data: transformedData,
-          status: rawData.status
+  const handleUpdate = (pool: string, index: number, key: string, value: string) => {
+    setUpdatedPoolData((prevData) => {
+      const updatedData = { ...prevData };
+      const section = updatedData[pool][index];
+      if (section.content) {
+        const setting = section.content.find((item) => item.key === key);
+        if (setting) {
+          setting.value = value;
         }
-      }));
-      
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch domain configuration');
-      console.error('Error fetching domain config:', err);
-    }
-  };
-
-  // Update the tab change handler
-  const handleTabChange = (poolName: string) => {
-    setActivePoolTab(poolName);
-    const pool = queuePools.find(p => p.queuePoolName === poolName);
-    if (pool && existingDomain?.domainName) {
-      fetchDomainConfig(existingDomain.domainName, poolName, pool.type || '');
-    }
-  };
-
-  const handleSettingChange = (
-    sectionIndex: number,
-    settingIndex: number,
-    newValue: string
-  ) => {
-    setConfigState(prev => {
-      const newSections = [...prev.sections];
-      const section = newSections[sectionIndex];
-      if (section.content[settingIndex]) {
-        section.content[settingIndex].value = newValue;
       }
-
-      return {
-        sections: newSections,
-        editHistory: [
-          ...prev.editHistory,
-          {
-            index: sectionIndex,
-            type: 'update',
-            timestamp: Date.now()
-          }
-        ]
-      };
+      return updatedData;
     });
   };
 
-  const handleAddSection = (index: number, newSection: ConfigSection) => {
-    setConfigState(prev => {
-      const newSections = [
-        ...prev.sections.slice(0, index),
-        newSection,
-        ...prev.sections.slice(index)
-      ];
+  function getPoolTypeByName(poolName: string, queuePools: QueuePool[]): string | undefined {
+    const pool = queuePools.find(pool => pool.queuePoolName === poolName);
+    return pool ? pool.type : undefined;
+  }
 
-      return {
-        sections: newSections,
-        editHistory: [
-          ...prev.editHistory,
-          {
-            index,
-            type: 'add',
-            timestamp: Date.now()
-          }
-        ]
-      };
+
+  function getTargetISPs(sections: Section[]): { [key: string]: Section[] } {
+    const targetISPs: { [key: string]: Section[] } = {};
+    let currentVMTANode: string | null = null;
+
+    sections.forEach((section) => {
+      if (section.key === 'virtual-mta' && section.type === 'section_start') {
+        currentVMTANode = section.value;
+        targetISPs[currentVMTANode] = [];
+      } else if (section.key === 'virtual-mta' && section.type === 'section_end') {
+        currentVMTANode = null;
+      } else if (currentVMTANode && section.key === 'domain') {
+        targetISPs[currentVMTANode].push(section);
+      }
+    });
+
+    return targetISPs;
+  }
+
+  const handleAddTargetISP = () => {
+    // Logic to add a new target ISP
+  };
+
+  const handleAddSetting = (pool: string, domainIdx: number) => {
+    setPoolData((prevData) => {
+      const updatedData = { ...prevData };
+      const section = updatedData[pool][domainIdx];
+      if (section.content) {
+        section.content.push({ key: '', type: 'setting', value: '' });
+      }
+      return updatedData;
     });
   };
 
-  const getQueueNames = (config: ConfigSection[]): string[] => {
-    return config
-      .filter(section => section.type === 'section_start' && section.name === 'virtual-mta')
-      .map(section => section.name || '');
+  const handleSaveChanges = () => {
+    // Logic to save changes
+  };
+
+  const handleCancel = () => {
+    navigate('/sending-domains');
   };
 
   return (
     <div className="flex h-screen overflow-hidden">
-      {/* Main Editor Section - 65% */}
-      <div className="w-[65%] overflow-y-auto p-6">
+      <div className="flex-grow overflow-y-auto p-6">
         <div className="flex items-center mb-6">
-          <button
-            onClick={() => navigate('/sending-domains')}
-            className="mr-4 text-gray-600 hover:text-gray-800"
-          >
+          <button onClick={() => navigate('/sending-domains')} className="mr-4 text-gray-600 hover:text-gray-800">
             <ArrowLeft className="w-6 h-6" />
           </button>
-          <h1 className="text-2xl font-semibold">
-            {domainId ? 'Edit Domain' : 'Add New Domain'}
-          </h1>
+          <h1 className="text-2xl font-semibold">{domainId ? 'Edit Domain' : 'Add New Domain'}</h1>
         </div>
 
-        {/* Domain Settings Section */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
           <h2 className="text-lg font-semibold mb-4">Domain Settings</h2>
           <Form>
@@ -260,7 +198,7 @@ export function DomainEditorPage() {
               <Form.Label>Domain Name</Form.Label>
               <Form.Control
                 type="text"
-                value={existingDomain?.domainName || ''}
+                value={domain}
                 onChange={(e) => setDomain(e.target.value)}
                 placeholder="example.com"
               />
@@ -276,11 +214,9 @@ export function DomainEditorPage() {
                     className="mb-2"
                   >
                     <option value="">Select an IP address</option>
-                    {availableIPs
-                      .filter(ip => !ipAddresses.includes(ip))
-                      .map(ip => (
-                        <option key={ip} value={ip}>{ip}</option>
-                      ))}
+                    {availableIPs.filter(ip => !ipAddresses.includes(ip)).map(ip => (
+                      <option key={ip} value={ip}>{ip}</option>
+                    ))}
                   </Form.Select>
                 </Col>
                 <Col md={5}>
@@ -292,13 +228,14 @@ export function DomainEditorPage() {
                   />
                 </Col>
                 <Col md={2}>
-                  <Button 
-                    variant="primary"
-                    onClick={handleAddIP}
-                    className="w-100"
-                  >
-                    Add IP
-                  </Button>
+                  <Button variant="primary" onClick={() => {
+                    const ipToAdd = newIP || customIP;
+                    if (ipToAdd && !ipAddresses.includes(ipToAdd)) {
+                      setIpAddresses(prev => [...prev, ipToAdd]);
+                      setNewIP('');
+                      setCustomIP('');
+                    }
+                  }} className="w-100">Add IP</Button>
                 </Col>
               </Row>
             </Form.Group>
@@ -309,17 +246,9 @@ export function DomainEditorPage() {
                   <span className="text-muted">No IP addresses selected</span>
                 ) : (
                   ipAddresses.map(ip => (
-                    <Badge 
-                      key={ip} 
-                      bg="secondary" 
-                      className="d-flex align-items-center p-2"
-                    >
+                    <Badge key={ip} bg="secondary" className="d-flex align-items-center p-2">
                       {ip}
-                      <Button
-                        variant="link"
-                        className="p-0 ms-2 text-white"
-                        onClick={() => handleRemoveIP(ip)}
-                      >
+                      <Button variant="link" className="p-0 ms-2 text-white" onClick={() => setIpAddresses(prev => prev.filter(existingIP => existingIP !== ip))}>
                         <X size={14} />
                       </Button>
                     </Badge>
@@ -330,102 +259,139 @@ export function DomainEditorPage() {
           </Form>
         </div>
 
-        {/* Queue Pools Section */}
         <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold">Queue Pools</h2>
-            <Button
-              variant="outline-primary"
-              onClick={handleAddQueuePool}
-              className="flex items-center"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Queue Pool
-            </Button>
-          </div>
-
-          <Tabs
-            activeKey={activePoolTab}
-            onSelect={(k) => k && handleTabChange(k)}
-            className="mb-4"
-          >
-            {queuePools.map((pool) => (
-              <Tab
-                key={pool.queuePoolName}
-                eventKey={pool.queuePoolName}
-                title={
-                  <div className="flex items-center">
-                    {pool.queuePoolName}
-                    <Button
-                      variant="link"
-                      className="ml-2 p-0 text-danger"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRemoveQueuePool(pool.queuePoolName);
-                      }}
-                    >
-                      <X size={14} />
+          <h2 className="text-lg font-semibold mb-4">Queues</h2>
+          <Tabs activeKey={activeQueueTab} onSelect={(k) => k && setActiveQueueTab(k)} className="mb-4">
+            {Object.entries(poolData).map(([poolName, sections]) => {
+              const targetISPs = getTargetISPs(sections);
+              return sections.filter(section => section.key === 'virtual-mta').map((section, index) => (
+                <Tab key={index} eventKey={section.value} title={section.value}>
+                  <div className="p-4 border rounded">
+                    <Form>
+                      <Row>
+                        <Col md={4}>
+                          <Form.Group className="mb-4">
+                            <Form.Label>Subdomain</Form.Label>
+                            <Form.Control
+                              type="text"
+                              value={section.content?.find(setting => setting.key === 'smtp-source-host')?.value?.split(' ')[1] || ''}
+                              onChange={(e) => handleUpdate(poolName, index, 'subdomain', e.target.value)}
+                            />
+                          </Form.Group>
+                        </Col>
+                        <Col md={4}>
+                          <Form.Group className="mb-4">
+                            <Form.Label>IP Address</Form.Label>
+                            <Form.Control
+                              type="text"
+                              value={section.content?.find(setting => setting.key === 'smtp-source-host')?.value?.split(' ')[0] || ''}
+                              onChange={(e) => handleUpdate(poolName, index, 'ip-address', e.target.value)}
+                            />
+                          </Form.Group>
+                        </Col>
+                        <Col md={4}>
+                          <Form.Group className="mb-4">
+                            <Form.Label>Type</Form.Label>
+                            <Form.Control
+                              type="text"
+                              value={getPoolTypeByName(poolName, existingDomain?.queuePools || [])}
+                              onChange={(e) => handleUpdate(poolName, index, 'type', e.target.value)}
+                            />
+                          </Form.Group>
+                        </Col>
+                      </Row>
+                    </Form>
+                    <h4 className="text-lg font-semibold mt-4">Target ISPs</h4>
+                    <Button variant="outline-primary" onClick={handleAddTargetISP} size="sm" className="mb-3">
+                      Add Target ISP
                     </Button>
+                    <Tabs>
+                      {targetISPs[section?.value]?.map((domainSection, domainIdx) => (
+                        <Tab key={domainIdx} eventKey={domainSection.value} title={domainSection.value}>
+                          <div className="border rounded p-3 mb-4">
+                            Target ISP Name:
+                          <Row className="mb-3">
+                                <Col md={3}>
+                                  <Form.Control
+                                    type="text"
+                                    value={domainSection.value}
+                                    onChange={(e) => {
+                                      handleUpdate(poolName, domainIdx, domainSection.key, e.target.value)
+                                    }}
+                                    placeholder="Enter Target ISP"
+                                  />
+                                </Col>
+                                <Col md={9} className="text-end">
+                                  <Button variant="link" onClick={() => handleAddSetting(poolName, domainIdx)}>
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Add Setting
+                                  </Button>
+                                </Col>
+                              </Row>
+                            <Form>
+                            <div className="d-flex flex-wrap gap-3">
+                              {domainSection.content?.map((setting, settingIdx) => (
+                                <div key={settingIdx} className="d-flex align-items-center gap-2 flex-grow-1">
+                                  <div style={{ width: '45%' }}>
+                                    <Form.Control
+                                      type="text"
+                                      value={setting.key}
+                                      onChange={(e) => handleUpdate(poolName, domainIdx, setting.key, e.target.value)}
+                                      size="sm"
+                                      className="bg-light"
+                                    />
+                                  </div>
+                                  <div style={{ width: '45%' }}>
+                                    <Form.Control
+                                      type="text"
+                                      value={setting.value || ''}
+                                      onChange={(e) => handleUpdate(poolName, domainIdx, setting.key, e.target.value)}
+                                      size="sm"
+                                      className="hover:bg-gray-50 focus:bg-white transition-colors"
+                                      style={{ cursor: 'text' }}
+                                    />
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                            </Form>
+                          </div>
+                        </Tab>
+                      ))}
+                    </Tabs>
                   </div>
-                }
-              >
-                <div className="p-4 border rounded">
-                  {poolConfigs[pool.queuePoolName] && (
-                    <div>
-                      <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-lg font-semibold">Queue Configuration</h3>
-                        <Button
-                          variant="primary"
-                          className="flex items-center bg-blue-500 hover:bg-blue-600 text-white"
-                          onClick={() => handleAddQueueToPool(pool.queuePoolName)}
-                        >
-                          <Plus className="w-4 h-4 mr-2" />
-                          Add Queue
-                        </Button>
-                      </div>
-                      
-                      <Tabs
-                        activeKey={activeQueueTab}
-                        onSelect={(k) => k && setActiveQueueTab(k)}
-                        className="mb-4"
-                      >
-                        {poolConfigs[pool.queuePoolName].data
-                          .filter((section: ConfigSection) => 
-                            section.type === 'section_start' && 
-                            section.key === 'virtual-mta' &&
-                            section.name
-                          )
-                          .map((section: ConfigSection) => (
-                            <Tab
-                              key={section.name}
-                              eventKey={section.name || ''}
-                              title={section.name}
-                            >
-                              <div className="p-4 border rounded mt-4">
-                                {/* Queue settings will go here in future */}
-                                <pre className="text-sm">
-                                  {JSON.stringify(section.content, null, 2)}
-                                </pre>
-                              </div>
-                            </Tab>
-                          ))}
-                      </Tabs>
-                    </div>
-                  )}
-                </div>
-              </Tab>
-            ))}
+                </Tab>
+              ));
+            })}
           </Tabs>
+        </div>
+        <div className="flex justify-end mt-4">
+          <Button variant="secondary" onClick={handleCancel} className="mr-2">Cancel</Button>
+          <Button variant="primary" onClick={handleSaveChanges}>Save Changes</Button>
         </div>
       </div>
 
-      {/* String Interpreter Section - 35% */}
-      <div className="w-[35%] border-l border-gray-200 overflow-y-auto">
-        <StringInterpreter 
-          originalDomain={existingDomain?.domainName || ''} 
-          modifiedDomain={domain}
-        />
+      <div className={`transition-all duration-300 ${isExpanded ? 'w-[1000%]' : 'w-[15%]'} border-l border-gray-200 overflow-y-auto`}>
+        <button 
+          className="p-2 text-blue-500 hover:underline"
+          onClick={() => setIsExpanded(!isExpanded)}
+        >
+          {isExpanded ? 'Collapse' : 'Expand'} String Interpreter
+        </button>
+        {isExpanded && (
+          isLoading ? (
+            <div className="p-4 text-center">
+              <span className="text-gray-600">Loading changes...</span>
+            </div>
+          ) : (
+            <StringInterpreter 
+              originalString={originalString}
+              modifiedString={modifiedString}
+              title={getFileName(poolName)}
+            />
+          )
+        )}
       </div>
-    </div>
+    </div> 
   );
 } 

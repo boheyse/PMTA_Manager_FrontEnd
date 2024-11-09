@@ -16,3 +16,18 @@ export interface Domain {
   ipAddresses: string[];
   queuePools: QueuePool[];
 }
+
+export interface Section {
+  content?: Setting[];
+  index: number;
+  key?: string;
+  value?: string;
+  type: string;
+}
+
+// Type Definitions
+export interface Setting {
+  key?: string;
+  type: string;
+  value?: string;
+}
