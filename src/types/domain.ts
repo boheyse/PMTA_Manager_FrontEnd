@@ -1,29 +1,18 @@
-export type QueueStatus = 'Active' | 'Paused' | 'Stopped';
-export type ISPTarget = 'Gmail' | 'Yahoo/AOL' | 'Hotmail';
-export type QueueType = 'Fresh' | 'Engaged' | 'Unthrottled';
-
 export interface Queue {
-  name: string;
+  queueName: string;
   ipAddress: string;
   subdomain: string;
-  type?: string;
-  queueStatus: QueueStatus;
-  targetIsps: {
-    name: string;
-    settings: {
-      [key: string]: string;
-    };
-  }[];
+  type: string;
+}
+
+export interface QueuePool {
+  queuePoolName: string;
+  type: string;
+  queues: Queue[];
 }
 
 export interface Domain {
-  domain: string;
+  domainName: string;
   ipAddresses: string[];
-  emailsSent: number;
-  queueStatus: string;
-  queues: Queue[];
-  healthStatus: 'healthy' | 'warning' | 'error';
-  ispStatus: {
-    [key in ISPTarget]: QueueStatus;
-  };
-} 
+  queuePools: QueuePool[];
+}

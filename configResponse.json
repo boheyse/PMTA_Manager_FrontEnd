@@ -1,0 +1,1078 @@
+{
+    "data": [
+        {
+            "content": [
+                {
+                    "key": "smtp-source-host",
+                    "type": "setting",
+                    "value": "154.22.55.6 kamden.securesoulmate.com"
+                },
+                {
+                    "key": "domain-key",
+                    "type": "setting",
+                    "value": "102524135445625635272,securesoulmate.com,/etc/pmta/dkim/102524135445625635272.securesoulmate.com"
+                },
+                {
+                    "type": "empty_line"
+                },
+                {
+                    "type": "empty_line"
+                },
+                {
+                    "type": "empty_line"
+                }
+            ],
+            "index": 0,
+            "key": "virtual-mta",
+            "name": "154.22.55.6-securesoulmate.com",
+            "type": "section_start"
+        },
+        {
+            "content": [
+                {
+                    "key": "deliver-local-dsn",
+                    "type": "setting",
+                    "value": "yes"
+                },
+                {
+                    "key": "bounce-after",
+                    "type": "setting",
+                    "value": "48h"
+                }
+            ],
+            "index": 1,
+            "key": "domain",
+            "name": "*",
+            "type": "section_start"
+        },
+        {
+            "index": 2,
+            "key": "domain",
+            "type": "section_end"
+        },
+        {
+            "index": 3,
+            "type": "empty_line"
+        },
+        {
+            "content": [
+                {
+                    "key": "queue-to",
+                    "type": "setting",
+                    "value": "\"gmail.rollup\""
+                },
+                {
+                    "key": "use-starttls",
+                    "type": "setting",
+                    "value": "yes"
+                }
+            ],
+            "index": 4,
+            "key": "domain",
+            "name": "$gmail",
+            "type": "section_start"
+        },
+        {
+            "index": 5,
+            "key": "domain",
+            "type": "section_end"
+        },
+        {
+            "index": 6,
+            "type": "empty_line"
+        },
+        {
+            "content": [
+                {
+                    "key": "max-smtp-out",
+                    "type": "setting",
+                    "value": "5"
+                },
+                {
+                    "key": "max-msg-per-connection",
+                    "type": "setting",
+                    "value": "50"
+                },
+                {
+                    "key": "max-msg-rate",
+                    "type": "setting",
+                    "value": "1/m"
+                },
+                {
+                    "key": "smtp-hosts",
+                    "type": "setting",
+                    "value": "aspmx.l.google.com, alt1.aspmx.l.google.com, alt2.aspmx.l.google.com, gmail-smtp-in.l.google.com, alt4.gmail-smtp-in.l.google.com, alt1.gmail-smtp-in.l.google.com, alt3.gmail-smtp-in.l.google.com, alt2.gmail-smtp-in.l.google.com"
+                },
+                {
+                    "key": "use-starttls",
+                    "type": "setting",
+                    "value": "yes"
+                }
+            ],
+            "index": 7,
+            "key": "domain",
+            "name": "gmail.rollup",
+            "type": "section_start"
+        },
+        {
+            "index": 8,
+            "key": "domain",
+            "type": "section_end"
+        },
+        {
+            "index": 9,
+            "type": "empty_line"
+        },
+        {
+            "content": [
+                {
+                    "key": "queue-to",
+                    "type": "setting",
+                    "value": "\"hotmail.rollup\""
+                }
+            ],
+            "index": 10,
+            "key": "domain",
+            "name": "$hotmail_isp.$isp_tld",
+            "type": "section_start"
+        },
+        {
+            "index": 11,
+            "key": "domain",
+            "type": "section_end"
+        },
+        {
+            "index": 12,
+            "type": "empty_line"
+        },
+        {
+            "content": [
+                {
+                    "key": "max-msg-rate",
+                    "type": "setting",
+                    "value": "120/h"
+                },
+                {
+                    "key": "route",
+                    "type": "setting",
+                    "value": "hotmail.com"
+                },
+                {
+                    "key": "smtp-hosts",
+                    "type": "setting",
+                    "value": "lookup-mx:outlook.com"
+                }
+            ],
+            "index": 13,
+            "key": "domain",
+            "name": "hotmail.rollup",
+            "type": "section_start"
+        },
+        {
+            "index": 14,
+            "key": "domain",
+            "type": "section_end"
+        },
+        {
+            "index": 15,
+            "type": "empty_line"
+        },
+        {
+            "content": [
+                {
+                    "key": "max-smtp-out",
+                    "type": "setting",
+                    "value": "20"
+                },
+                {
+                    "key": "max-msg-rate",
+                    "type": "setting",
+                    "value": "60/h"
+                },
+                {
+                    "key": "max-msg-per-connection",
+                    "type": "setting",
+                    "value": "20"
+                },
+                {
+                    "key": "max-rcpt-per-message",
+                    "type": "setting",
+                    "value": "50"
+                },
+                {
+                    "key": "smtp-hosts",
+                    "type": "setting",
+                    "value": "mta5.am0.yahoodns.net, mta6.am0.yahoodns.net, mta7.am0.yahoodns.net"
+                }
+            ],
+            "index": 16,
+            "key": "domain",
+            "name": "yahooaol.rollup",
+            "type": "section_start"
+        },
+        {
+            "index": 17,
+            "key": "domain",
+            "type": "section_end"
+        },
+        {
+            "index": 18,
+            "type": "empty_line"
+        },
+        {
+            "content": [
+                {
+                    "key": "max-msg-rate",
+                    "type": "setting",
+                    "value": "120/h"
+                },
+                {
+                    "key": "max-rcpt-per-message",
+                    "type": "setting",
+                    "value": "100"
+                },
+                {
+                    "key": "max-smtp-out-per-source-ip",
+                    "type": "setting",
+                    "value": "5"
+                }
+            ],
+            "index": 19,
+            "key": "domain",
+            "name": "comcast.net",
+            "type": "section_start"
+        },
+        {
+            "index": 20,
+            "key": "domain",
+            "type": "section_end"
+        },
+        {
+            "index": 21,
+            "type": "empty_line"
+        },
+        {
+            "index": 22,
+            "type": "empty_line"
+        },
+        {
+            "index": 23,
+            "key": "virtual-mta",
+            "type": "section_end"
+        },
+        {
+            "content": [
+                {
+                    "key": "smtp-source-host",
+                    "type": "setting",
+                    "value": "154.22.55.13 ari.securesoulmate.com"
+                },
+                {
+                    "key": "domain-key",
+                    "type": "setting",
+                    "value": "102524135446610470335,securesoulmate.com,/etc/pmta/dkim/102524135446610470335.securesoulmate.com"
+                },
+                {
+                    "type": "empty_line"
+                },
+                {
+                    "type": "empty_line"
+                },
+                {
+                    "type": "empty_line"
+                }
+            ],
+            "index": 24,
+            "key": "virtual-mta",
+            "name": "154.22.55.13-securesoulmate.com",
+            "type": "section_start"
+        },
+        {
+            "content": [
+                {
+                    "key": "deliver-local-dsn",
+                    "type": "setting",
+                    "value": "yes"
+                },
+                {
+                    "key": "bounce-after",
+                    "type": "setting",
+                    "value": "48h"
+                }
+            ],
+            "index": 25,
+            "key": "domain",
+            "name": "*",
+            "type": "section_start"
+        },
+        {
+            "index": 26,
+            "key": "domain",
+            "type": "section_end"
+        },
+        {
+            "index": 27,
+            "type": "empty_line"
+        },
+        {
+            "content": [
+                {
+                    "key": "queue-to",
+                    "type": "setting",
+                    "value": "\"gmail.rollup\""
+                },
+                {
+                    "key": "use-starttls",
+                    "type": "setting",
+                    "value": "yes"
+                }
+            ],
+            "index": 28,
+            "key": "domain",
+            "name": "$gmail",
+            "type": "section_start"
+        },
+        {
+            "index": 29,
+            "key": "domain",
+            "type": "section_end"
+        },
+        {
+            "index": 30,
+            "type": "empty_line"
+        },
+        {
+            "content": [
+                {
+                    "key": "max-smtp-out",
+                    "type": "setting",
+                    "value": "5"
+                },
+                {
+                    "key": "max-msg-per-connection",
+                    "type": "setting",
+                    "value": "50"
+                },
+                {
+                    "key": "max-msg-rate",
+                    "type": "setting",
+                    "value": "1/m"
+                },
+                {
+                    "key": "smtp-hosts",
+                    "type": "setting",
+                    "value": "aspmx.l.google.com, alt1.aspmx.l.google.com, alt2.aspmx.l.google.com, gmail-smtp-in.l.google.com, alt4.gmail-smtp-in.l.google.com, alt1.gmail-smtp-in.l.google.com, alt3.gmail-smtp-in.l.google.com, alt2.gmail-smtp-in.l.google.com"
+                },
+                {
+                    "key": "use-starttls",
+                    "type": "setting",
+                    "value": "yes"
+                }
+            ],
+            "index": 31,
+            "key": "domain",
+            "name": "gmail.rollup",
+            "type": "section_start"
+        },
+        {
+            "index": 32,
+            "key": "domain",
+            "type": "section_end"
+        },
+        {
+            "index": 33,
+            "type": "empty_line"
+        },
+        {
+            "content": [
+                {
+                    "key": "queue-to",
+                    "type": "setting",
+                    "value": "\"hotmail.rollup\""
+                }
+            ],
+            "index": 34,
+            "key": "domain",
+            "name": "$hotmail_isp.$isp_tld",
+            "type": "section_start"
+        },
+        {
+            "index": 35,
+            "key": "domain",
+            "type": "section_end"
+        },
+        {
+            "index": 36,
+            "type": "empty_line"
+        },
+        {
+            "content": [
+                {
+                    "key": "max-msg-rate",
+                    "type": "setting",
+                    "value": "120/h"
+                },
+                {
+                    "key": "route",
+                    "type": "setting",
+                    "value": "hotmail.com"
+                },
+                {
+                    "key": "smtp-hosts",
+                    "type": "setting",
+                    "value": "lookup-mx:outlook.com"
+                }
+            ],
+            "index": 37,
+            "key": "domain",
+            "name": "hotmail.rollup",
+            "type": "section_start"
+        },
+        {
+            "index": 38,
+            "key": "domain",
+            "type": "section_end"
+        },
+        {
+            "index": 39,
+            "type": "empty_line"
+        },
+        {
+            "content": [
+                {
+                    "key": "max-smtp-out",
+                    "type": "setting",
+                    "value": "20"
+                },
+                {
+                    "key": "max-msg-rate",
+                    "type": "setting",
+                    "value": "60/h"
+                },
+                {
+                    "key": "max-msg-per-connection",
+                    "type": "setting",
+                    "value": "20"
+                },
+                {
+                    "key": "max-rcpt-per-message",
+                    "type": "setting",
+                    "value": "50"
+                },
+                {
+                    "key": "smtp-hosts",
+                    "type": "setting",
+                    "value": "mta5.am0.yahoodns.net, mta6.am0.yahoodns.net, mta7.am0.yahoodns.net"
+                }
+            ],
+            "index": 40,
+            "key": "domain",
+            "name": "yahooaol.rollup",
+            "type": "section_start"
+        },
+        {
+            "index": 41,
+            "key": "domain",
+            "type": "section_end"
+        },
+        {
+            "index": 42,
+            "type": "empty_line"
+        },
+        {
+            "content": [
+                {
+                    "key": "max-msg-rate",
+                    "type": "setting",
+                    "value": "120/h"
+                },
+                {
+                    "key": "max-rcpt-per-message",
+                    "type": "setting",
+                    "value": "100"
+                },
+                {
+                    "key": "max-smtp-out-per-source-ip",
+                    "type": "setting",
+                    "value": "5"
+                }
+            ],
+            "index": 43,
+            "key": "domain",
+            "name": "comcast.net",
+            "type": "section_start"
+        },
+        {
+            "index": 44,
+            "key": "domain",
+            "type": "section_end"
+        },
+        {
+            "index": 45,
+            "type": "empty_line"
+        },
+        {
+            "index": 46,
+            "type": "empty_line"
+        },
+        {
+            "index": 47,
+            "key": "virtual-mta",
+            "type": "section_end"
+        },
+        {
+            "content": [
+                {
+                    "key": "smtp-source-host",
+                    "type": "setting",
+                    "value": "154.22.55.14 myles.securesoulmate.com"
+                },
+                {
+                    "key": "domain-key",
+                    "type": "setting",
+                    "value": "102524135447572587128,securesoulmate.com,/etc/pmta/dkim/102524135447572587128.securesoulmate.com"
+                },
+                {
+                    "type": "empty_line"
+                },
+                {
+                    "type": "empty_line"
+                },
+                {
+                    "type": "empty_line"
+                }
+            ],
+            "index": 48,
+            "key": "virtual-mta",
+            "name": "154.22.55.14-securesoulmate.com",
+            "type": "section_start"
+        },
+        {
+            "content": [
+                {
+                    "key": "deliver-local-dsn",
+                    "type": "setting",
+                    "value": "yes"
+                },
+                {
+                    "key": "bounce-after",
+                    "type": "setting",
+                    "value": "48h"
+                }
+            ],
+            "index": 49,
+            "key": "domain",
+            "name": "*",
+            "type": "section_start"
+        },
+        {
+            "index": 50,
+            "key": "domain",
+            "type": "section_end"
+        },
+        {
+            "index": 51,
+            "type": "empty_line"
+        },
+        {
+            "content": [
+                {
+                    "key": "queue-to",
+                    "type": "setting",
+                    "value": "\"gmail.rollup\""
+                },
+                {
+                    "key": "use-starttls",
+                    "type": "setting",
+                    "value": "yes"
+                }
+            ],
+            "index": 52,
+            "key": "domain",
+            "name": "$gmail",
+            "type": "section_start"
+        },
+        {
+            "index": 53,
+            "key": "domain",
+            "type": "section_end"
+        },
+        {
+            "index": 54,
+            "type": "empty_line"
+        },
+        {
+            "content": [
+                {
+                    "key": "max-smtp-out",
+                    "type": "setting",
+                    "value": "5"
+                },
+                {
+                    "key": "max-msg-per-connection",
+                    "type": "setting",
+                    "value": "50"
+                },
+                {
+                    "key": "max-msg-rate",
+                    "type": "setting",
+                    "value": "1/m"
+                },
+                {
+                    "key": "smtp-hosts",
+                    "type": "setting",
+                    "value": "aspmx.l.google.com, alt1.aspmx.l.google.com, alt2.aspmx.l.google.com, gmail-smtp-in.l.google.com, alt4.gmail-smtp-in.l.google.com, alt1.gmail-smtp-in.l.google.com, alt3.gmail-smtp-in.l.google.com, alt2.gmail-smtp-in.l.google.com"
+                },
+                {
+                    "key": "use-starttls",
+                    "type": "setting",
+                    "value": "yes"
+                }
+            ],
+            "index": 55,
+            "key": "domain",
+            "name": "gmail.rollup",
+            "type": "section_start"
+        },
+        {
+            "index": 56,
+            "key": "domain",
+            "type": "section_end"
+        },
+        {
+            "index": 57,
+            "type": "empty_line"
+        },
+        {
+            "content": [
+                {
+                    "key": "queue-to",
+                    "type": "setting",
+                    "value": "\"hotmail.rollup\""
+                }
+            ],
+            "index": 58,
+            "key": "domain",
+            "name": "$hotmail_isp.$isp_tld",
+            "type": "section_start"
+        },
+        {
+            "index": 59,
+            "key": "domain",
+            "type": "section_end"
+        },
+        {
+            "index": 60,
+            "type": "empty_line"
+        },
+        {
+            "content": [
+                {
+                    "key": "max-msg-rate",
+                    "type": "setting",
+                    "value": "120/h"
+                },
+                {
+                    "key": "route",
+                    "type": "setting",
+                    "value": "hotmail.com"
+                },
+                {
+                    "key": "smtp-hosts",
+                    "type": "setting",
+                    "value": "lookup-mx:outlook.com"
+                }
+            ],
+            "index": 61,
+            "key": "domain",
+            "name": "hotmail.rollup",
+            "type": "section_start"
+        },
+        {
+            "index": 62,
+            "key": "domain",
+            "type": "section_end"
+        },
+        {
+            "index": 63,
+            "type": "empty_line"
+        },
+        {
+            "content": [
+                {
+                    "key": "max-smtp-out",
+                    "type": "setting",
+                    "value": "20"
+                },
+                {
+                    "key": "max-msg-rate",
+                    "type": "setting",
+                    "value": "60/h"
+                },
+                {
+                    "key": "max-msg-per-connection",
+                    "type": "setting",
+                    "value": "20"
+                },
+                {
+                    "key": "max-rcpt-per-message",
+                    "type": "setting",
+                    "value": "50"
+                },
+                {
+                    "key": "smtp-hosts",
+                    "type": "setting",
+                    "value": "mta5.am0.yahoodns.net, mta6.am0.yahoodns.net, mta7.am0.yahoodns.net"
+                }
+            ],
+            "index": 64,
+            "key": "domain",
+            "name": "yahooaol.rollup",
+            "type": "section_start"
+        },
+        {
+            "index": 65,
+            "key": "domain",
+            "type": "section_end"
+        },
+        {
+            "index": 66,
+            "type": "empty_line"
+        },
+        {
+            "content": [
+                {
+                    "key": "max-msg-rate",
+                    "type": "setting",
+                    "value": "120/h"
+                },
+                {
+                    "key": "max-rcpt-per-message",
+                    "type": "setting",
+                    "value": "100"
+                },
+                {
+                    "key": "max-smtp-out-per-source-ip",
+                    "type": "setting",
+                    "value": "5"
+                }
+            ],
+            "index": 67,
+            "key": "domain",
+            "name": "comcast.net",
+            "type": "section_start"
+        },
+        {
+            "index": 68,
+            "key": "domain",
+            "type": "section_end"
+        },
+        {
+            "index": 69,
+            "type": "empty_line"
+        },
+        {
+            "index": 70,
+            "type": "empty_line"
+        },
+        {
+            "index": 71,
+            "key": "virtual-mta",
+            "type": "section_end"
+        },
+        {
+            "content": [
+                {
+                    "key": "smtp-source-host",
+                    "type": "setting",
+                    "value": "154.22.55.2 sarah.securesoulmate.com"
+                },
+                {
+                    "key": "domain-key",
+                    "type": "setting",
+                    "value": "102524135448534804040,securesoulmate.com,/etc/pmta/dkim/102524135448534804040.securesoulmate.com"
+                },
+                {
+                    "type": "empty_line"
+                },
+                {
+                    "type": "empty_line"
+                },
+                {
+                    "type": "empty_line"
+                }
+            ],
+            "index": 72,
+            "key": "virtual-mta",
+            "name": "154.22.55.2-securesoulmate.com",
+            "type": "section_start"
+        },
+        {
+            "content": [
+                {
+                    "key": "deliver-local-dsn",
+                    "type": "setting",
+                    "value": "yes"
+                },
+                {
+                    "key": "bounce-after",
+                    "type": "setting",
+                    "value": "48h"
+                }
+            ],
+            "index": 73,
+            "key": "domain",
+            "name": "*",
+            "type": "section_start"
+        },
+        {
+            "index": 74,
+            "key": "domain",
+            "type": "section_end"
+        },
+        {
+            "index": 75,
+            "type": "empty_line"
+        },
+        {
+            "content": [
+                {
+                    "key": "queue-to",
+                    "type": "setting",
+                    "value": "\"gmail.rollup\""
+                },
+                {
+                    "key": "use-starttls",
+                    "type": "setting",
+                    "value": "yes"
+                }
+            ],
+            "index": 76,
+            "key": "domain",
+            "name": "$gmail",
+            "type": "section_start"
+        },
+        {
+            "index": 77,
+            "key": "domain",
+            "type": "section_end"
+        },
+        {
+            "index": 78,
+            "type": "empty_line"
+        },
+        {
+            "content": [
+                {
+                    "key": "max-smtp-out",
+                    "type": "setting",
+                    "value": "5"
+                },
+                {
+                    "key": "max-msg-per-connection",
+                    "type": "setting",
+                    "value": "50"
+                },
+                {
+                    "key": "max-msg-rate",
+                    "type": "setting",
+                    "value": "1/m"
+                },
+                {
+                    "key": "smtp-hosts",
+                    "type": "setting",
+                    "value": "aspmx.l.google.com, alt1.aspmx.l.google.com, alt2.aspmx.l.google.com, gmail-smtp-in.l.google.com, alt4.gmail-smtp-in.l.google.com, alt1.gmail-smtp-in.l.google.com, alt3.gmail-smtp-in.l.google.com, alt2.gmail-smtp-in.l.google.com"
+                },
+                {
+                    "key": "use-starttls",
+                    "type": "setting",
+                    "value": "yes"
+                }
+            ],
+            "index": 79,
+            "key": "domain",
+            "name": "gmail.rollup",
+            "type": "section_start"
+        },
+        {
+            "index": 80,
+            "key": "domain",
+            "type": "section_end"
+        },
+        {
+            "index": 81,
+            "type": "empty_line"
+        },
+        {
+            "content": [
+                {
+                    "key": "queue-to",
+                    "type": "setting",
+                    "value": "\"hotmail.rollup\""
+                }
+            ],
+            "index": 82,
+            "key": "domain",
+            "name": "$hotmail_isp.$isp_tld",
+            "type": "section_start"
+        },
+        {
+            "index": 83,
+            "key": "domain",
+            "type": "section_end"
+        },
+        {
+            "index": 84,
+            "type": "empty_line"
+        },
+        {
+            "content": [
+                {
+                    "key": "max-msg-rate",
+                    "type": "setting",
+                    "value": "120/h"
+                },
+                {
+                    "key": "route",
+                    "type": "setting",
+                    "value": "hotmail.com"
+                },
+                {
+                    "key": "smtp-hosts",
+                    "type": "setting",
+                    "value": "lookup-mx:outlook.com"
+                }
+            ],
+            "index": 85,
+            "key": "domain",
+            "name": "hotmail.rollup",
+            "type": "section_start"
+        },
+        {
+            "index": 86,
+            "key": "domain",
+            "type": "section_end"
+        },
+        {
+            "index": 87,
+            "type": "empty_line"
+        },
+        {
+            "content": [
+                {
+                    "key": "max-smtp-out",
+                    "type": "setting",
+                    "value": "20"
+                },
+                {
+                    "key": "max-msg-rate",
+                    "type": "setting",
+                    "value": "60/h"
+                },
+                {
+                    "key": "max-msg-per-connection",
+                    "type": "setting",
+                    "value": "20"
+                },
+                {
+                    "key": "max-rcpt-per-message",
+                    "type": "setting",
+                    "value": "50"
+                },
+                {
+                    "key": "smtp-hosts",
+                    "type": "setting",
+                    "value": "mta5.am0.yahoodns.net, mta6.am0.yahoodns.net, mta7.am0.yahoodns.net"
+                }
+            ],
+            "index": 88,
+            "key": "domain",
+            "name": "yahooaol.rollup",
+            "type": "section_start"
+        },
+        {
+            "index": 89,
+            "key": "domain",
+            "type": "section_end"
+        },
+        {
+            "index": 90,
+            "type": "empty_line"
+        },
+        {
+            "content": [
+                {
+                    "key": "max-msg-rate",
+                    "type": "setting",
+                    "value": "120/h"
+                },
+                {
+                    "key": "max-rcpt-per-message",
+                    "type": "setting",
+                    "value": "100"
+                },
+                {
+                    "key": "max-smtp-out-per-source-ip",
+                    "type": "setting",
+                    "value": "5"
+                }
+            ],
+            "index": 91,
+            "key": "domain",
+            "name": "comcast.net",
+            "type": "section_start"
+        },
+        {
+            "index": 92,
+            "key": "domain",
+            "type": "section_end"
+        },
+        {
+            "index": 93,
+            "type": "empty_line"
+        },
+        {
+            "index": 94,
+            "type": "empty_line"
+        },
+        {
+            "index": 95,
+            "key": "virtual-mta",
+            "type": "section_end"
+        },
+        {
+            "content": [
+                {
+                    "key": "virtual-mta",
+                    "type": "setting",
+                    "value": "154.22.55.6-securesoulmate.com"
+                },
+                {
+                    "key": "virtual-mta",
+                    "type": "setting",
+                    "value": "154.22.55.13-securesoulmate.com"
+                },
+                {
+                    "key": "virtual-mta",
+                    "type": "setting",
+                    "value": "154.22.55.14-securesoulmate.com"
+                },
+                {
+                    "key": "virtual-mta",
+                    "type": "setting",
+                    "value": "154.22.55.2-securesoulmate.com"
+                }
+            ],
+            "index": 96,
+            "key": "virtual-mta-pool",
+            "name": "securesoulmate.com-pool",
+            "type": "section_start"
+        },
+        {
+            "index": 97,
+            "key": "virtual-mta-pool",
+            "type": "section_end"
+        }
+    ],
+    "status": "success"
+}
