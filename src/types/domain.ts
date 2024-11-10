@@ -18,11 +18,11 @@ export interface Domain {
 }
 
 export interface Section {
-  content?: Setting[];
-  index: number;
-  key?: string;
-  value?: string;
+  key: string;
   type: string;
+  value?: string;
+  index: number;
+  content?: Setting[];
 }
 
 // Type Definitions

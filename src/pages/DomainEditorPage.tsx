@@ -4,7 +4,7 @@ import { Form, Row, Col, Button, Badge, Tabs, Tab } from 'react-bootstrap';
 import { X, Plus, ArrowLeft } from 'lucide-react';
 import { useSidebar } from '../context/SidebarContext';
 import { StringInterpreter } from '../components/StringInterpreter';
-import type { Domain, QueuePool, Section } from '../types/domain';
+import type { Domain, QueuePool, Section, Setting } from '../types/domain';
 import cloneDeep from 'lodash/cloneDeep';
 
 interface LocationState {
@@ -146,42 +146,87 @@ export function DomainEditorPage() {
   });
   };
 
-  function getPoolTypeByName(poolName: string, queuePools: QueuePool[]): string | undefined {
-    const pool = queuePools.find(pool => pool.queuePoolName === poolName);
-    return pool ? pool.type : undefined;
-  }
+  const handleAddTargetISP = (poolName: string, vmtaSection: Section) => {
+    setPoolData(prevState => {
+      const updatedPoolData = cloneDeep(prevState);
+      const pool = updatedPoolData[poolName];
+      
+      if (!pool) return updatedPoolData;
 
+      // Use getTargetISPs to get all target ISPs organized by VMTA
+      const targetISPsByVMTA = getTargetISPs(pool);
+      
+      // Get target ISPs for current VMTA
+      const currentVMTATargetISPs = targetISPsByVMTA[vmtaSection.value || ''] || [];
+      console.log(currentVMTATargetISPs);
 
-  function getTargetISPs(sections: Section[]): { [key: string]: Section[] } {
-    const targetISPs: { [key: string]: Section[] } = {};
-    let currentVMTANode: string | null = null;
+      // Find the last index from the current VMTA's target ISPs
+      const lastIndex = currentVMTATargetISPs.length > 0
+        ? Math.max(...currentVMTATargetISPs.flat().map(section => section.index))
+        : vmtaSection.index;
 
-    sections.forEach((section) => {
-      if (section.key === 'virtual-mta' && section.type === 'section_start') {
-        currentVMTANode = section.value || null;
-        targetISPs[currentVMTANode] = [];
-      } else if (section.key === 'virtual-mta' && section.type === 'section_end') {
-        currentVMTANode = null;
-      } else if (currentVMTANode && section.key === 'domain') {
-        targetISPs[currentVMTANode].push(section);
-      }
+      // Create new section indexes
+      const newStartIndex = lastIndex + 1;
+      const newEndIndex = lastIndex + 2;
+
+      // Update all existing sections that have indexes >= newStartIndex
+      pool.forEach(section => {
+        if (section.index >= newStartIndex) {
+          section.index += 2;
+        }
+      });
+
+      // Create new domain sections
+      const domainSectionStart: Section = {
+        key: 'domain',
+        type: 'section_start',
+        value: 'new-target-isp',
+        index: newStartIndex,
+        content: []
+      };
+
+      const domainSectionEnd: Section = {
+        key: 'domain',
+        type: 'section_end',
+        value: '',
+        index: newEndIndex,
+        content: []
+      };
+
+      // Add new sections to the pool
+      pool.push(domainSectionStart);
+      pool.push(domainSectionEnd);
+
+      // Sort the pool by index to maintain order
+      pool.sort((a, b) => a.index - b.index);
+
+      return updatedPoolData;
     });
-
-    return targetISPs;
-  }
-
-  const handleAddTargetISP = () => {
-    // Logic to add a new target ISP
   };
 
-  const handleAddSetting = (pool: string, domainIdx: number) => {
-    setPoolData((prevData) => {
-      const updatedData = { ...prevData };
-      const section = updatedData[pool][domainIdx];
-      if (section.content) {
-        section.content.push({ key: '', type: 'setting', value: '' });
+  const handleAddSetting = (poolName: string, index: number, field: [any]) => {
+    setPoolData(prevState => {
+      const updatedPoolData = cloneDeep(prevState);
+      const pool = updatedPoolData[poolName];
+      if (pool) {
+        const section = pool[index];
+        if (section) {
+          // Initialize content array if it doesn't exist
+          if (!section.content) {
+            section.content = [];
+          }
+          
+          // Create and add the new setting
+          const newSetting: Setting = {
+            key: '',
+            type: 'setting',
+            value: ''
+          };
+          
+          section.content.push(newSetting);
+        }
       }
-      return updatedData;
+      return updatedPoolData;
     });
   };
 
@@ -191,6 +236,90 @@ export function DomainEditorPage() {
 
   const handleCancel = () => {
     navigate('/sending-domains');
+  };
+
+  function getPoolTypeByName(poolName: string, queuePools: QueuePool[]): string | undefined {
+    const pool = queuePools.find(pool => pool.queuePoolName === poolName);
+    return pool ? pool.type : undefined;
+  }
+
+
+  function getTargetISPs(sections: Section[]): { [key: string]: Section[] } {
+    const targetISPs: { [key: string]: Section[] } = {};
+    let currentVMTANode: string = '';
+    let currentDomainSection: Section[] = [];
+
+    sections.forEach((section) => {
+      if (section.key === 'virtual-mta' && section.type === 'section_start') {
+        currentVMTANode = section.value || '';
+        targetISPs[currentVMTANode] = [];
+      } else if (section.key === 'virtual-mta' && section.type === 'section_end') {
+        currentVMTANode = '';
+      } else if (currentVMTANode && section.key === 'domain') {
+        if (section.type === 'section_start') {
+          currentDomainSection = [section];
+        } else if (section.type === 'section_end' && currentDomainSection.length > 0) {
+          currentDomainSection.push(section);
+          targetISPs[currentVMTANode].push(...currentDomainSection);
+          currentDomainSection = [];
+        }
+      }
+    });
+
+    return targetISPs;
+  }
+
+  const handleAddQueue = (poolName: string) => {
+    setPoolData(prevState => {
+      const updatedPoolData = cloneDeep(prevState);
+      const pool = updatedPoolData[poolName];
+      
+      if (!pool) return updatedPoolData;
+
+      // Find the last virtual-mta section's index
+      const lastVMTAIndex = Math.max(
+        ...pool
+          .filter(section => section.key === 'virtual-mta')
+          .map(section => section.index)
+      );
+
+      // Create new section indexes
+      const newStartIndex = lastVMTAIndex + 1;
+      const newEndIndex = lastVMTAIndex + 2;
+
+      // Update all existing sections that have indexes >= newStartIndex
+      pool.forEach((section: Section) => {
+        if (section.index >= newStartIndex) {
+          section.index += 2;
+        }
+      });
+
+      // Create new virtual-mta sections
+      const vmtaSectionStart: Section = {
+        key: 'virtual-mta',
+        type: 'section_start',
+        value: `vmta-${Math.floor(Math.random() * 1000)}`, // Generate a unique name
+        index: newStartIndex,
+        content: []
+      };
+
+      const vmtaSectionEnd: Section = {
+        key: 'virtual-mta',
+        type: 'section_end',
+        value: '',
+        index: newEndIndex,
+        content: []
+      };
+
+      // Add new sections to the pool
+      pool.push(vmtaSectionStart);
+      pool.push(vmtaSectionEnd);
+
+      // Sort the pool by index to maintain order
+      pool.sort((a: Section, b: Section) => a.index - b.index);
+
+      return updatedPoolData;
+    });
   };
 
   return (
@@ -272,7 +401,15 @@ export function DomainEditorPage() {
         </div>
 
         <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold mb-4">Queues</h2>
+          <h2 className="text-lg font-semibold mb-2">Queues</h2>
+          <Button 
+            variant="outline-primary" 
+            onClick={() => handleAddQueue(poolName)} 
+            size="sm"
+            className="mb-4"
+          >
+            Add Queue
+          </Button>
           <Tabs activeKey={activeQueueTab} onSelect={(k) => k && setActiveQueueTab(k)} className="mb-4">
             {Object.entries(poolData).map(([poolName, sections]) => {
               const targetISPs = getTargetISPs(sections);
@@ -314,58 +451,66 @@ export function DomainEditorPage() {
                       </Row>
                     </Form>
                     <h4 className="text-lg font-semibold mt-4">Target ISPs</h4>
-                    <Button variant="outline-primary" onClick={handleAddTargetISP} size="sm" className="mb-3">
+                    <Button 
+                      variant="outline-primary" 
+                      onClick={() => handleAddTargetISP(poolName, section)} 
+                      size="sm" 
+                      className="mb-3"
+                    >
                       Add Target ISP
                     </Button>
                     <Tabs>
                       {targetISPs[section?.value]?.map((domainSection, domainIdx) => (
                         <Tab key={domainIdx} eventKey={domainSection.index} title={domainSection.value}>
                           <div className="border rounded p-3 mb-4">
-                            Target ISP Name:
-                          <Row className="mb-3">
-                                <Col md={3}>
-                                  <Form.Control
-                                    type="text"
-                                    value={domainSection.value}
-                                    onChange={(e) => {
-                                      handleUpdate(poolName, domainSection.index, ["value"], e.target.value)
-                                    }}
-                                    placeholder="Enter Target ISP"
-                                  />
-                                </Col>
-                                <Col md={9} className="text-end">
-                                  <Button variant="link" onClick={() => handleAddSetting(poolName, domainIdx)}>
-                                    <Plus className="w-4 h-4 mr-2" />
-                                    Add Setting
-                                  </Button>
-                                </Col>
-                              </Row>
-                            <Form>
-                            <div className="d-flex flex-wrap gap-3">
-                              {domainSection.content?.map((setting, settingIdx) => (
-                                <div key={settingIdx} className="d-flex align-items-center gap-2 flex-grow-1">
-                                  <div style={{ width: '45%' }}>
-                                    <Form.Control
-                                      type="text"
-                                      value={setting.key}
-                                      onChange={(e) => handleUpdate(poolName, domainSection.index, ["content", settingIdx, "key"], e.target.value)}
-                                      size="sm"
-                                      className="bg-light"
-                                    />
-                                  </div>
-                                  <div style={{ width: '45%' }}>
-                                    <Form.Control
-                                      type="text"
-                                      value={setting.value || ''}
-                                      onChange={(e) => handleUpdate(poolName, domainSection.index, ["content", settingIdx, "value"], e.target.value)}
-                                      size="sm"
-                                      className="hover:bg-gray-50 focus:bg-white transition-colors"
-                                      style={{ cursor: 'text' }}
-                                    />
-                                  </div>
-                                </div>
-                              ))}
+                            <div className="flex justify-between items-center mb-3">
+                              <div className="flex items-center gap-2">
+                                <span>Target ISP Name:</span>
+                                <Form.Control
+                                  type="text"
+                                  value={domainSection.value}
+                                  onChange={(e) => {
+                                    handleUpdate(poolName, domainSection.index, ["value"], e.target.value);
+                                  }}
+                                  placeholder="Enter Target ISP"
+                                  className="w" // Adjust width as needed
+                                />
+                              </div>
+                              <Button 
+                                variant="link" 
+                                onClick={() => handleAddSetting(poolName, domainSection.index, ["content"])}
+                                className="flex items-center"
+                              >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Add Setting
+                              </Button>
                             </div>
+                            <Form>
+                              <div className="d-flex flex-wrap gap-3">
+                                {domainSection.content?.map((setting, settingIdx) => (
+                                  <div key={settingIdx} className="d-flex align-items-center gap-2 flex-grow-1">
+                                    <div style={{ width: '45%' }}>
+                                      <Form.Control
+                                        type="text"
+                                        value={setting.key}
+                                        onChange={(e) => handleUpdate(poolName, domainSection.index, ["content", settingIdx, "key"], e.target.value)}
+                                        size="sm"
+                                        className="bg-light"
+                                      />
+                                    </div>
+                                    <div style={{ width: '45%' }}>
+                                      <Form.Control
+                                        type="text"
+                                        value={setting.value || ''}
+                                        onChange={(e) => handleUpdate(poolName, domainSection.index, ["content", settingIdx, "value"], e.target.value)}
+                                        size="sm"
+                                        className="hover:bg-gray-50 focus:bg-white transition-colors"
+                                        style={{ cursor: 'text' }}
+                                      />
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
                             </Form>
                           </div>
                         </Tab>
