@@ -4,7 +4,8 @@ import { Form, Row, Col, Button, Badge, Tabs, Tab } from 'react-bootstrap';
 import { X, Plus, ArrowLeft } from 'lucide-react';
 import { useSidebar } from '../context/SidebarContext';
 import { StringInterpreter } from '../components/StringInterpreter';
-import type { Domain, QueuePool, Section, Setting } from '../types/domain';
+import type { Domain, QueuePool, Section } from '../types/domain';
+import cloneDeep from 'lodash/cloneDeep';
 
 interface LocationState {
   domain?: Domain;
@@ -24,7 +25,7 @@ export function DomainEditorPage() {
   const [customIP, setCustomIP] = useState('');
   const [activeQueueTab, setActiveQueueTab] = useState<string>('');
   const [poolData, setPoolData] = useState<{ [key: string]: Section[] }>({});
-  const [updatedPoolData, setUpdatedPoolData] = useState<{ [key: string]: Section[] }>({});
+  const [originalPoolData, setOriginalPoolData] = useState<{ [key: string]: Section[] }>({});
   const [poolName, setPoolName] = useState<string>('');
   const [isExpanded, setIsExpanded] = useState(false);
   const [originalString, setOriginalString] = useState<string>('');
@@ -51,6 +52,7 @@ export function DomainEditorPage() {
           poolDataResult[pool.queuePoolName] = results[index].status === 'success' ? results[index].data : [];
         });
         setPoolData(poolDataResult);
+        setOriginalPoolData(poolDataResult);
       } catch (error) {
         console.error('Error fetching data:', error);
       }
@@ -59,16 +61,9 @@ export function DomainEditorPage() {
   }, [existingDomain]);
 
   useEffect(() => {
-    if (Object.keys(poolData).length > 0) {
-      setUpdatedPoolData(poolData);
-    }
-  }, [poolData]);
-
-  useEffect(() => {
     for (const pool of existingDomain?.queuePools || []) {
       if (pool.queues.some(queue => queue.queueName === activeQueueTab)) {
         setPoolName(pool.queuePoolName);
-        console.log(JSON.stringify(updatedPoolData[pool.queuePoolName], null, 2)); 
       }
     }
 
@@ -86,7 +81,7 @@ export function DomainEditorPage() {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ data: poolData[poolName] || [] }),
+      body: JSON.stringify({ data: originalPoolData[poolName] || [] }),
     });
 
     // Fetch modified string
@@ -95,7 +90,7 @@ export function DomainEditorPage() {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ data: updatedPoolData[poolName] || [] }),
+      body: JSON.stringify({ data: poolData[poolName] || [] }),
     });
 
     // Fetch both strings in parallel
@@ -110,7 +105,7 @@ export function DomainEditorPage() {
         console.error('Error fetching strings:', error);
         setIsLoading(false);
       });
-  }, [poolName, poolData, updatedPoolData]);
+  }, [poolName, originalPoolData, poolData]);
 
   // Function to determine the file name
   const getFileName = (poolName: string): string => {
@@ -120,18 +115,35 @@ export function DomainEditorPage() {
     return pool?.type ? `${existingDomain?.domainName}-${pool.type}.vmta.json` : `${existingDomain?.domainName}.vmta.json`;
   };
 
-  const handleUpdate = (pool: string, index: number, key: string, value: string) => {
-    setUpdatedPoolData((prevData) => {
-      const updatedData = { ...prevData };
-      const section = updatedData[pool][index];
-      if (section.content) {
-        const setting = section.content.find((item) => item.key === key);
-        if (setting) {
-          setting.value = value;
+  function setNestedValue(section: Section, path: any[], value: string) {
+    const lastKey = path[path.length - 1];
+    const parent = path.slice(0, -1).reduce((acc, key) => {
+        if (acc[key] === undefined) {
+            acc[key] = typeof key === 'number' ? [] : {}; // Initialize if undefined
         }
+        return acc[key];
+    }, section);
+
+    parent[lastKey] = value;
+  }
+
+  //leaving for testing for now clean up later
+  function getNestedValue(section: Section, path: any[]) {
+    return path.reduce((acc, key) => (acc && acc[key] !== undefined ? acc[key] : undefined), section);
+  }
+
+  const handleUpdate = (poolName: string, index: number, field: [any], value: string) => {
+    setPoolData(prevState => {
+      const updatedPoolData = cloneDeep(prevState);
+      const pool = updatedPoolData[poolName];
+      if (pool) {
+          const section = pool[index]
+          if (section) {
+            setNestedValue(section, field, value);
+          }
       }
-      return updatedData;
-    });
+      return updatedPoolData;
+  });
   };
 
   function getPoolTypeByName(poolName: string, queuePools: QueuePool[]): string | undefined {
@@ -146,7 +158,7 @@ export function DomainEditorPage() {
 
     sections.forEach((section) => {
       if (section.key === 'virtual-mta' && section.type === 'section_start') {
-        currentVMTANode = section.value;
+        currentVMTANode = section.value || null;
         targetISPs[currentVMTANode] = [];
       } else if (section.key === 'virtual-mta' && section.type === 'section_end') {
         currentVMTANode = null;
@@ -275,7 +287,7 @@ export function DomainEditorPage() {
                             <Form.Control
                               type="text"
                               value={section.content?.find(setting => setting.key === 'smtp-source-host')?.value?.split(' ')[1] || ''}
-                              onChange={(e) => handleUpdate(poolName, index, 'subdomain', e.target.value)}
+                              onChange={(e) => handleUpdate(poolName, section.index, ['content', index, 'value'], e.target.value)}
                             />
                           </Form.Group>
                         </Col>
@@ -285,7 +297,7 @@ export function DomainEditorPage() {
                             <Form.Control
                               type="text"
                               value={section.content?.find(setting => setting.key === 'smtp-source-host')?.value?.split(' ')[0] || ''}
-                              onChange={(e) => handleUpdate(poolName, index, 'ip-address', e.target.value)}
+                              onChange={(e) => handleUpdate(poolName, section.index, ['content', index, 'value'], e.target.value)}
                             />
                           </Form.Group>
                         </Col>
@@ -295,7 +307,7 @@ export function DomainEditorPage() {
                             <Form.Control
                               type="text"
                               value={getPoolTypeByName(poolName, existingDomain?.queuePools || [])}
-                              onChange={(e) => handleUpdate(poolName, index, 'type', e.target.value)}
+                              onChange={(e) => handleUpdate(poolName, section.index, "type", e.target.value)} // TODO: if the user udpates the type we need to do some special stuff to 
                             />
                           </Form.Group>
                         </Col>
@@ -307,7 +319,7 @@ export function DomainEditorPage() {
                     </Button>
                     <Tabs>
                       {targetISPs[section?.value]?.map((domainSection, domainIdx) => (
-                        <Tab key={domainIdx} eventKey={domainSection.value} title={domainSection.value}>
+                        <Tab key={domainIdx} eventKey={domainSection.index} title={domainSection.value}>
                           <div className="border rounded p-3 mb-4">
                             Target ISP Name:
                           <Row className="mb-3">
@@ -316,7 +328,7 @@ export function DomainEditorPage() {
                                     type="text"
                                     value={domainSection.value}
                                     onChange={(e) => {
-                                      handleUpdate(poolName, domainIdx, domainSection.key, e.target.value)
+                                      handleUpdate(poolName, domainSection.index, ["value"], e.target.value)
                                     }}
                                     placeholder="Enter Target ISP"
                                   />
@@ -336,7 +348,7 @@ export function DomainEditorPage() {
                                     <Form.Control
                                       type="text"
                                       value={setting.key}
-                                      onChange={(e) => handleUpdate(poolName, domainIdx, setting.key, e.target.value)}
+                                      onChange={(e) => handleUpdate(poolName, domainSection.index, ["content", settingIdx, "key"], e.target.value)}
                                       size="sm"
                                       className="bg-light"
                                     />
@@ -345,7 +357,7 @@ export function DomainEditorPage() {
                                     <Form.Control
                                       type="text"
                                       value={setting.value || ''}
-                                      onChange={(e) => handleUpdate(poolName, domainIdx, setting.key, e.target.value)}
+                                      onChange={(e) => handleUpdate(poolName, domainSection.index, ["content", settingIdx, "value"], e.target.value)}
                                       size="sm"
                                       className="hover:bg-gray-50 focus:bg-white transition-colors"
                                       style={{ cursor: 'text' }}

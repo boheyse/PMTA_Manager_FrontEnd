@@ -1,4 +1,3 @@
-import React, { useEffect, useState } from 'react';
 import ReactDiffViewer from 'react-diff-viewer-continued';
 
 interface StringInterpreterProps {
@@ -24,7 +23,6 @@ export function StringInterpreter({ originalString, modifiedString, title }: Str
         oldValue={beautifyString(originalString)}
         newValue={beautifyString(modifiedString)}
         splitView={true}
-        showDiffOnly={false}
       />
     </div>
   );
