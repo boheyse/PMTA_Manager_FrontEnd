@@ -6,6 +6,7 @@ import { useSidebar } from '../context/SidebarContext';
 import { StringInterpreter } from '../components/StringInterpreter';
 import type { Domain, QueuePool, Section, Setting } from '../types/domain';
 import cloneDeep from 'lodash/cloneDeep';
+import { AddQueueModal } from '../components/AddQueueModal';
 
 interface LocationState {
   domain?: Domain;
@@ -31,6 +32,7 @@ export function DomainEditorPage() {
   const [originalString, setOriginalString] = useState<string>('');
   const [modifiedString, setModifiedString] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showAddQueueModal, setShowAddQueueModal] = useState(false);
 
   useEffect(() => {
     setShowSidebar(false);
@@ -105,7 +107,7 @@ export function DomainEditorPage() {
         console.error('Error fetching strings:', error);
         setIsLoading(false);
       });
-  }, [poolName, originalPoolData, poolData]);
+  }, [poolName, poolData]);
 
   // Function to determine the file name
   const getFileName = (poolName: string): string => {
@@ -269,19 +271,34 @@ export function DomainEditorPage() {
     return targetISPs;
   }
 
-  const handleAddQueue = (poolName: string) => {
+  const handleAddQueue = (ipAddress: string, queueType: string) => {
     setPoolData(prevState => {
       const updatedPoolData = cloneDeep(prevState);
-      const pool = updatedPoolData[poolName];
       
-      if (!pool) return updatedPoolData;
-
+      // Determine the correct pool name based on domain and type
+      const effectivePoolName = queueType 
+        ? `${existingDomain?.domainName}-pool-${queueType}`
+        : `${existingDomain?.domainName}-pool` || '';
+      
+      // Set the poolName state to trigger the useEffect
+      setPoolName(effectivePoolName);
+      
+      // Initialize the pool if it doesn't exist
+      if (!updatedPoolData[effectivePoolName]) {
+        updatedPoolData[effectivePoolName] = [];
+      }
+      
+      const pool = updatedPoolData[effectivePoolName];
+      
       // Find the last virtual-mta section's index
-      const lastVMTAIndex = Math.max(
-        ...pool
-          .filter(section => section.key === 'virtual-mta')
-          .map(section => section.index)
-      );
+      const lastVMTAIndex = pool.length > 0 
+        ? Math.max(
+            ...pool
+              .filter(section => section.key === 'virtual-mta')
+              .map(section => section.index),
+            -1
+          )
+        : -1;
 
       // Create new section indexes
       const newStartIndex = lastVMTAIndex + 1;
@@ -294,13 +311,26 @@ export function DomainEditorPage() {
         }
       });
 
+      // Create section value based on inputs
+      const sectionValue = queueType 
+        ? `${ipAddress}-${existingDomain?.domainName}-${queueType}`
+        : `${ipAddress}-${existingDomain?.domainName}`;
+
       // Create new virtual-mta sections
       const vmtaSectionStart: Section = {
         key: 'virtual-mta',
         type: 'section_start',
-        value: `vmta-${Math.floor(Math.random() * 1000)}`, // Generate a unique name
+        value: sectionValue,
         index: newStartIndex,
-        content: []
+        content: [{
+          "key": "domain-key",
+          "type": "setting",
+          "value": "102524135452859585361,gleemate.com,/etc/pmta/dkim/102524135452859585361.gleemate.com"
+        }, {
+          "key": "smtp-source-host",
+          "type": "setting",
+          "value": `${ipAddress} ${existingDomain?.domainName}`
+        }]
       };
 
       const vmtaSectionEnd: Section = {
@@ -317,6 +347,8 @@ export function DomainEditorPage() {
 
       // Sort the pool by index to maintain order
       pool.sort((a: Section, b: Section) => a.index - b.index);
+      console.log(JSON.stringify(pool, null, 2));
+
 
       return updatedPoolData;
     });
@@ -404,12 +436,21 @@ export function DomainEditorPage() {
           <h2 className="text-lg font-semibold mb-2">Queues</h2>
           <Button 
             variant="outline-primary" 
-            onClick={() => handleAddQueue(poolName)} 
+            onClick={() => setShowAddQueueModal(true)} 
             size="sm"
             className="mb-4"
           >
             Add Queue
           </Button>
+          
+          <AddQueueModal
+            show={showAddQueueModal}
+            onHide={() => setShowAddQueueModal(false)}
+            onSubmit={(ipAddress, queueType) => handleAddQueue(ipAddress, queueType)}
+            availableIPs={availableIPs}
+            domainName={existingDomain?.domainName || ''}
+          />
+
           <Tabs activeKey={activeQueueTab} onSelect={(k) => k && setActiveQueueTab(k)} className="mb-4">
             {Object.entries(poolData).map(([poolName, sections]) => {
               const targetISPs = getTargetISPs(sections);
