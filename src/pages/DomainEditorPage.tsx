@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Form, Row, Col, Button, Badge, Tabs, Tab } from 'react-bootstrap';
 import { X, Plus, ArrowLeft } from 'lucide-react';
@@ -11,6 +11,24 @@ import { AddQueueModal } from '../components/AddQueueModal';
 interface LocationState {
   domain?: Domain;
   availableIPs: string[];
+}
+
+interface QueueInfo {
+  domainKey: string;
+  domainKeyPath: string;
+  domainName: string;
+  ipAddress: string;
+  host: string;
+  subDomain: string;
+  queueName: string;
+  queueType: string;
+}
+
+interface QueueInfoResponse {
+  data: {
+    [key: string]: QueueInfo[];
+  };
+  success: boolean;
 }
 
 export function DomainEditorPage() {
@@ -33,6 +51,8 @@ export function DomainEditorPage() {
   const [modifiedString, setModifiedString] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [showAddQueueModal, setShowAddQueueModal] = useState(false);
+  const [queueInfo, setQueueInfo] = useState<QueueInfoResponse['data']>({});
+  const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     setShowSidebar(false);
@@ -41,81 +61,109 @@ export function DomainEditorPage() {
 
   useEffect(() => {
     const fetchData = async () => {
+      if (!existingDomain?.domainName) return;
+
       try {
-        const responses = await Promise.all(
-          existingDomain?.queuePools.map(pool => {
-            const fileName = pool.type ? `${existingDomain?.domainName}-${pool.type}.vmta.json` : `${existingDomain?.domainName}.vmta.json`;
-            return fetch(`http://127.0.0.1:5000/domain-config/${fileName}`);
-          }) || []
-        );
-        const results = await Promise.all(responses.map(res => res.json()));
-        const poolDataResult: { [key: string]: Section[] } = {};
-        existingDomain?.queuePools.forEach((pool, index) => {
-          poolDataResult[pool.queuePoolName] = results[index].status === 'success' ? results[index].data : [];
-        });
-        setPoolData(poolDataResult);
-        setOriginalPoolData(poolDataResult);
+        const response = await fetch(`http://127.0.0.1:5000/domain-config/${existingDomain.domainName}`);
+        const result = await response.json();
+        
+        if (result.data) {
+          const poolDataResult: { [key: string]: Section[] } = result.data;
+
+          setPoolData(poolDataResult);
+          setOriginalPoolData(poolDataResult);
+        }
       } catch (error) {
         console.error('Error fetching data:', error);
       }
     };
+    
     fetchData();
-  }, [existingDomain]);
+  }, [existingDomain?.domainName]);
 
   useEffect(() => {
-    for (const pool of existingDomain?.queuePools || []) {
-      if (pool.queues.some(queue => queue.queueName === activeQueueTab)) {
-        setPoolName(pool.queuePoolName);
+    const fetchQueueInfo = async () => {
+      if (!existingDomain?.domainName) return;
+
+      try {
+        const response = await fetch(`http://127.0.0.1:5000/vmta-info?domainName=${existingDomain.domainName}`);
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+          setQueueInfo(result.data);
+        }
+      } catch (error) {
+        console.error('Error fetching queue info:', error);
+      }
+    };
+    
+    fetchQueueInfo();
+  }, [existingDomain?.domainName]);
+
+  useEffect(() => {
+    if (!queueInfo) return;
+
+    // Look through each pool in queueInfo
+    for (const [poolName, queues] of Object.entries(queueInfo)) {
+      // Check if any queue in this pool has a matching name
+      if (queues.some(queue => queue.queueName === activeQueueTab)) {
+        // Remove the .vmta.json extension from the poolName
+        setPoolName(poolName);
+        break; // Exit loop once we find the matching pool
       }
     }
+  }, [activeQueueTab, queueInfo]);
 
+  useEffect(() => {
+    // console.log("queueInfoPoolName", JSON.stringify(queueInfo[poolName], null, 2));
     
+    // console.log("queueInfo", JSON.stringify(queueInfo, null, 2));
   }, [activeQueueTab]);
 
   useEffect(() => {
     if (!poolName) return;
 
-    setIsLoading(true);
-    
-    // Fetch original string
-    const fetchOriginal = fetch('http://127.0.0.1:5000/config-string', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ data: originalPoolData[poolName] || [] }),
-    });
+    // Clear any existing timeout
+    if (debounceTimeout.current) {
+      clearTimeout(debounceTimeout.current);
+    }
 
-    // Fetch modified string
-    const fetchModified = fetch('http://127.0.0.1:5000/config-string', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ data: poolData[poolName] || [] }),
-    });
+    // Set a new timeout to delay the API call
+    debounceTimeout.current = setTimeout(() => {
+      setIsLoading(true);
 
-    // Fetch both strings in parallel
-    Promise.all([fetchOriginal, fetchModified])
-      .then(([originalRes, modifiedRes]) => Promise.all([originalRes.json(), modifiedRes.json()]))
-      .then(([originalData, modifiedData]) => {
-        setOriginalString(JSON.stringify(originalData['config_string'], null, 2));
-        setModifiedString(JSON.stringify(modifiedData['config_string'], null, 2));
-        setIsLoading(false);
-      })
-      .catch(error => {
-        console.error('Error fetching strings:', error);
-        setIsLoading(false);
+      // Fetch original string
+      const fetchOriginal = fetch('http://127.0.0.1:5000/config-string', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ data: originalPoolData[poolName] || [] }),
       });
-  }, [poolName, poolData]);
 
-  // Function to determine the file name
-  const getFileName = (poolName: string): string => {
-    // Construct the file name based on your logic
-    // For example, using the domain name and pool type
-    const pool = existingDomain?.queuePools.find(p => p.queuePoolName === poolName);
-    return pool?.type ? `${existingDomain?.domainName}-${pool.type}.vmta.json` : `${existingDomain?.domainName}.vmta.json`;
-  };
+      // Fetch modified string
+      const fetchModified = fetch('http://127.0.0.1:5000/config-string', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ data: poolData[poolName] || [] }),
+      });
+
+      // Fetch both strings in parallel
+      Promise.all([fetchOriginal, fetchModified])
+        .then(([originalRes, modifiedRes]) => Promise.all([originalRes.json(), modifiedRes.json()]))
+        .then(([originalData, modifiedData]) => {
+          setOriginalString(JSON.stringify(originalData['config_string'], null, 2));
+          setModifiedString(JSON.stringify(modifiedData['config_string'], null, 2));
+          setIsLoading(false);
+        })
+        .catch(error => {
+          console.error('Error fetching strings:', error);
+          setIsLoading(false);
+        });
+    }, 2000); // 2-second delay
+  }, [poolName, poolData]);
 
   function setNestedValue(section: Section, path: any[], value: string) {
     const lastKey = path[path.length - 1];
@@ -160,7 +208,6 @@ export function DomainEditorPage() {
       
       // Get target ISPs for current VMTA
       const currentVMTATargetISPs = targetISPsByVMTA[vmtaSection.value || ''] || [];
-      console.log(currentVMTATargetISPs);
 
       // Find the last index from the current VMTA's target ISPs
       const lastIndex = currentVMTATargetISPs.length > 0
@@ -232,6 +279,20 @@ export function DomainEditorPage() {
     });
   };
 
+  const handleRemoveSetting = (poolName: string, sectionIndex: number, settingIndex: number) => {
+    setPoolData((prevState) => {
+      const updatedPoolData = cloneDeep(prevState);
+      const pool = updatedPoolData[poolName];
+      if (pool) {
+        const section = pool[sectionIndex];
+        if (section && section.content) {
+          section.content.splice(settingIndex, 1);
+        }
+      }
+      return updatedPoolData;
+    });
+  };
+
   const handleSaveChanges = () => {
     // Logic to save changes
   };
@@ -239,11 +300,6 @@ export function DomainEditorPage() {
   const handleCancel = () => {
     navigate('/sending-domains');
   };
-
-  function getPoolTypeByName(poolName: string, queuePools: QueuePool[]): string | undefined {
-    const pool = queuePools.find(pool => pool.queuePoolName === poolName);
-    return pool ? pool.type : undefined;
-  }
 
 
   function getTargetISPs(sections: Section[]): { [key: string]: Section[] } {
@@ -271,14 +327,14 @@ export function DomainEditorPage() {
     return targetISPs;
   }
 
-  const handleAddQueue = (ipAddress: string, queueType: string) => {
+  const handleAddQueue = async (ipAddress: string, queueType: string, subDomain: string, domainKey: string) => {
     setPoolData(prevState => {
       const updatedPoolData = cloneDeep(prevState);
       
       // Determine the correct pool name based on domain and type
       const effectivePoolName = queueType 
-        ? `${existingDomain?.domainName}-pool-${queueType}`
-        : `${existingDomain?.domainName}-pool` || '';
+        ? `${existingDomain?.domainName}-${queueType}.vmta.json`
+        : `${existingDomain?.domainName}.vmta.json` || '';
       
       // Set the poolName state to trigger the useEffect
       setPoolName(effectivePoolName);
@@ -325,11 +381,11 @@ export function DomainEditorPage() {
         content: [{
           "key": "domain-key",
           "type": "setting",
-          "value": "102524135452859585361,gleemate.com,/etc/pmta/dkim/102524135452859585361.gleemate.com"
+          "value": `${domainKey},${existingDomain?.domainName},/etc/pmta/dkim/${domainKey}.${existingDomain?.domainName}`
         }, {
           "key": "smtp-source-host",
           "type": "setting",
-          "value": `${ipAddress} ${existingDomain?.domainName}`
+          "value": `${ipAddress} ${subDomain}`
         }]
       };
 
@@ -347,10 +403,51 @@ export function DomainEditorPage() {
 
       // Sort the pool by index to maintain order
       pool.sort((a: Section, b: Section) => a.index - b.index);
-      console.log(JSON.stringify(pool, null, 2));
 
+      // Make API call to update queueInfo
+      fetch('http://127.0.0.1:5000/vmta-info', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify([vmtaSectionStart, vmtaSectionEnd]),
+      })
+      .then(response => response.json())
+      .then(result => {
+        if (result.success && result.data) {
+          updateQueueInfo(result, effectivePoolName);
+          
+          setActiveQueueTab(result.data[0].queueName);
+        }
+      })
+      .catch(error => {
+        console.error('Error updating queue info:', error);
+      });
 
       return updatedPoolData;
+    });
+  };
+
+  const updateQueueInfo = (response, targetPoolName) => {
+    setQueueInfo(prevQueueInfo => {
+      // Clone the existing queueInfo to avoid direct mutation
+      const updatedQueueInfo = { ...prevQueueInfo };
+  
+      // Get the data array from the response
+      const newQueueData = response.data;
+  
+      if (updatedQueueInfo[targetPoolName]) {
+        // If the target pool exists, append the new data
+        updatedQueueInfo[targetPoolName] = [
+          ...updatedQueueInfo[targetPoolName],
+          ...newQueueData,
+        ];
+      } else {
+        // If the target pool does not exist, create it
+        updatedQueueInfo[targetPoolName] = newQueueData;
+      }
+  
+      return updatedQueueInfo;
     });
   };
 
@@ -446,7 +543,9 @@ export function DomainEditorPage() {
           <AddQueueModal
             show={showAddQueueModal}
             onHide={() => setShowAddQueueModal(false)}
-            onSubmit={(ipAddress, queueType) => handleAddQueue(ipAddress, queueType)}
+            onSubmit={(ipAddress, queueType, subDomain, domainKey) => 
+              handleAddQueue(ipAddress, queueType, subDomain, domainKey)
+            }
             availableIPs={availableIPs}
             domainName={existingDomain?.domainName || ''}
           />
@@ -464,8 +563,8 @@ export function DomainEditorPage() {
                             <Form.Label>Subdomain</Form.Label>
                             <Form.Control
                               type="text"
-                              value={section.content?.find(setting => setting.key === 'smtp-source-host')?.value?.split(' ')[1] || ''}
-                              onChange={(e) => handleUpdate(poolName, section.index, ['content', index, 'value'], e.target.value)}
+                              value={queueInfo[poolName]?.find(queue => queue.queueName === activeQueueTab)?.subDomain || ''}
+                              disabled
                             />
                           </Form.Group>
                         </Col>
@@ -474,8 +573,8 @@ export function DomainEditorPage() {
                             <Form.Label>IP Address</Form.Label>
                             <Form.Control
                               type="text"
-                              value={section.content?.find(setting => setting.key === 'smtp-source-host')?.value?.split(' ')[0] || ''}
-                              onChange={(e) => handleUpdate(poolName, section.index, ['content', index, 'value'], e.target.value)}
+                              value={queueInfo[poolName]?.find(queue => queue.queueName === activeQueueTab)?.ipAddress || ''}
+                              disabled
                             />
                           </Form.Group>
                         </Col>
@@ -484,8 +583,31 @@ export function DomainEditorPage() {
                             <Form.Label>Type</Form.Label>
                             <Form.Control
                               type="text"
-                              value={getPoolTypeByName(poolName, existingDomain?.queuePools || [])}
-                              onChange={(e) => handleUpdate(poolName, section.index, "type", e.target.value)} // TODO: if the user udpates the type we need to do some special stuff to 
+                              value={queueInfo[poolName]?.find(queue => queue.queueName === activeQueueTab)?.queueType || ''}
+                              disabled
+                            />
+                          </Form.Group>
+                        </Col>
+                      </Row>
+
+                      <Row className="mb-4">
+                        <Col md={6}>
+                          <Form.Group>
+                            <Form.Label>Domain Key</Form.Label>
+                            <Form.Control
+                              type="text"
+                              value={queueInfo[poolName]?.find(queue => queue.queueName === activeQueueTab)?.domainKey || ''}
+                              disabled
+                            />
+                          </Form.Group>
+                        </Col>
+                        <Col md={6}>
+                          <Form.Group>
+                            <Form.Label>Domain Key Path</Form.Label>
+                            <Form.Control
+                              type="text"
+                              value={queueInfo[poolName]?.find(queue => queue.queueName === activeQueueTab)?.domainKeyPath || ''}
+                              disabled
                             />
                           </Form.Group>
                         </Col>
@@ -527,28 +649,39 @@ export function DomainEditorPage() {
                               </Button>
                             </div>
                             <Form>
-                              <div className="d-flex flex-wrap gap-3">
+                              <div className="grid grid-cols-2 gap-4">
                                 {domainSection.content?.map((setting, settingIdx) => (
-                                  <div key={settingIdx} className="d-flex align-items-center gap-2 flex-grow-1">
-                                    <div style={{ width: '45%' }}>
-                                      <Form.Control
-                                        type="text"
-                                        value={setting.key}
-                                        onChange={(e) => handleUpdate(poolName, domainSection.index, ["content", settingIdx, "key"], e.target.value)}
-                                        size="sm"
-                                        className="bg-light"
-                                      />
+                                  <div key={settingIdx} className="flex items-center gap-2 p-2 border rounded">
+                                    <div className="flex-1 flex gap-2">
+                                      <div className="w-1/2">
+                                        <Form.Control
+                                          type="text"
+                                          value={setting.key}
+                                          onChange={(e) => handleUpdate(poolName, domainSection.index, ["content", settingIdx, "key"], e.target.value)}
+                                          size="sm"
+                                          className="bg-light w-full"
+                                          placeholder="Key"
+                                        />
+                                      </div>
+                                      <div className="w-1/2">
+                                        <Form.Control
+                                          type="text"
+                                          value={setting.value || ''}
+                                          onChange={(e) => handleUpdate(poolName, domainSection.index, ["content", settingIdx, "value"], e.target.value)}
+                                          size="sm"
+                                          className="hover:bg-gray-50 focus:bg-white transition-colors w-full"
+                                          placeholder="Value"
+                                          style={{ cursor: 'text' }}
+                                        />
+                                      </div>
                                     </div>
-                                    <div style={{ width: '45%' }}>
-                                      <Form.Control
-                                        type="text"
-                                        value={setting.value || ''}
-                                        onChange={(e) => handleUpdate(poolName, domainSection.index, ["content", settingIdx, "value"], e.target.value)}
-                                        size="sm"
-                                        className="hover:bg-gray-50 focus:bg-white transition-colors"
-                                        style={{ cursor: 'text' }}
-                                      />
-                                    </div>
+                                    <Button
+                                      variant="link"
+                                      className="p-0 text-danger flex-shrink-0"
+                                      onClick={() => handleRemoveSetting(poolName, domainSection.index, settingIdx)}
+                                    >
+                                      <X size={14} />
+                                    </Button>
                                   </div>
                                 ))}
                               </div>
@@ -574,7 +707,7 @@ export function DomainEditorPage() {
           className="p-2 text-blue-500 hover:underline"
           onClick={() => setIsExpanded(!isExpanded)}
         >
-          {isExpanded ? 'Collapse' : 'Expand'} String Interpreter
+          {isExpanded ? 'Collapse' : 'Expand'} Diff
         </button>
         {isExpanded && (
           isLoading ? (
@@ -585,7 +718,7 @@ export function DomainEditorPage() {
             <StringInterpreter 
               originalString={originalString}
               modifiedString={modifiedString}
-              title={getFileName(poolName)}
+              title={poolName}
             />
           )
         )}
