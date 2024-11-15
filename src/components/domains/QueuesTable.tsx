@@ -1,9 +1,9 @@
 import React from 'react';
-import type { QueuePool, Queue } from '../../types/domain';
+import type { QueuePool, QueueData } from '../../types/domain';
 
 interface QueuesTableProps {
   queuePools: QueuePool[];
-  onQueueClick: (queue: Queue) => void;
+  onQueueClick: (queue: QueueData) => void;
 }
 
 export function QueuesTable({ queuePools, onQueueClick }: QueuesTableProps) {
@@ -20,22 +20,24 @@ export function QueuesTable({ queuePools, onQueueClick }: QueuesTableProps) {
       </thead>
       <tbody>
         {queuePools.flatMap((pool) =>
-          pool.queues.map((queue, queueIndex) => (
-            <tr key={`${pool.queuePoolName}-${queue.subdomain}-${queueIndex}`} className="text-sm">
-              <td className="py-2">{pool.queuePoolName}</td>
-              <td className="py-2">
-                <button
-                  onClick={() => onQueueClick(queue)}
-                  className="text-blue-500 hover:text-blue-700"
-                >
-                  {queue.queueName}
-                </button>
-              </td>
-              <td className="py-2">{queue.subdomain}</td>
-              <td className="py-2">{queue.ipAddress}</td>
-              <td className="py-2">{queue.type || pool.type}</td>
-            </tr>
-          ))
+          pool.queues.flatMap((queue) =>
+            queue.info.map((info, infoIndex) => (
+              <tr key={`${pool.poolName}-${info.queueName}-${infoIndex}`} className="text-sm">
+                <td className="py-2">{pool.poolName}</td>
+                <td className="py-2">
+                  <button
+                    onClick={() => onQueueClick(queue)}
+                    className="text-blue-500 hover:text-blue-700"
+                  >
+                    {info.queueName}
+                  </button>
+                </td>
+                <td className="py-2">{info.subDomain}</td>
+                <td className="py-2">{info.ipAddress}</td>
+                <td className="py-2">{info.queueType || pool.poolType}</td>
+              </tr>
+            ))
+          )
         )}
       </tbody>
     </table>

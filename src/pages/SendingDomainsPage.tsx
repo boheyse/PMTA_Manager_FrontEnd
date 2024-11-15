@@ -1,86 +1,56 @@
 import React, { useState, useEffect } from 'react';
 import { PlusCircle } from 'lucide-react';
 import { Spinner } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { SearchableSelect } from '../components/SearchableSelect';
 import { DomainRow } from '../components/domains/DomainRow';
 import { QueuesTable } from '../components/domains/QueuesTable';
-import type { Domain, QueuePool } from '../types/domain';
+import type { Domain, QueuePool, QueueData, QueueInfoResponse } from '../types/domain';
 import styles from '../styles/SendingDomains.module.css';
 import mockData from '../../domainResponse.json';
+import { buildIpAddresses, getMappedDomainData } from './util/DomainsUtil';
 
 export function SendingDomainsPage() {
   // State management for domains and UI
   const [domains, setDomains] = useState<Domain[]>([]);
+  const [domainNames, setDomainNames] = useState<string[]>([]);
   const [expandedDomains, setExpandedDomains] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [availableIPs, setAvailableIPs] = useState<string[]>([]);
-  
+  const [queueInfo, setQueueInfo] = useState<QueueInfoResponse['data'] | null>(null);
   const navigate = useNavigate();
-
-  // Fetch domains function
-  const fetchDomains = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      
-      const data = mockData;
-      
-      const allIPs = new Set<string>();
-      data['host-domains'].forEach((hostDomain: any) => {
-        hostDomain['queue-pools'].forEach((pool: any) => {
-          (pool['queues'] || []).forEach((queue: any) => {
-            if (queue.smtp_source?.ip_address) {
-              allIPs.add(queue.smtp_source.ip_address);
-            }
-          });
-        });
-      });
-      setAvailableIPs([...allIPs]);
-
-      const transformedDomains: Domain[] = data['host-domains']
-        .filter((hostDomain: any) => hostDomain.name !== '@*')
-        .map((hostDomain: any) => {
-          const domainName = hostDomain.name.replace('@', '');
-          
-          const queuePools: QueuePool[] = hostDomain['queue-pools'].map((pool: any) => ({
-            queuePoolName: pool['queue-pool-name'],
-            type: pool.type || '',
-            queues: (pool.queues || []).map((queue: any) => ({
-              queueName: queue.name,
-              ipAddress: queue.smtp_source?.ip_address || '',
-              subdomain: queue.smtp_source?.subdomain || '',
-              type: queue.type || ''
-            }))
-          }));
-
-          return {
-            domainName: domainName,
-            ipAddresses: [...new Set(queuePools.flatMap((pool: QueuePool) => 
-              pool.queues.map((q: Queue) => q.ipAddress)
-            ))],
-            queuePools
-          };
-        });
-
-      setDomains(transformedDomains);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch domains');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const location = useLocation();
+  
+  useEffect(() => {
+    const getDomains = async () => {
+      try {
+        const domains = await getMappedDomainData();
+        setDomains(domains);
+        setAvailableIPs(buildIpAddresses(domains));
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to retrieve domains');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    getDomains();
+  },[]);
 
   useEffect(() => {
-    fetchDomains();
-  }, []);
+    setDomainNames(domains.map(domain => domain.domainName));
+  }, [domains]);
+
+
 
   // Handlers
   const handleEdit = (domain: Domain) => {
     navigate(`/domain-editor/${domain.domainName}`, {
-      state: { domain, availableIPs }
+      state: { 
+        domain, 
+        allAvailableIPs: availableIPs 
+      }
     });
   };
 
@@ -93,7 +63,7 @@ export function SendingDomainsPage() {
       await fetch(`http://localhost:5000/domains/${domain.domainName}`, {
         method: 'DELETE',
       });
-      await fetchDomains();
+      await getDomains();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete domain');
     } finally {
@@ -102,7 +72,12 @@ export function SendingDomainsPage() {
   };
 
   const handleAdd = () => {
-    navigate('/domain-editor', { state: { availableIPs } });
+    navigate('/domain-editor', { 
+      state: { 
+        availableIPs,
+        queueInfo: {} // Pass empty object for new domains
+      } 
+    });
   };
 
   const toggleDomain = (domain: string) => {

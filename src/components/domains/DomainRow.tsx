@@ -17,7 +17,9 @@ export function DomainRow({ domain, isExpanded, onToggle, onEdit, onDelete }: Do
         {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
       </td>
       <td className="p-4">{domain.domainName}</td>
-      <td className="p-4">{domain.ipAddresses.join(', ')}</td>
+      <td className="p-4">
+        {domain.ipAddresses?.length > 0 ? domain.ipAddresses.join(', ') : 'No IP addresses'}
+      </td>
       <td className="p-4">
         <div className="flex items-center space-x-2">
           <button
