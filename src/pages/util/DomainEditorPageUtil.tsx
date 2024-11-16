@@ -21,27 +21,23 @@ export function createVMTASectionStart(sectionValue: string, newStartIndex: numb
     };
   }
 
-  export function createVMTAPoolSectionStart(poolName: string, newStartIndex: number, sectionValue: string): Section {
+  export function createVMTAPoolSectionStart(poolName: string): Section {
     return {
       key: 'virtual-mta-pool',
       type: 'section_start',
       value: poolName,
-      index: newStartIndex,
-      content: [{
-        "key": "virtual-mta",
-        "type": "setting",
-        "value": `${sectionValue}`,
-        "data": []
-      }]
+      index: 0,
+      content: []
     };
   }
 
-  export function createVMTAPoolSetting(sectionValue: string): Setting {
+  export function createSectionStart(key: string, sectionValue: string, newStartIndex: number): Section {
     return {
-        key: "virtual-mta",
-        type: "setting",
-        value: `${sectionValue}`,
-        data: []
+      key: key,
+      type: "section_start",
+      value: sectionValue,
+      index: newStartIndex,
+      content: []
     };
   }
 
@@ -55,6 +51,17 @@ export function createVMTASectionStart(sectionValue: string, newStartIndex: numb
     };
   }
 
+  export function createVMTAPoolSetting(sectionValue: string): Setting {
+    return {
+        key: "virtual-mta",
+        type: "setting",
+        value: `${sectionValue}`,
+        data: []
+    };
+  }
+
+
+
   export function getSectionFromFile(fileName: string, type: string, key: string, value: string, fileData: any) {
     const pool = fileData[fileName];
     if (pool) {
@@ -65,36 +72,11 @@ export function createVMTASectionStart(sectionValue: string, newStartIndex: numb
 
   export function getLastIndex(file: any, key: string) {
     return file.length > 0 
-        ? Math.max(
-            ...file
-              .filter(section => section.key === key)
-              .map(section => section.index),
-            -1
-          )
-        : -1;
-  }
-
-  export function getTargetISPs(sections: Section[]): { [key: string]: Section[] } {
-    const targetISPs: { [key: string]: Section[] } = {};
-    let currentVMTANode: string = '';
-    let currentDomainSection: Section[] = [];
-
-    sections.forEach((section) => {
-      if (section.key === 'virtual-mta' && section.type === 'section_start') {
-        currentVMTANode = section.value || '';
-        targetISPs[currentVMTANode] = [];
-      } else if (section.key === 'virtual-mta' && section.type === 'section_end') {
-        currentVMTANode = '';
-      } else if (currentVMTANode && section.key === 'domain') {
-        if (section.type === 'section_start') {
-          currentDomainSection = [section];
-        } else if (section.type === 'section_end' && currentDomainSection.length > 0) {
-          currentDomainSection.push(section);
-          targetISPs[currentVMTANode].push(...currentDomainSection);
-          currentDomainSection = [];
-        }
-      }
-    });
-
-    return targetISPs;
-  }
+      ? Math.max(
+          ...file
+            .filter(section => section.key === key)
+            .map(section => section.index),
+          0 // Default value when no sections match
+        )
+      : 0; // Return 0 if the file is empty
+  }  

@@ -5,38 +5,30 @@ import { SearchableSelect } from './SearchableSelect';
 interface AddQueueModalProps {
   show: boolean;
   onHide: () => void;
-  onSubmit: (ipAddress: string, queueType: string, subDomain: string, domainKey: string) => void;
+  onSubmit: (ipAddress: string, subDomain: string, domainKey: string) => void;
   availableIPs: string[];
   domainName: string;
+  poolType: string;
 }
-
-const modalStyles = {
-  '.modal-90w': {
-    width: '90%',
-    maxWidth: '1200px',
-  },
-};
 
 export function AddQueueModal({ 
   show, 
   onHide, 
   onSubmit, 
   availableIPs,
-  domainName 
+  domainName,
+  poolType
 }: AddQueueModalProps) {
   const [selectedIP, setSelectedIP] = useState<string>('');
-  const [queueType, setQueueType] = useState<string>('default');
   const [subDomain, setSubDomain] = useState<string>(domainName);
   const [domainKey, setDomainKey] = useState<string>('0');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const finalQueueType = queueType === 'default' ? '' : queueType;
-    onSubmit(selectedIP, finalQueueType, subDomain, domainKey);
+    onSubmit(selectedIP, subDomain, domainKey);
     onHide();
     // Reset form
     setSelectedIP('');
-    setQueueType('default');
     setSubDomain(domainName);
     setDomainKey('0');
   };
@@ -89,12 +81,11 @@ export function AddQueueModal({
                 <Form.Label>Queue Type</Form.Label>
                 <Form.Control
                   type="text"
-                  value={queueType}
-                  onChange={(e) => setQueueType(e.target.value)}
-                  placeholder="Enter queue type"
+                  value={poolType}
+                  disabled
                 />
                 <Form.Text className="text-muted">
-                  Default = empty
+                  Auto-generated from selected pool
                 </Form.Text>
               </Form.Group>
             </Col>

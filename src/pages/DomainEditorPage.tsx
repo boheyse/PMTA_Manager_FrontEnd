@@ -4,13 +4,13 @@ import { Form, Row, Col, Button, Badge, Tabs, Tab } from 'react-bootstrap';
 import { X, Plus, ArrowLeft } from 'lucide-react';
 import { useSidebar } from '../context/SidebarContext';
 import { StringInterpreter } from '../components/StringInterpreter';
-import { createVMTASectionStart, createSectionEnd, getSectionFromFile, createVMTAPoolSectionStart, getLastIndex, createVMTAPoolSetting, getTargetISPs } from '../pages/util/DomainEditorPageUtil';
+import { createVMTASectionStart, createSectionEnd, getSectionFromFile, createVMTAPoolSectionStart, getLastIndex, createVMTAPoolSetting, getTargetISPs, createSectionStart } from '../pages/util/DomainEditorPageUtil';
 import type { Domain, QueueInfo, Section, Setting } from '../types/domain';
 import cloneDeep from 'lodash/cloneDeep';
 import { AddQueueModal } from '../components/AddQueueModal';
-import { axiosGet, axiosPost, fetchGet } from '../utils/apiUtils';
-import TargetISPTabs2 from '../components/domaineditor/TargetISPTabs2';
+import { axiosGet, axiosPost, fetchGet, fetchPost } from '../utils/apiUtils';
 import QueueTabs from '../components/domaineditor/QueueTabs';
+import AddPoolModal from '../components/domaineditor/AddPoolModal';
 
 interface LocationState {
   domain?: Domain;
@@ -28,6 +28,8 @@ export function DomainEditorPage() {
   const [domainIPAddresses, setDomainIPAddresses] = useState(domain?.ipAddresses || []);
   const [originalPoolData, setOriginalPoolData] = useState(domain?.queuePools || []);
   const [poolData, setPoolData] = useState(domain?.queuePools || []);
+  const [showAddPoolModal, setShowAddPoolModal] = useState(false);
+  const [newQueueType, setNewQueueType] = useState("default");
 
   const [selectedPoolName, setSelectedPoolName] = useState<string | null>(null);
   const [selectedQueueName, setSelectedQueueName] = useState<string | null>(null);
@@ -46,6 +48,12 @@ export function DomainEditorPage() {
   const [isDomainAdded, setIsDomainAdded] = useState(!!domain);
   const [showAddButton, setShowAddButton] = useState(false);
 
+  // Extract unique poolName for top-level tabs
+  let poolNames = Array.from(
+    new Set(
+      poolData.map((pool) => pool.poolName || "")
+    ) 
+  );
   // Get queues for the selected poolName
   const queuesForSelectedPool = poolData.find(
     (pool) => pool.poolName === selectedPoolName
@@ -54,6 +62,10 @@ export function DomainEditorPage() {
   const fileName = poolData.find(
     (pool) => pool.poolName === selectedPoolName
   )?.fileName;
+
+  const poolType = poolData.find(
+    (pool) => pool.poolName === selectedPoolName
+  )?.poolType;
 
   // Get all queueInfo for the selected queueName
   const queueInfo = queuesForSelectedPool?.flatMap((queue) => queue.info) || [];
@@ -107,13 +119,7 @@ export function DomainEditorPage() {
     return () => clearTimeout(debounceTimeout.current as NodeJS.Timeout); // Cleanup on unmount or dependency change
   }, [poolData]);
 
-  // Extract unique poolName for top-level tabs
-  let poolNames = Array.from(
-    new Set(
-      poolData.map((pool) => pool.poolName || "")
-    ) 
-  );
-
+  // Function to fetch config strings from the backend
   const fetchConfigStrings = async (sectionsForOriginalPoolData: Section[], sectionsForPoolData: Section[]) => {
     setIsLoading(true);
     try {
@@ -143,66 +149,41 @@ export function DomainEditorPage() {
     return selectedPool.queues.flatMap((queue) => queue.sections || []);
   };
 
-  function setNestedValue(section: Section, path: any[], value: string) {
-    const lastKey = path[path.length - 1];
-    const parent = path.slice(0, -1).reduce((acc, key) => {
-        if (acc[key] === undefined) {
-            acc[key] = typeof key === 'number' ? [] : {}; // Initialize if undefined
-        }
-        return acc[key];
-    }, section);
-
-    parent[lastKey] = value;
-  }
-
-  const handleSaveChanges = async () => {
-    try {
-      setIsLoading(true);
+  // Function to save changes to the backend
+  const buildSaveRequestBody = () => {
+    const changeSet = poolData.map((currentPool) => {
   
-      // Create diffPoolData by comparing poolData with originalPoolData
-      const diffPoolData: { [key: string]: Section[] } = {};
-      Object.keys(poolData).forEach(poolName => {
-        const currentPoolString = JSON.stringify(poolData[poolName]);
-        const originalPoolString = JSON.stringify(originalPoolData[poolName] || []);
+      // Find the corresponding pool in originalPoolData
+      const originalPool = originalPoolData.find((pool) => pool.poolName === currentPool.poolName);
   
-        if (currentPoolString !== originalPoolString) {
-          diffPoolData[poolName] = poolData[poolName];
-        }
-      });
+      // Extract sections from the current pool
+      const workingSections = currentPool.queues.flatMap((queue) => queue.sections || []);
   
-      if (Object.keys(diffPoolData).length === 0) {
-        alert('No changes to save');
-        return;
-      }
+      // Extract sections from the original pool (if it exists)
+      const previousSections = originalPool
+        ? originalPool.queues.flatMap((queue) => queue.sections || [])
+        : [];
   
-      const saveRequest = Object.keys(diffPoolData).map(poolName => ({
-        data: diffPoolData[poolName],
-        fileType: queueInfo[poolName]?.[0]?.queueType || '',
-        fileName: poolName
-      }));
-  
-      const result = await fetchPost('http://127.0.0.1:5000/save-config', saveRequest);
-  
-      if (result.success) {
-        setOriginalPoolData(prevState => ({
-          ...prevState,
-          ...Object.keys(diffPoolData).reduce((acc, poolName) => ({
-            ...acc,
-            [poolName]: cloneDeep(poolData[poolName])
-          }), {})
-        }));
-  
-        alert('All changes saved successfully');
-      } else {
-        throw new Error(result.message || 'Failed to save changes');
-      }
-    } catch (error) {
-      console.error('Error saving changes:', error);
-      alert('Failed to save changes: ' + (error instanceof Error ? error.message : 'Unknown error'));
-    } finally {
-      setIsLoading(false);
-    }
+      // Create the object for this pool
+      return {
+        fileName: currentPool.fileName,
+        poolType: currentPool.poolType,
+        poolName: currentPool.poolName,
+        domainName: domainName,
+        workingSections,
+        previousSections,
+      };
+    });
+    return changeSet;
   };
+
+  // Function to save changes to the backend
+  const handleSaveChanges = async () => {
+    const changeSet = buildSaveRequestBody();
+    console.log(JSON.stringify(changeSet, null, 2));
+    await fetchPost('http://127.0.0.1:5000/v1/save-configs', changeSet);
+  };
+  
 
   const handleCancel = () => {
     // Trigger a reload by navigating with a state flag
@@ -213,121 +194,127 @@ export function DomainEditorPage() {
     });
   };
 
+  // Logic to add a new queue to the selected pool
+  const handleAddQueue = (ipAddress: string, subDomain: string, domainKey: string) => {
+    setPoolData((prevPoolData) => {
+      const updatedPoolData = cloneDeep(prevPoolData);
+      const targetPool = updatedPoolData.find((pool) => pool.poolName === selectedPoolName);
+      const poolIndex = updatedPoolData.findIndex((pool) => pool.poolName === selectedPoolName);
 
-  // Logic that hadnles what happens when a user clicks the "Add Queue" button
-  const handleAddQueue = async (ipAddress: string, queueType: string, subDomain: string, domainKey: string) => {
-    setPoolData(prevState => {
-      const updatedFileData = cloneDeep(prevState);
-      
-      // Determine the correct pool & file name based on domain and type
-      const fileName = queueType ? `${domain}-${queueType}.vmta.json` : `${domain}.vmta.json` || '';
-      // Create section value based on inputs
-      const sectionValue = queueType ? `${ipAddress}-${domain}-${queueType}` : `${ipAddress}-${domain}`;
-      // Create pool name based on inputs
-      const poolName = queueType ? `${domain}-pool-${queueType}` : `${domain}-pool`;
-      
-      // Set the poolName state to trigger the useEffect
-      setPoolName(fileName);
-      
-      // Initialize the pool if it doesn't exist
-      if (!updatedFileData[fileName]) {
-        updatedFileData[fileName] = [];
+      if (targetPool) {
+        const queueName = targetPool.poolType ? `${ipAddress}-${domainName}-${targetPool.poolType}` : `${ipAddress}-${domainName}`;
+        const lastIndex = getLastIndex(updatedPoolData, 'virtual-mta');
+
+        // assumes there are sections in the pool because it's created with two new virtual-mta-pool sections. There shouldn't be a way to get here without sections.
+        // therefore increment the exisitng  by 2.
+        targetPool.queues[0].sections = targetPool.queues[0].sections.map((section) => ({
+          ...section,
+          index: section.index + 2, // Increment index by 2
+        }));
+
+        // Find the "virtual-mta-pool" section_start
+        targetPool.queues[0].sections.find(
+          (section) => section.key === 'virtual-mta-pool' && section.type === 'section_start'
+        ).content.push(createVMTAPoolSetting(queueName));
+
+        const newQueue = {
+          info: [
+            {
+              queueName: queueName,
+              domainName: domainName,
+              ipAddress: ipAddress,
+              queueType: targetPool.poolType,
+              subDomain: subDomain,
+              domainKey: domainKey,
+              domainKeyPath: `/etc/pmta/dkim/${domainKey}.${domainName}`,
+            },
+          ],
+          sections: [
+            createVMTASectionStart(queueName, lastIndex, ipAddress, subDomain, domainKey, domainName),
+            createSectionEnd("virtual-mta", lastIndex + 1),
+          ],
+        };
+  
+        // Add the new queue and sort sections by index
+        targetPool.queues[0].info.push(newQueue.info[0]);
+        targetPool.queues[0].sections = targetPool.queues[0].sections
+        .concat(newQueue.sections) // Combine old and new sections
+        .sort((a, b) => a.index - b.index); // Sort by index
       }
-      
-      const file = updatedFileData[fileName];
-      
-      // Find the last virtual-mta section's index
-      const lastVMTAIndex = getLastIndex(file, 'virtual-mta');
+      // Update the pool in the poolData array
+      updatedPoolData[poolIndex] = targetPool;
+      return updatedPoolData;
+    });
+  
+    setShowAddQueueModal(false); // Close the modal after adding the queue
+  };
+  
 
-      // Create new section indexes
-      const newStartIndex = lastVMTAIndex + 1;
-      const newEndIndex = lastVMTAIndex + 2;
-
-      // Update all existing sections that have indexes >= newStartIndex
-      file.forEach((section: Section) => {
-        if (section.index >= newStartIndex) {
-          section.index += 2;
-        }
-      });
-
-      // Create new virtual-mta sections
-      const vmtaSectionStart = createVMTASectionStart(sectionValue, newStartIndex, ipAddress, subDomain, domainKey, domain);
-      const vmtaSectionEnd = createSectionEnd('virtual-mta', newEndIndex);
-      
-      // Check if the virtual-mta-pool section already exists in the pool, since we need to add the new vmta to the pool as well
-      const vmtaPoolSection = getSectionFromFile(fileName, 'section_start', 'virtual-mta-pool', poolName, updatedFileData);
-      if (vmtaPoolSection) {
-        vmtaPoolSection.content.push(createVMTAPoolSetting(sectionValue));
-      } else {
-        file.push(createVMTAPoolSectionStart(poolName, newEndIndex+1, sectionValue));
-        file.push(createSectionEnd('virtual-mta-pool', newEndIndex+2));
-      }
-
-      // Add new sections to the pool
-      file.push(vmtaSectionStart);
-      file.push(vmtaSectionEnd);
-
-      // Sort the pool by index to maintain order
-      file.sort((a: Section, b: Section) => a.index - b.index);
-
-      // Make API call to update queueInfo
-      fetch('http://127.0.0.1:5000/vmta-info', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+  const handleAddPool = () => {
+    const poolType = newQueueType === "default" ? "" : newQueueType.trim();
+    const poolName = poolType
+      ? `${domainName}-pool-${poolType}`
+      : `${domainName}-pool`;
+  
+    // Define starting and ending section indices
+    const sectionStartIndex = 0; // Adjust as needed
+    const sectionEndIndex = sectionStartIndex + 1;
+  
+    // Create sections for the new pool
+    const sections = [
+      createSectionStart("virtual-mta-pool", poolName, sectionStartIndex),
+      createSectionEnd("virtual-mta-pool", sectionEndIndex),
+    ];
+  
+    const newPool = {
+      fileName: poolType
+        ? `${domainName}-${poolType}.vmta.json`
+        : `${domainName}.vmta.json`,
+      poolName: poolName,
+      poolType: poolType,
+      queues: [
+        {
+          info: [],
+          sections: sections,
         },
-        body: JSON.stringify([vmtaSectionStart, vmtaSectionEnd]),
-      })
-      .then(response => response.json())
-      .then(result => {
-        if (result.success && result.data) {
-          updateQueueInfo(result, fileName);
-          
-          setActiveQueueTab(result.data[0].queueName);
-        }
-      })
-      .catch(error => {
-        console.error('Error updating queue info:', error);
-      });
-
-      return updatedFileData;
+      ],
+    };
+  
+    setPoolData((prevPoolData) => {
+      const updatedPoolData = cloneDeep(prevPoolData); // Deep clone
+      updatedPoolData.push(newPool); // Add the new pool
+      return updatedPoolData;
     });
+    setShowAddPoolModal(false); // Close the modal
+    setNewQueueType("default"); // Reset the input
+    setSelectedPoolName(newPool.poolName); // Auto-select the new pool tab
   };
-
-  const updateQueueInfo = (response, targetPoolName) => {
-    setQueueInfo(prevQueueInfo => {
-      // Clone the existing queueInfo to avoid direct mutation
-      const updatedQueueInfo = { ...prevQueueInfo };
   
-      // Get the data array from the response
-      const newQueueData = response.data;
-  
-      if (updatedQueueInfo[targetPoolName]) {
-        // If the target pool exists, append the new data
-        updatedQueueInfo[targetPoolName] = [
-          ...updatedQueueInfo[targetPoolName],
-          ...newQueueData,
-        ];
-      } else {
-        // If the target pool does not exist, create it
-        updatedQueueInfo[targetPoolName] = newQueueData;
-      }
-  
-      return updatedQueueInfo;
-    });
+  const validateDomainName = (name: string) => {
+    // Example: Basic validation for domain format
+    const domainRegex = /^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return domainRegex.test(name);
   };
-
-  // Modify the domain name change handler
+  
   const handleDomainNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value;
-    setDomain(newValue);
-    setShowAddButton(!!newValue && !isDomainAdded);
+    const name = e.target.value;
+    setDomainName(name);
+  
+    // Toggle Add Button based on validation
+    if (validateDomainName(name)) {
+      setShowAddButton(true);
+    } else {
+      setShowAddButton(false);
+    }
   };
-
-  // Add handler for Add Domain button
+  
   const handleAddDomain = () => {
-    setIsDomainAdded(true);
-    setShowAddButton(false);
+    if (validateDomainName(domainName)) {
+      setIsDomainAdded(true);
+      setShowAddButton(false);
+    } else {
+      alert('Please enter a valid domain name.');
+    }
   };
 
   // Function to update sections in poolData
@@ -340,7 +327,6 @@ export function DomainEditorPage() {
           queue.sections = updatedSections;
         });
       }
-      console.log('updatedPoolData', JSON.stringify(updatedPoolData, null, 2));
       return updatedPoolData;
     });
   };
@@ -365,7 +351,7 @@ export function DomainEditorPage() {
                   <Form.Control
                     type="text"
                     value={domainName}
-                    onChange={(e) => setDomainName(e.target.value)}
+                    onChange={handleDomainNameChange}
                     placeholder="example.com"
                     disabled={isDomainAdded}
                   />
@@ -446,52 +432,62 @@ export function DomainEditorPage() {
             <h2 className="text-lg font-semibold mb-2">Queues</h2>
             <Button 
               variant="outline-primary" 
-              onClick={() => setShowAddQueueModal(true)} 
+              onClick={() => setShowAddPoolModal(true)} 
               size="sm"
               className="mb-4"
             >
-              Add Queue
+              Add Pool
             </Button>
             
-            <AddQueueModal
-              show={showAddQueueModal}
-              onHide={() => {
-                setShowAddQueueModal(false);
-              }}
-              onSubmit={handleAddQueue}
-              availableIPs={allAvailableIPs}
-              domainName={domainName || ''}
+            {/* Add Pool Modal */}
+            <AddPoolModal
+              show={showAddPoolModal}
+              onHide={() => setShowAddPoolModal(false)}
+              onSubmit={handleAddPool}
+              newQueueType={newQueueType}
+              setNewQueueType={setNewQueueType}
             />
 
-                  {/* Top-level Tabs for poolName */}
-                  <Tabs
-                    activeKey={selectedPoolName || ""}
-                    onSelect={(key) => {
-                      setSelectedPoolName(key); // Set active pool tab
-                      setSelectedQueueName(null); // Reset queue tab when changing pool
-                    }}
-                    className="mb-4"
-                  >
-                    {poolNames.map((poolName) => (
-                      <Tab eventKey={poolName} key={poolName} title={poolName}>
-                        {selectedPoolName === poolName && (
-                          <div>
-                            {/* Render second-level tabs only for active pool */}
-                            <QueueTabs
-                              queuesForSelectedPool={queuesForSelectedPool}
-                              selectedQueueName={selectedQueueName}
-                              setSelectedQueueName={setSelectedQueueName}
-                              activeQueueDetails={activeQueueDetails}
-                              queueSections={queueSections}
-                              poolName={poolName}
-                              onUpdateSections={(updatedSections: Section[]) => updateSections(poolName, updatedSections)}
-                            />
-                          </div>
-                        )}
-                      </Tab>
-                    ))}
-                  </Tabs>
-
+            {/* Top-level Tabs for poolName */}
+            <Tabs
+              activeKey={selectedPoolName || ""}
+              onSelect={(key) => {
+                setSelectedPoolName(key); // Set active pool tab
+                setSelectedQueueName(null); // Reset queue tab when changing pool
+              }}
+              className="mb-4"
+            >
+              {poolNames.map((poolName) => (
+                <Tab eventKey={poolName} key={poolName} title={poolName}>
+                  {selectedPoolName === poolName && (
+                    <div>
+                      {/* Render second-level tabs only for active pool */}
+                      <QueueTabs
+                        queuesForSelectedPool={queuesForSelectedPool}
+                        selectedQueueName={selectedQueueName}
+                        setSelectedQueueName={setSelectedQueueName}
+                        activeQueueDetails={activeQueueDetails}
+                        queueSections={queueSections}
+                        poolName={poolName}
+                        onUpdateSections={(updatedSections: Section[]) => updateSections(poolName, updatedSections)}
+                        addNewQueue={handleAddQueue} // Pass the function here
+                        showAddQueueModal={showAddQueueModal}
+                        setShowAddQueueModal={setShowAddQueueModal}
+                      />
+                      {/* Add Queue Modal */}
+                      <AddQueueModal
+                        show={showAddQueueModal}
+                        onHide={() => setShowAddQueueModal(false)}
+                        onSubmit={(ipAddress, subDomain, domainKey) => handleAddQueue(ipAddress, subDomain, domainKey)} // Pass correct arguments
+                        availableIPs={domainIPAddresses}
+                        domainName={domainName || ""}
+                        poolType={poolType || ""}
+                      />
+                    </div>
+                  )}
+                </Tab>
+              ))}
+            </Tabs>
           </div>
         )}
 

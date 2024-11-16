@@ -24,17 +24,6 @@ export function SendingDomainsPage() {
   const location = useLocation();
   
   useEffect(() => {
-    const getDomains = async () => {
-      try {
-        const domains = await getMappedDomainData();
-        setDomains(domains);
-        setAvailableIPs(buildIpAddresses(domains));
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to retrieve domains');
-      } finally {
-        setIsLoading(false);
-      }
-    };
     getDomains();
   },[]);
 
@@ -42,7 +31,17 @@ export function SendingDomainsPage() {
     setDomainNames(domains.map(domain => domain.domainName));
   }, [domains]);
 
-
+  const getDomains = async () => {
+    try {
+      const domains = await getMappedDomainData();
+      setDomains(domains);
+      setAvailableIPs(buildIpAddresses(domains));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to retrieve domains');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Handlers
   const handleEdit = (domain: Domain) => {
@@ -74,8 +73,8 @@ export function SendingDomainsPage() {
   const handleAdd = () => {
     navigate('/domain-editor', { 
       state: { 
-        availableIPs,
-        queueInfo: {} // Pass empty object for new domains
+        domain: null,
+        allAvailableIPs: availableIPs,
       } 
     });
   };
