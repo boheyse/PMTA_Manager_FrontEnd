@@ -43,6 +43,7 @@ export function DomainEditorPage() {
   const [modifiedString, setModifiedString] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [showAddQueueModal, setShowAddQueueModal] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // Add new state to track if domain has been added
   const [isDomainAdded, setIsDomainAdded] = useState(!!domain);
@@ -77,6 +78,16 @@ export function DomainEditorPage() {
   const activeQueueDetails = queueInfo.find(
     (queue) => queue.queueName === selectedQueueName
   );
+
+  // Mark unsaved changes when poolData or domain-related state changes
+  useEffect(() => {
+    const isModified =
+      JSON.stringify(originalPoolData) !== JSON.stringify(poolData) ||
+      domainName !== domain?.domainName ||
+      JSON.stringify(domainIPAddresses) !== JSON.stringify(domain?.ipAddresses);
+
+    setHasUnsavedChanges(isModified);
+  }, [originalPoolData, poolData, domainName, domainIPAddresses, domain]);
 
   useEffect(() => {
     setShowSidebar(false);
@@ -179,19 +190,31 @@ export function DomainEditorPage() {
 
   // Function to save changes to the backend
   const handleSaveChanges = async () => {
-    const changeSet = buildSaveRequestBody();
-    console.log(JSON.stringify(changeSet, null, 2));
-    await fetchPost('http://127.0.0.1:5000/v1/save-configs', changeSet);
+    try {
+      const changeSet = buildSaveRequestBody();
+      console.log(JSON.stringify(changeSet, null, 2));
+  
+      await fetchPost('http://127.0.0.1:5000/v1/save-configs', changeSet);
+  
+      alert('Changes saved successfully!');
+      setHasUnsavedChanges(false); // Reset unsaved changes
+      navigate('/sending-domains'); // Redirect to /sending-domains on success
+    } catch (error) {
+      console.error('Failed to save changes:', error);
+      alert('Failed to save changes. Please try again.');
+    }
   };
   
 
   const handleCancel = () => {
-    // Trigger a reload by navigating with a state flag
-    navigate('/sending-domains', { 
-      state: { 
-        reload: true 
-      } 
-    });
+    if (hasUnsavedChanges) {
+      const confirmLeave = window.confirm(
+        'You have unsaved changes. Are you sure you want to leave this page?'
+      );
+      if (!confirmLeave) return; // Stop navigation if user cancels
+    }
+  
+    navigate('/sending-domains', { state: { reload: true } });
   };
 
   // Logic to add a new queue to the selected pool
