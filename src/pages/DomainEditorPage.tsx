@@ -5,10 +5,10 @@ import { X, Plus, ArrowLeft } from 'lucide-react';
 import { useSidebar } from '../context/SidebarContext';
 import { StringInterpreter } from '../components/StringInterpreter';
 import { createVMTASectionStart, createSectionEnd, getSectionFromFile, createVMTAPoolSectionStart, getLastIndex, createVMTAPoolSetting, getTargetISPs, createSectionStart } from '../pages/util/DomainEditorPageUtil';
-import type { Domain, QueueInfo, Section, Setting } from '../types/domain';
+import type { Domain, Section } from '../types/domain';
 import cloneDeep from 'lodash/cloneDeep';
 import { AddQueueModal } from '../components/AddQueueModal';
-import { axiosGet, axiosPost, fetchGet, fetchPost } from '../utils/apiUtils';
+import { axiosPost, fetchPost } from '../utils/apiUtils';
 import QueueTabs from '../components/domaineditor/QueueTabs';
 import AddPoolModal from '../components/domaineditor/AddPoolModal';
 
@@ -135,10 +135,10 @@ export function DomainEditorPage() {
     setIsLoading(true);
     try {
       const [originalData, modifiedData] = await Promise.all([
-        axiosPost('http://127.0.0.1:5000/v1/config-string', {
+        axiosPost('/v1/config-string', {
           data: sectionsForOriginalPoolData || [],
         }),
-        axiosPost('http://127.0.0.1:5000/v1/config-string', {
+        axiosPost('/v1/config-string', {
           data: sectionsForPoolData || [],
         }),
       ]);
@@ -194,7 +194,7 @@ export function DomainEditorPage() {
       const changeSet = buildSaveRequestBody();
       console.log(JSON.stringify(changeSet, null, 2));
   
-      await fetchPost('http://127.0.0.1:5000/v1/save-configs', changeSet);
+      await fetchPost('/v1/save-configs', changeSet);
   
       alert('Changes saved successfully!');
       setHasUnsavedChanges(false); // Reset unsaved changes

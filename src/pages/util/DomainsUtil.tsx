@@ -1,9 +1,9 @@
-import { axiosGet } from '../../utils/apiUtils'; // Assuming your fetchGet is in an 'api.ts' file
+import { axiosGet } from '../../utils/apiUtils'; // Assuming your axiosGet is in an 'api.ts' file
 import type { Domain, DomainResponse } from '../../types/domain';
 
 // Get the domain data from the API and map it to the desired structure
 export const getMappedDomainData = async (): Promise<Domain[]> => {
-  const url = 'http://127.0.0.1:5000/v1/domains';
+  const url = '/v1/domains';
 
   try {
     // Fetch the domainResponse from the API

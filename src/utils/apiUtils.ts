@@ -1,9 +1,11 @@
 // src/utils/apiUtils.ts
 import axios from 'axios';
 
+// const hostName = 'http://127.0.0.1:5000';
+const hostName = 'https://pmta-manager-backend-boheyse.replit.app';
 export const axiosGet = async (url: string) => {
   try {
-    const response = await axios.get(url);
+    const response = await axios.get(`${hostName}${url}`);
     return response.data; // Axios automatically parses JSON
   } catch (error) {
     console.error('GET request failed:', error);
@@ -13,7 +15,7 @@ export const axiosGet = async (url: string) => {
 
 export const axiosPost = async (url: string, data: any) => {
   try {
-    const response = await axios.post(url, data, {
+    const response = await axios.post(`${hostName}${url}`, data, {
       headers: {
         'Content-Type': 'application/json',
       },
