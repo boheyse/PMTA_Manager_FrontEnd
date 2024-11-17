@@ -4,7 +4,7 @@ import { FileList } from '../components/config-viewer/FileList';
 import { Editor } from '../components/config-viewer/Editor';
 import { mockApiResponses } from '../mocks/configFiles';
 
-const USE_MOCK_DATA = true; // Toggle this to switch between mock and real API
+const USE_MOCK_DATA = false; // Toggle this to switch between mock and real API
 
 export function ConfigViewerPage() {
   const [files, setFiles] = useState<string[]>([]);
@@ -34,6 +34,7 @@ export function ConfigViewerPage() {
       } else {
         const response = await axiosGet('/v1/config-files?fileNameList=true');
         setFiles(response.data || []);
+        console.log(`Fetched file list: ${response.data}`);
       }
     } catch (err) {
       setError('Failed to fetch file list');
@@ -58,7 +59,8 @@ export function ConfigViewerPage() {
         setFileContent(beautifiedContent);
         setOriginalContent(beautifiedContent);
       } else {
-        const response = await axiosGet(`/v1/config-files?fileName=${fileName}&raw=true`);
+        console.log(`Fetching file content for ${fileName}`);
+        const response = await axiosGet(`/v1/config-files?fileName=${fileName}&rawString=true`);
         const beautifiedContent = beautifyString(response.data);
         setFileContent(beautifiedContent);
         setOriginalContent(beautifiedContent);

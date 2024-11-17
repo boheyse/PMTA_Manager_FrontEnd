@@ -49,9 +49,10 @@ export function StatusPage() {
       emailsSent: acc.emailsSent + node.stats.emailsSent,
       emailsDelivered: acc.emailsDelivered + node.stats.emailsDelivered,
       emailsBounced: acc.emailsBounced + node.stats.emailsBounced,
-      activeNodes: acc.activeNodes + (node.status === 'connected' ? 1 : 0)
+      activeNodes: acc.activeNodes + (node.status === 'connected' ? 1 : 0),
+      backoffRate: acc.backoffRate + (node.stats.bounceRate > 5 ? 1 : 0),
     }),
-    { emailsSent: 0, emailsDelivered: 0, emailsBounced: 0, activeNodes: 0 }
+    { emailsSent: 0, emailsDelivered: 0, emailsBounced: 0, activeNodes: 0, backoffRate: 0 }
   );
 
   const filteredNodes = selectedNode === 'all' 
@@ -102,7 +103,7 @@ export function StatusPage() {
         </div>
       ) : (
         <div className="space-y-6">
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-5 gap-4">
             <StatCard
               title="Total Emails Sent"
               value={totalStats.emailsSent.toLocaleString()}
@@ -123,6 +124,11 @@ export function StatusPage() {
               title="Active Nodes"
               value={`${totalStats.activeNodes}/${nodes.length}`}
               info="Number of currently connected nodes"
+            />
+            <StatCard
+              title="Backoff Rate"
+              value={`${((totalStats.backoffRate / nodes.length) * 100).toFixed(1)}%`}
+              info="Percentage of nodes in backoff state"
             />
           </div>
 

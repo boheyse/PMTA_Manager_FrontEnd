@@ -32,7 +32,8 @@ export function FileList({
     let commonPrefix = '';
     
     for (let i = 0; i < parts.length; i++) {
-      const currentPath = '/' + parts.slice(0, i + 1).join('/');
+      // const currentPath = '/' + parts.slice(0, i + 1).join('/');
+      const currentPath = parts.slice(0, i + 1).join('/');
       const isCommon = paths.every(path => path.startsWith(currentPath));
       if (!isCommon) break;
       commonPrefix = currentPath;
@@ -44,23 +45,20 @@ export function FileList({
   // Build file tree structure
   const buildFileTree = (paths: string[]): FileNode => {
     const root: FileNode = { name: '', path: '', children: {}, isFile: false };
-    const commonPrefix = findCommonPrefix(paths);
-    const commonPrefixParts = commonPrefix.split('/').filter(Boolean).length;
     
     paths.forEach(path => {
       const parts = path.split('/').filter(Boolean);
-      // Skip the common prefix parts
-      const relevantParts = parts.slice(commonPrefixParts);
       let current = root;
       
-      relevantParts.forEach((part, index) => {
-        const currentPath = commonPrefix + '/' + relevantParts.slice(0, index + 1).join('/');
-        if (!current.children[part]) {
+      parts.forEach((part, index) => {
+        if (!(part in current.children)) {
+          const isLastPart = index === parts.length - 1;
+          const nodePath = parts.slice(0, index + 1).join('/');
           current.children[part] = {
             name: part,
-            path: currentPath,
+            path: nodePath,
             children: {},
-            isFile: index === relevantParts.length - 1
+            isFile: isLastPart
           };
         }
         current = current.children[part];

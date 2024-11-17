@@ -3,6 +3,8 @@ import { Modal, Form, Button, Tabs, Tab } from 'react-bootstrap';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Settings, Mail, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 import type { Node } from '../../types/node';
+import { DomainHealthGrid } from './DomainHealthGrid';
+import { ISPMetrics } from './ISPMetrics';
 
 interface NodeDetailsProps {
   show: boolean;
@@ -32,7 +34,7 @@ export function NodeDetails({ show, onHide, node, onUpdate }: NodeDetailsProps) 
   };
 
   return (
-    <Modal show={show} onHide={onHide} size="xl" centered>
+    <Modal show={show} onHide={onHide} size="xl" centered dialogClassName="modal-90w">
       <Modal.Header closeButton>
         <Modal.Title className="flex items-center space-x-2">
           {node.status === 'connected' ? (
@@ -158,6 +160,15 @@ export function NodeDetails({ show, onHide, node, onUpdate }: NodeDetailsProps) 
               </div>
             </div>
           </Tab>
+
+          <Tab eventKey="domains" title="Domain Health">
+            <DomainHealthGrid nodes={[node]} />
+          </Tab>
+
+          <Tab eventKey="isps" title="ISP Metrics">
+            <ISPMetrics nodes={[node]} />
+          </Tab>
+
           <Tab eventKey="settings" title="Settings">
             <div className="p-4 bg-gray-50 rounded-lg">
               <h3 className="text-lg font-semibold mb-4">Node Settings</h3>
@@ -185,13 +196,13 @@ export function NodeDetails({ show, onHide, node, onUpdate }: NodeDetailsProps) 
               </Form>
             </div>
           </Tab>
+
           <Tab eventKey="logs" title="Logs">
             <div className="bg-gray-900 text-gray-100 p-4 rounded-lg font-mono text-sm h-96 overflow-auto">
               <div>[2024-01-20 10:15:23] Connected to SMTP server</div>
               <div>[2024-01-20 10:15:24] Starting mail delivery</div>
               <div>[2024-01-20 10:15:25] Successfully delivered to recipient@example.com</div>
               <div>[2024-01-20 10:15:26] Queue processed successfully</div>
-              {/* Add more log entries as needed */}
             </div>
           </Tab>
         </Tabs>

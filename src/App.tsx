@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Sidebar } from './components/Sidebar';
 import { StatusPage } from './pages/StatusPage';
+import { NodeDetailsPage } from './pages/NodeDetailsPage';
 import { MailboxProvidersPage } from './pages/MailboxProvidersPage';
 import { EmailLogsPage } from './pages/EmailLogsPage';
 import { SendingDomainsPage } from './pages/SendingDomainsPage';
@@ -21,6 +22,7 @@ export default function App() {
             <Routes>
               <Route path="/" element={<StatusPage />} />
               <Route path="/status" element={<StatusPage />} />
+              <Route path="/node/:nodeId" element={<NodeDetailsPage />} />
               <Route path="/mailbox-providers" element={<MailboxProvidersPage />} />
               <Route path="/email-logs" element={<EmailLogsPage />} />
               <Route path="/sending-domains" element={<SendingDomainsPage />} />
