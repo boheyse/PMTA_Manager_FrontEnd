@@ -1,515 +1,546 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Form, Row, Col, Button, Badge, Tabs, Tab } from 'react-bootstrap';
-import { X, Plus, Trash2, ArrowLeft } from 'lucide-react';
-import type { Domain, QueueStatus, Subdomain, Queue } from '../types/domain';
-import { SearchableSelect } from '../components/SearchableSelect';
-import { recipientDomainSettings } from '../config/recipientDomainSettings';
-import { StringInterpreter } from '../components/StringInterpreter';
+import { X, Plus, ArrowLeft } from 'lucide-react';
 import { useSidebar } from '../context/SidebarContext';
+import { StringInterpreter } from '../components/StringInterpreter';
+import { createVMTASectionStart, createSectionEnd, getSectionFromFile, createVMTAPoolSectionStart, getLastIndex, createVMTAPoolSetting, getTargetISPs, createSectionStart } from '../pages/util/DomainEditorPageUtil';
+import type { Domain, Section } from '../types/domain';
+import cloneDeep from 'lodash/cloneDeep';
+import { AddQueueModal } from '../components/AddQueueModal';
+import { axiosPost, fetchPost } from '../utils/apiUtils';
+import QueueTabs from '../components/domaineditor/QueueTabs';
+import AddPoolModal from '../components/domaineditor/AddPoolModal';
 
 interface LocationState {
   domain?: Domain;
-  availableIPs: string[];
+  allAvailableIPs: string[];
 }
 
 export function DomainEditorPage() {
   const { domainId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { domain: existingDomain, availableIPs } = location.state as LocationState;
+  const { domain: domain, allAvailableIPs: allAvailableIPs } = location.state as LocationState;
   const { setShowSidebar } = useSidebar();
 
-  const [activeTab, setActiveTab] = useState<string>('queue-0');
-  const [domain, setDomain] = useState<string>(existingDomain?.domain || '');
-  const [ipAddresses, setIpAddresses] = useState<string[]>(existingDomain?.ipAddresses || []);
-  const [queues, setQueues] = useState<Queue[]>(existingDomain?.queues || []);
+  const [domainName, setDomainName] = useState(domain?.domainName || '');
+  const [domainIPAddresses, setDomainIPAddresses] = useState(domain?.ipAddresses || []);
+  const [originalPoolData, setOriginalPoolData] = useState(domain?.queuePools || []);
+  const [poolData, setPoolData] = useState(domain?.queuePools || []);
+  const [showAddPoolModal, setShowAddPoolModal] = useState(false);
+  const [newQueueType, setNewQueueType] = useState("default");
+
+  const [selectedPoolName, setSelectedPoolName] = useState<string | null>(null);
+  const [selectedQueueName, setSelectedQueueName] = useState<string | null>(null);
+
+  const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
+
   const [newIP, setNewIP] = useState('');
   const [customIP, setCustomIP] = useState('');
-  const [selectedQueue, setSelectedQueue] = useState<string | null>(null);
-  const [activeRecipientDomain, setActiveRecipientDomain] = useState<string>('rd-0');
-  const [domainString, setDomainString] = useState<string>('');
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [originalString, setOriginalString] = useState<string>('');
+  const [modifiedString, setModifiedString] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [showAddQueueModal, setShowAddQueueModal] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
-  // Hide sidebar when component mounts
+  // Add new state to track if domain has been added
+  const [isDomainAdded, setIsDomainAdded] = useState(!!domain);
+  const [showAddButton, setShowAddButton] = useState(false);
+
+  // Extract unique poolName for top-level tabs
+  let poolNames = Array.from(
+    new Set(
+      poolData.map((pool) => pool.poolName || "")
+    ) 
+  );
+  // Get queues for the selected poolName
+  const queuesForSelectedPool = poolData.find(
+    (pool) => pool.poolName === selectedPoolName
+  )?.queues;
+
+  const fileName = poolData.find(
+    (pool) => pool.poolName === selectedPoolName
+  )?.fileName;
+
+  const poolType = poolData.find(
+    (pool) => pool.poolName === selectedPoolName
+  )?.poolType;
+
+  // Get all queueInfo for the selected queueName
+  const queueInfo = queuesForSelectedPool?.flatMap((queue) => queue.info) || [];
+
+  // Get config file sections for the selected poolName
+  const queueSections = queuesForSelectedPool?.flatMap((queue) => queue.sections) || [];
+
+  // Get the active queue details for the selected queueName
+  const activeQueueDetails = queueInfo.find(
+    (queue) => queue.queueName === selectedQueueName
+  );
+
+  // Mark unsaved changes when poolData or domain-related state changes
+  useEffect(() => {
+    const isModified =
+      JSON.stringify(originalPoolData) !== JSON.stringify(poolData) ||
+      domainName !== domain?.domainName ||
+      JSON.stringify(domainIPAddresses) !== JSON.stringify(domain?.ipAddresses);
+
+    setHasUnsavedChanges(isModified);
+  }, [originalPoolData, poolData, domainName, domainIPAddresses, domain]);
+
   useEffect(() => {
     setShowSidebar(false);
-    return () => setShowSidebar(true); // Show sidebar when component unmounts
+    return () => setShowSidebar(true);
   }, [setShowSidebar]);
 
-  // Initialize the first queue tab if exists
-  useState(() => {
-    if (queues.length > 0) {
-      setSelectedQueue(queues[0].name);
-      setActiveTab(queues[0].name);
-    }
-  }, []);
-
-  const handleAddIP = () => {
-    const ipToAdd = newIP || customIP;
-    if (ipToAdd && !ipAddresses.includes(ipToAdd)) {
-      setIpAddresses(prev => [...prev, ipToAdd]);
-      setNewIP('');
-      setCustomIP('');
-    }
-  };
-
-  const handleRemoveIP = (ip: string) => {
-    setIpAddresses(prev => prev.filter(existingIP => existingIP !== ip));
-  };
-
-  const handleAddQueue = () => {
-    const newQueue: Queue = {
-      name: '',
-      ipAddress: '',
-      subdomain: '',
-      type: '',
-      queueStatus: 'Active',
-      targetIsps: []
-    };
-    const newIndex = queues.length;
-    setQueues(prev => [...prev, newQueue]);
-    setActiveTab(`queue-${newIndex}`);
-  };
-
-  const handleRemoveQueue = (index: number) => {
-    setQueues(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const handleSave = async () => {
-    try {
-      const method = domainId ? 'PUT' : 'POST';
-      const url = domainId 
-        ? `http://localhost:5000/domains/${domainId}`
-        : 'http://localhost:5000/domains';
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          domain,
-          ipAddresses,
-          queues
-        }),
-      });
-
-      if (!response.ok) throw new Error('Failed to save domain');
-      
-      navigate('/sending-domains');
-    } catch (error) {
-      console.error('Error saving domain:', error);
-    }
-  };
-
-  const generateQueueName = (ip: string, domain: string, type: string): string => {
-    if (!ip || !domain) return '';
-    return type ? `${ip}-${domain}-${type}` : `${ip}-${domain}`;
-  };
-
-  // Generate domain string whenever relevant data changes
+  // Effect for changes in selectedPoolName with a 0.5-second timeout
   useEffect(() => {
-    const generateDomainString = () => {
-      let str = '';
-      
-      // Add domain settings
-      str += `<domain ${domain}>\n`;
-      str += `  ip-addresses ${ipAddresses.join(', ')}\n\n`;
+    if (!selectedPoolName) return;
 
-      // Add queues
-      queues.forEach(queue => {
-        str += `  <queue ${queue.name}>\n`;
-        str += `    smtp-source-host ${queue.ipAddress} ${queue.subdomain}\n`;
-        
-        // Add target ISPs
-        queue.targetIsps.forEach(isp => {
-          str += `    <target-isp ${isp.name}>\n`;
-          Object.entries(isp.settings).forEach(([key, value]) => {
-            str += `      ${key} ${value}\n`;
-          });
-          str += `    </target-isp>\n`;
-        });
-        
-        str += `  </queue>\n\n`;
-      });
+    if (debounceTimeout.current) {
+      clearTimeout(debounceTimeout.current);
+    }
 
-      str += `</domain>`;
-      setDomainString(str);
+    debounceTimeout.current = setTimeout(() => {
+      const sectionsForOriginalPoolData = getSectionsByPoolName(originalPoolData, selectedPoolName);
+      const sectionsForPoolData = getSectionsByPoolName(poolData, selectedPoolName);
+
+      fetchConfigStrings(sectionsForOriginalPoolData, sectionsForPoolData);
+    }, 500); // 0.5-second delay
+
+    return () => clearTimeout(debounceTimeout.current as NodeJS.Timeout); // Cleanup on unmount or dependency change
+  }, [selectedPoolName]);
+
+  // Effect for changes in poolData with a 2-second timeout
+  useEffect(() => {
+    if (!selectedPoolName) return;
+
+    if (debounceTimeout.current) {
+      clearTimeout(debounceTimeout.current);
+    }
+
+    debounceTimeout.current = setTimeout(() => {
+      const sectionsForOriginalPoolData = getSectionsByPoolName(originalPoolData, selectedPoolName);
+      const sectionsForPoolData = getSectionsByPoolName(poolData, selectedPoolName);
+
+      fetchConfigStrings(sectionsForOriginalPoolData, sectionsForPoolData);
+    }, 2000); // 2-second delay
+
+    return () => clearTimeout(debounceTimeout.current as NodeJS.Timeout); // Cleanup on unmount or dependency change
+  }, [poolData]);
+
+  // Function to fetch config strings from the backend
+  const fetchConfigStrings = async (sectionsForOriginalPoolData: Section[], sectionsForPoolData: Section[]) => {
+    setIsLoading(true);
+    try {
+      const [originalData, modifiedData] = await Promise.all([
+        axiosPost('/v1/config-string', {
+          data: sectionsForOriginalPoolData || [],
+        }),
+        axiosPost('/v1/config-string', {
+          data: sectionsForPoolData || [],
+        }),
+      ]);
+
+      setOriginalString(JSON.stringify(originalData['config_string'], null, 2));
+      setModifiedString(JSON.stringify(modifiedData['config_string'], null, 2));
+    } catch (error) {
+      console.error('Error fetching config strings:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Function to get sections by poolName
+  const getSectionsByPoolName = (poolData: any[], poolName: string) => {
+    const selectedPool = poolData.find((pool) => pool.poolName === poolName);
+    if (!selectedPool) return []; // Return an empty array if poolName is not found
+
+    return selectedPool.queues.flatMap((queue) => queue.sections || []);
+  };
+
+  // Function to save changes to the backend
+  const buildSaveRequestBody = () => {
+    const changeSet = poolData.map((currentPool) => {
+  
+      // Find the corresponding pool in originalPoolData
+      const originalPool = originalPoolData.find((pool) => pool.poolName === currentPool.poolName);
+  
+      // Extract sections from the current pool
+      const workingSections = currentPool.queues.flatMap((queue) => queue.sections || []);
+  
+      // Extract sections from the original pool (if it exists)
+      const previousSections = originalPool
+        ? originalPool.queues.flatMap((queue) => queue.sections || [])
+        : [];
+  
+      // Create the object for this pool
+      return {
+        fileName: currentPool.fileName,
+        poolType: currentPool.poolType,
+        poolName: currentPool.poolName,
+        domainName: domainName,
+        workingSections,
+        previousSections,
+      };
+    });
+    return changeSet;
+  };
+
+  // Function to save changes to the backend
+  const handleSaveChanges = async () => {
+    try {
+      const changeSet = buildSaveRequestBody();
+      console.log(JSON.stringify(changeSet, null, 2));
+  
+      await fetchPost('/v1/save-configs', changeSet);
+  
+      alert('Changes saved successfully!');
+      setHasUnsavedChanges(false); // Reset unsaved changes
+      navigate('/sending-domains'); // Redirect to /sending-domains on success
+    } catch (error) {
+      console.error('Failed to save changes:', error);
+      alert('Failed to save changes. Please try again.');
+    }
+  };
+  
+
+  const handleCancel = () => {
+    if (hasUnsavedChanges) {
+      const confirmLeave = window.confirm(
+        'You have unsaved changes. Are you sure you want to leave this page?'
+      );
+      if (!confirmLeave) return; // Stop navigation if user cancels
+    }
+  
+    navigate('/sending-domains', { state: { reload: true } });
+  };
+
+  // Logic to add a new queue to the selected pool
+  const handleAddQueue = (ipAddress: string, subDomain: string, domainKey: string) => {
+    setPoolData((prevPoolData) => {
+      const updatedPoolData = cloneDeep(prevPoolData);
+      const targetPool = updatedPoolData.find((pool) => pool.poolName === selectedPoolName);
+      const poolIndex = updatedPoolData.findIndex((pool) => pool.poolName === selectedPoolName);
+
+      if (targetPool) {
+        const queueName = targetPool.poolType ? `${ipAddress}-${domainName}-${targetPool.poolType}` : `${ipAddress}-${domainName}`;
+        const lastIndex = getLastIndex(updatedPoolData, 'virtual-mta');
+
+        // assumes there are sections in the pool because it's created with two new virtual-mta-pool sections. There shouldn't be a way to get here without sections.
+        // therefore increment the exisitng  by 2.
+        targetPool.queues[0].sections = targetPool.queues[0].sections.map((section) => ({
+          ...section,
+          index: section.index + 2, // Increment index by 2
+        }));
+
+        // Find the "virtual-mta-pool" section_start
+        targetPool.queues[0].sections.find(
+          (section) => section.key === 'virtual-mta-pool' && section.type === 'section_start'
+        ).content.push(createVMTAPoolSetting(queueName));
+
+        const newQueue = {
+          info: [
+            {
+              queueName: queueName,
+              domainName: domainName,
+              ipAddress: ipAddress,
+              queueType: targetPool.poolType,
+              subDomain: subDomain,
+              domainKey: domainKey,
+              domainKeyPath: `/etc/pmta/dkim/${domainKey}.${domainName}`,
+            },
+          ],
+          sections: [
+            createVMTASectionStart(queueName, lastIndex, ipAddress, subDomain, domainKey, domainName),
+            createSectionEnd("virtual-mta", lastIndex + 1),
+          ],
+        };
+  
+        // Add the new queue and sort sections by index
+        targetPool.queues[0].info.push(newQueue.info[0]);
+        targetPool.queues[0].sections = targetPool.queues[0].sections
+        .concat(newQueue.sections) // Combine old and new sections
+        .sort((a, b) => a.index - b.index); // Sort by index
+      }
+      // Update the pool in the poolData array
+      updatedPoolData[poolIndex] = targetPool;
+      return updatedPoolData;
+    });
+  
+    setShowAddQueueModal(false); // Close the modal after adding the queue
+  };
+  
+
+  const handleAddPool = () => {
+    const poolType = newQueueType === "default" ? "" : newQueueType.trim();
+    const poolName = poolType
+      ? `${domainName}-pool-${poolType}`
+      : `${domainName}-pool`;
+  
+    // Define starting and ending section indices
+    const sectionStartIndex = 0; // Adjust as needed
+    const sectionEndIndex = sectionStartIndex + 1;
+  
+    // Create sections for the new pool
+    const sections = [
+      createSectionStart("virtual-mta-pool", poolName, sectionStartIndex),
+      createSectionEnd("virtual-mta-pool", sectionEndIndex),
+    ];
+  
+    const newPool = {
+      fileName: poolType
+        ? `${domainName}-${poolType}.vmta.json`
+        : `${domainName}.vmta.json`,
+      poolName: poolName,
+      poolType: poolType,
+      queues: [
+        {
+          info: [],
+          sections: sections,
+        },
+      ],
     };
+  
+    setPoolData((prevPoolData) => {
+      const updatedPoolData = cloneDeep(prevPoolData); // Deep clone
+      updatedPoolData.push(newPool); // Add the new pool
+      return updatedPoolData;
+    });
+    setShowAddPoolModal(false); // Close the modal
+    setNewQueueType("default"); // Reset the input
+    setSelectedPoolName(newPool.poolName); // Auto-select the new pool tab
+  };
+  
+  const validateDomainName = (name: string) => {
+    // Example: Basic validation for domain format
+    const domainRegex = /^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return domainRegex.test(name);
+  };
+  
+  const handleDomainNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const name = e.target.value;
+    setDomainName(name);
+  
+    // Toggle Add Button based on validation
+    if (validateDomainName(name)) {
+      setShowAddButton(true);
+    } else {
+      setShowAddButton(false);
+    }
+  };
+  
+  const handleAddDomain = () => {
+    if (validateDomainName(domainName)) {
+      setIsDomainAdded(true);
+      setShowAddButton(false);
+    } else {
+      alert('Please enter a valid domain name.');
+    }
+  };
 
-    generateDomainString();
-  }, [domain, ipAddresses, queues]);
+  // Function to update sections in poolData
+  const updateSections = (poolName: string, updatedSections: Section[]) => {
+    setPoolData(prevState => {
+      const updatedPoolData = cloneDeep(prevState);
+      const pool = updatedPoolData.find(pool => pool.poolName === poolName);
+      if (pool) {
+        pool.queues.forEach(queue => {
+          queue.sections = updatedSections;
+        });
+      }
+      return updatedPoolData;
+    });
+  };
 
   return (
     <div className="flex h-screen overflow-hidden">
-      {/* Main Editor Section - 65% */}
-      <div className="w-[65%] overflow-y-auto p-6">
+      <div className="flex-grow overflow-y-auto p-6">
         <div className="flex items-center mb-6">
-          <button
-            onClick={() => navigate('/sending-domains')}
-            className="mr-4 text-gray-600 hover:text-gray-800"
-          >
+          <button onClick={() => navigate('/sending-domains')} className="mr-4 text-gray-600 hover:text-gray-800">
             <ArrowLeft className="w-6 h-6" />
           </button>
-          <h1 className="text-2xl font-semibold">
-            {domainId ? 'Edit Domain' : 'Add New Domain'}
-          </h1>
+          <h1 className="text-2xl font-semibold">{domainId ? 'Edit Domain' : 'Add New Domain'}</h1>
         </div>
 
-        {/* Domain Settings Section */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
           <h2 className="text-lg font-semibold mb-4">Domain Settings</h2>
           <Form>
-            <Form.Group className="mb-4">
-              <Form.Label>Domain Name</Form.Label>
-              <Form.Control
-                type="text"
-                value={domain}
-                onChange={(e) => setDomain(e.target.value)}
-                placeholder="example.com"
-              />
-            </Form.Group>
-
-            <Form.Group className="mb-4">
-              <Form.Label>IP Addresses</Form.Label>
-              <Row>
-                <Col md={5}>
-                  <Form.Select
-                    value={newIP}
-                    onChange={(e) => setNewIP(e.target.value)}
-                    className="mb-2"
-                  >
-                    <option value="">Select an IP address</option>
-                    {availableIPs
-                      .filter(ip => !ipAddresses.includes(ip))
-                      .map(ip => (
-                        <option key={ip} value={ip}>{ip}</option>
-                      ))}
-                  </Form.Select>
-                </Col>
-                <Col md={5}>
+            <div className="relative">
+              <Form.Group className="mb-4">
+                <Form.Label>Domain Name</Form.Label>
+                <div className="flex items-center gap-4">
                   <Form.Control
                     type="text"
-                    placeholder="Or enter custom IP"
-                    value={customIP}
-                    onChange={(e) => setCustomIP(e.target.value)}
+                    value={domainName}
+                    onChange={handleDomainNameChange}
+                    placeholder="example.com"
+                    disabled={isDomainAdded}
                   />
-                </Col>
-                <Col md={2}>
-                  <Button 
-                    variant="primary"
-                    onClick={handleAddIP}
-                    className="w-100"
-                  >
-                    Add IP
-                  </Button>
-                </Col>
-              </Row>
-            </Form.Group>
-
-            <div className="mb-4">
-              <div className="d-flex flex-wrap gap-2 border rounded p-2">
-                {ipAddresses.length === 0 ? (
-                  <span className="text-muted">No IP addresses selected</span>
-                ) : (
-                  ipAddresses.map(ip => (
-                    <Badge 
-                      key={ip} 
-                      bg="secondary" 
-                      className="d-flex align-items-center p-2"
+                  {showAddButton && (
+                    <Button
+                      variant="primary"
+                      onClick={handleAddDomain}
+                      className="whitespace-nowrap"
                     >
-                      {ip}
-                      <Button
-                        variant="link"
-                        className="p-0 ms-2 text-white"
-                        onClick={() => handleRemoveIP(ip)}
-                      >
-                        <X size={14} />
-                      </Button>
-                    </Badge>
-                  ))
-                )}
-              </div>
+                      Add Domain
+                    </Button>
+                  )}
+                </div>
+              </Form.Group>
             </div>
+
+            {isDomainAdded && (
+              <>
+                <Form.Group className="mb-4">
+                  <Form.Label>IP Addresses</Form.Label>
+                  <Row>
+                    <Col md={5}>
+                      <Form.Select
+                        value={newIP}
+                        onChange={(e) => setNewIP(e.target.value)}
+                        className="mb-2"
+                      >
+                        <option value="">Select an IP address</option>
+                        {allAvailableIPs.filter(ip => !domainIPAddresses.includes(ip)).map(ip => (
+                          <option key={ip} value={ip}>{ip}</option>
+                        ))}
+                      </Form.Select>
+                    </Col>
+                    <Col md={5}>
+                      <Form.Control
+                        type="text"
+                        placeholder="Or enter custom IP"
+                        value={customIP}
+                        onChange={(e) => setCustomIP(e.target.value)}
+                      />
+                    </Col>
+                    <Col md={2}>
+                      <Button variant="primary" onClick={() => {
+                        const ipToAdd = newIP || customIP;
+                        if (ipToAdd && !domainIPAddresses.includes(ipToAdd)) {
+                          setDomainIPAddresses(prev => [...prev, ipToAdd]);
+                          setNewIP('');
+                          setCustomIP('');
+                        }
+                      }} className="w-100">Add IP</Button>
+                    </Col>
+                  </Row>
+                </Form.Group>
+
+                <div className="mb-4">
+                  <div className="d-flex flex-wrap gap-2 border rounded p-2">
+                    {domainIPAddresses.length === 0 ? (
+                      <span className="text-muted">No IP addresses selected</span>
+                    ) : (
+                      domainIPAddresses.map(ip => (
+                        <Badge key={ip} bg="secondary" className="d-flex align-items-center p-2">
+                          {ip}
+                          <Button variant="link" className="p-0 ms-2 text-white" onClick={() => setDomainIPAddresses(prev => prev.filter(existingIP => existingIP !== ip))}>
+                            <X size={14} />
+                          </Button>
+                        </Badge>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
           </Form>
         </div>
 
-        {/* Queues Section */}
-        <div className="mb-4">
-          <h2 className="text-lg font-semibold mb-3">Queues</h2>
-          <Button
-            variant="outline-primary"
-            onClick={handleAddQueue}
-            className="mb-4"
-          >
-            Add Queue
-          </Button>
-
-          {queues.length > 0 && (
-            <Tabs
-              activeKey={activeTab}
-              onSelect={(k) => setActiveTab(k || 'domain')}
-              className="mb-4 bg-gray-100 p-3 rounded"
+        {isDomainAdded && (
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-lg font-semibold mb-2">Queues</h2>
+            <Button 
+              variant="outline-primary" 
+              onClick={() => setShowAddPoolModal(true)} 
+              size="sm"
+              className="mb-4"
             >
-              {queues.map((queue, index) => (
-                <Tab 
-                  key={`queue-${index}`}
-                  eventKey={`queue-${index}`}
-                  title={queue.name || `New Queue ${index + 1}`}
-                >
-                  <div className="bg-white rounded-lg shadow p-6">
-                    <Form>
-                      {/* Display auto-generated queue name */}
-                      <Row>
-                        <Col md={12}>
-                          <Form.Group className="mb-3">
-                            <Form.Label>Queue Name (Auto-generated)</Form.Label>
-                            <Form.Control
-                              type="text"
-                              value={queue.name}
-                              readOnly
-                              disabled
-                              className="bg-light"
-                            />
-                          </Form.Group>
-                        </Col>
-                      </Row>
-                      
-                      <Row>
-                        <Col md={4}>
-                          <Form.Group className="mb-3">
-                            <Form.Label>Subdomain</Form.Label>
-                            <Form.Control
-                              type="text"
-                              value={queue.subdomain || ''}
-                              onChange={(e) => {
-                                const newQueues = [...queues];
-                                newQueues[index] = {
-                                  ...newQueues[index],
-                                  subdomain: e.target.value,
-                                  name: generateQueueName(
-                                    newQueues[index].ipAddress,
-                                    domain,
-                                    newQueues[index].type || ''
-                                  )
-                                };
-                                setQueues(newQueues);
-                              }}
-                              placeholder="mail.example.com"
-                            />
-                          </Form.Group>
-                        </Col>
-                        <Col md={4}>
-                          <Form.Group className="mb-3">
-                            <Form.Label>IP Address</Form.Label>
-                            <Form.Select
-                              value={queue.ipAddress || ''}
-                              onChange={(e) => {
-                                const newQueues = [...queues];
-                                newQueues[index] = {
-                                  ...newQueues[index],
-                                  ipAddress: e.target.value,
-                                  name: generateQueueName(
-                                    e.target.value,
-                                    domain,
-                                    newQueues[index].type || ''
-                                  )
-                                };
-                                setQueues(newQueues);
-                              }}
-                            >
-                              <option value="">Select IP address</option>
-                              {ipAddresses.map(ip => (
-                                <option key={ip} value={ip}>{ip}</option>
-                              ))}
-                            </Form.Select>
-                          </Form.Group>
-                        </Col>
-                        <Col md={4}>
-                          <Form.Group className="mb-3">
-                            <Form.Label>Type</Form.Label>
-                            <Form.Control
-                              type="text"
-                              value={queue.type || ''}
-                              onChange={(e) => {
-                                const newQueues = [...queues];
-                                newQueues[index] = {
-                                  ...newQueues[index],
-                                  type: e.target.value,
-                                  name: generateQueueName(
-                                    newQueues[index].ipAddress,
-                                    domain,
-                                    e.target.value
-                                  )
-                                };
-                                setQueues(newQueues);
-                              }}
-                              placeholder="ex) unthrottled, fresh, engaged"
-                            />
-                          </Form.Group>
-                        </Col>
-                      </Row>
+              Add Pool
+            </Button>
+            
+            {/* Add Pool Modal */}
+            <AddPoolModal
+              show={showAddPoolModal}
+              onHide={() => setShowAddPoolModal(false)}
+              onSubmit={handleAddPool}
+              newQueueType={newQueueType}
+              setNewQueueType={setNewQueueType}
+            />
 
-                      <div className="mt-4">
-                        <div className="d-flex justify-content-between align-items-center mb-3">
-                          <h6 className="mb-0">Target ISPs</h6>
-                          <Button
-                            variant="outline-primary"
-                            size="sm"
-                            onClick={() => {
-                              const newQueues = [...queues];
-                              const newIndex = newQueues[index].targetIsps.length;
-                              newQueues[index].targetIsps.push({
-                                name: '',
-                                settings: {}
-                              });
-                              setQueues(newQueues);
-                              setActiveRecipientDomain(`rd-${newIndex}`);
-                            }}
-                          >
-                            Add Target ISP
-                          </Button>
-                        </div>
-
-                        {queue.targetIsps.length > 0 && (
-                          <Tabs
-                            activeKey={activeRecipientDomain}
-                            onSelect={(k) => setActiveRecipientDomain(k || '')}
-                            className="mb-4"
-                          >
-                            {queue.targetIsps.map((isp, rdIndex) => (
-                              <Tab
-                                key={`rd-${rdIndex}`}
-                                eventKey={`rd-${rdIndex}`}
-                                title={isp.name || `New Target ISP ${rdIndex + 1}`}
-                              >
-                                <div className="border rounded p-3">
-                                  <Row className="align-items-center mb-3">
-                                    <Col md={3}>
-                                      <Form.Control
-                                        type="text"
-                                        value={isp.name}
-                                        onChange={(e) => {
-                                          const newQueues = [...queues];
-                                          newQueues[index].targetIsps[rdIndex].name = e.target.value;
-                                          setQueues(newQueues);
-                                        }}
-                                        placeholder="Enter Target ISP"
-                                      />
-                                    </Col>
-                                    <Col md={9} className="text-end">
-                                      <Button
-                                        variant="link"
-                                        className="p-0"
-                                        onClick={() => {
-                                          const newQueues = [...queues];
-                                          const settings = newQueues[index].targetIsps[rdIndex].settings;
-                                          settings[''] = '';
-                                          setQueues(newQueues);
-                                        }}
-                                      >
-                                        <Plus size={16} className="me-1" />
-                                        Add Setting
-                                      </Button>
-                                    </Col>
-                                  </Row>
-
-                                  <div className="d-flex flex-wrap gap-3">
-                                    {Object.entries(isp.settings).map(([key, value]) => (
-                                      <div key={key} className="d-flex align-items-center gap-2" style={{ width: 'calc(50% - 12px)', marginBottom: '8px' }}>
-                                        {key === '' ? (
-                                          <SearchableSelect
-                                            options={Object.keys(recipientDomainSettings)}
-                                            placeholder="Select setting"
-                                            onChange={(selected) => {
-                                              const newQueues = [...queues];
-                                              const settings = newQueues[index].targetIsps[rdIndex].settings;
-                                              delete settings[''];
-                                              settings[selected[0]] = value;
-                                              setQueues(newQueues);
-                                            }}
-                                          />
-                                        ) : (
-                                          <div className="d-flex align-items-center gap-2 flex-grow-1">
-                                            <div style={{ width: '45%' }}>
-                                              <Form.Control
-                                                type="text"
-                                                value={key}
-                                                readOnly
-                                                size="sm"
-                                                className="bg-light"
-                                              />
-                                            </div>
-                                            <div style={{ width: '45%' }}>
-                                              <Form.Control
-                                                type="text"
-                                                value={value}
-                                                onChange={(e) => {
-                                                  const newQueues = [...queues];
-                                                  newQueues[index].targetIsps[rdIndex].settings[key] = e.target.value;
-                                                  setQueues(newQueues);
-                                                }}
-                                                placeholder={recipientDomainSettings[key as keyof typeof recipientDomainSettings]?.syntax || "Enter value"}
-                                                size="sm"
-                                                className="hover:bg-gray-50 focus:bg-white transition-colors"
-                                                style={{ cursor: 'text' }}
-                                              />
-                                            </div>
-                                            <Button
-                                              variant="link"
-                                              className="text-danger p-0"
-                                              onClick={() => {
-                                                const newQueues = [...queues];
-                                                delete newQueues[index].targetIsps[rdIndex].settings[key];
-                                                setQueues(newQueues);
-                                              }}
-                                            >
-                                              <X size={14} />
-                                            </Button>
-                                          </div>
-                                        )}
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              </Tab>
-                            ))}
-                          </Tabs>
-                        )}
-                      </div>
-                    </Form>
-                  </div>
+            {/* Top-level Tabs for poolName */}
+            <Tabs
+              activeKey={selectedPoolName || ""}
+              onSelect={(key) => {
+                setSelectedPoolName(key); // Set active pool tab
+                setSelectedQueueName(null); // Reset queue tab when changing pool
+              }}
+              className="mb-4"
+            >
+              {poolNames.map((poolName) => (
+                <Tab eventKey={poolName} key={poolName} title={poolName}>
+                  {selectedPoolName === poolName && (
+                    <div>
+                      {/* Render second-level tabs only for active pool */}
+                      <QueueTabs
+                        queuesForSelectedPool={queuesForSelectedPool}
+                        selectedQueueName={selectedQueueName}
+                        setSelectedQueueName={setSelectedQueueName}
+                        activeQueueDetails={activeQueueDetails}
+                        queueSections={queueSections}
+                        poolName={poolName}
+                        onUpdateSections={(updatedSections: Section[]) => updateSections(poolName, updatedSections)}
+                        addNewQueue={handleAddQueue} // Pass the function here
+                        showAddQueueModal={showAddQueueModal}
+                        setShowAddQueueModal={setShowAddQueueModal}
+                      />
+                      {/* Add Queue Modal */}
+                      <AddQueueModal
+                        show={showAddQueueModal}
+                        onHide={() => setShowAddQueueModal(false)}
+                        onSubmit={(ipAddress, subDomain, domainKey) => handleAddQueue(ipAddress, subDomain, domainKey)} // Pass correct arguments
+                        availableIPs={domainIPAddresses}
+                        domainName={domainName || ""}
+                        poolType={poolType || ""}
+                      />
+                    </div>
+                  )}
                 </Tab>
               ))}
             </Tabs>
-          )}
-        </div>
-
-        <div className="flex justify-end mt-6">
-          <div className="space-x-2">
-            <Button
-              variant="secondary"
-              onClick={() => navigate('/sending-domains')}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="primary"
-              onClick={handleSave}
-            >
-              Save Changes
-            </Button>
           </div>
+        )}
+
+        <div className="flex justify-end mt-4">
+          <Button variant="secondary" onClick={handleCancel} className="mr-2">Cancel</Button>
+          <Button variant="primary" onClick={handleSaveChanges}>Save Changes</Button>
         </div>
       </div>
 
-      {/* String Interpreter Section - 35% */}
-      <div className="w-[35%] border-l border-gray-200 overflow-y-auto">
-        <StringInterpreter 
-          inputString={domainString}
-          readOnly
-        />
+      <div className={`transition-all duration-300 ${isExpanded ? 'w-[1000%]' : 'w-[15%]'} border-l border-gray-200 overflow-y-auto`}>
+        <button 
+          className="p-2 text-blue-500 hover:underline"
+          onClick={() => setIsExpanded(!isExpanded)}
+        >
+          {isExpanded ? 'Collapse' : 'Expand'} Diff
+        </button>
+        {isExpanded && (
+          isLoading ? (
+            <div className="p-4 text-center">
+              <span className="text-gray-600">Loading changes...</span>
+            </div>
+          ) : (
+            <StringInterpreter 
+              originalString={originalString}
+              modifiedString={modifiedString}
+              title={fileName || 'new-file.vmta.json'}
+            />
+          )
+        )}
       </div>
-    </div>
+    </div> 
   );
 } 

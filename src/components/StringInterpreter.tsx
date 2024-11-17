@@ -1,61 +1,29 @@
-import React from 'react';
-import { Form } from 'react-bootstrap';
+import ReactDiffViewer from 'react-diff-viewer-continued';
 
 interface StringInterpreterProps {
-  inputString: string;
-  onChange?: (value: string) => void;
-  readOnly?: boolean;
+  originalString: string;
+  modifiedString: string;
+  title: string;
 }
 
-export function StringInterpreter({ inputString, onChange, readOnly = false }: StringInterpreterProps) {
-  const interpretString = (str: string) => {
-    try {
-      // Replace escaped newlines with actual newlines
-      let processed = str.replace(/\\n/g, '\n');
-      
-      // Replace escaped tabs with actual tabs
-      processed = processed.replace(/\\t/g, '\t');
-      
-      // Replace escaped quotes with actual quotes
-      processed = processed.replace(/\\"/g, '"');
-      
-      // Replace multiple consecutive newlines with a maximum of two newlines
-      processed = processed.replace(/\n\s*\n\s*\n+/g, '\n\n');
-      
-      return processed;
-    } catch (error) {
-      // If parsing fails, just show the string as-is
-      return str;
+export function StringInterpreter({ originalString, modifiedString, title }: StringInterpreterProps) {
+  function beautifyString(raw: string) {
+    let clean = raw;
+    if (clean.startsWith('"') && clean.endsWith('"')) {
+        clean = clean.slice(1, -1);
     }
-  };
+    clean = clean.replace(/\\n/g, '\n');
+    return clean;
+  }
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <h2 className="text-lg font-semibold mb-4">Interpreted Output</h2>
-      <pre 
-        className="bg-gray-50 p-4 rounded font-mono overflow-x-auto"
-        style={{ 
-          minHeight: '200px', 
-          whiteSpace: 'pre-wrap', 
-          wordWrap: 'break-word',
-          cursor: readOnly ? 'default' : 'text'
-        }}
-      >
-        {interpretString(inputString)}
-      </pre>
-      {!readOnly && onChange && (
-        <Form.Group className="mt-4">
-          <Form.Label>Edit String</Form.Label>
-          <Form.Control
-            as="textarea"
-            rows={10}
-            value={inputString}
-            onChange={(e) => onChange(e.target.value)}
-            className="font-mono"
-            placeholder="Enter string with escape sequences..."
-          />
-        </Form.Group>
-      )}
+    <div className="rounded-md border border-border bg-background p-4 overflow-auto">
+      <h2 className="text-lg font-semibold mb-4">{title} Changes</h2>
+      <ReactDiffViewer
+        oldValue={beautifyString(originalString)}
+        newValue={beautifyString(modifiedString)}
+        splitView={true}
+      />
     </div>
   );
 } 
