@@ -10,6 +10,8 @@ import { MailboxesPage } from './pages/MailboxesPage';
 import { DomainEditorPage } from './pages/DomainEditorPage';
 import { IPAddressesPage } from './pages/IPAddressesPage';
 import { ConfigViewerPage } from './pages/ConfigViewerPage';
+import { ServerManagerPage } from './pages/ServerManagerPage';
+import { DomainRegistrarPage } from './pages/domain-registrar/DomainRegistrarPage';
 import { SidebarProvider } from './context/SidebarContext';
 
 export default function App() {
@@ -25,12 +27,14 @@ export default function App() {
               <Route path="/node/:nodeId" element={<NodeDetailsPage />} />
               <Route path="/mailbox-providers" element={<MailboxProvidersPage />} />
               <Route path="/email-logs" element={<EmailLogsPage />} />
-              <Route path="/sending-domains" element={<SendingDomainsPage />} />
+              <Route path="/manage-server" element={<ServerManagerPage />} />
+              <Route path="/domain-registrar" element={<DomainRegistrarPage />} />
+              <Route path="/manage-server/sending-domains" element={<SendingDomainsPage />} />
+              <Route path="/manage-server/ip-addresses" element={<IPAddressesPage />} />
+              <Route path="/manage-server/config-viewer" element={<ConfigViewerPage />} />
               <Route path="/mailboxes" element={<MailboxesPage />} />
               <Route path="/domain-editor" element={<DomainEditorPage />} />
               <Route path="/domain-editor/:domainId" element={<DomainEditorPage />} />
-              <Route path="/ip-addresses" element={<IPAddressesPage />} />
-              <Route path="/config-viewer" element={<ConfigViewerPage />} />
             </Routes>
           </div>
         </div>
