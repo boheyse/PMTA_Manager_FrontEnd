@@ -3,25 +3,18 @@ export interface QueueInfo {
   domainKeyPath: string;
   domainName: string;
   ipAddress: string;
-  host: string;
-  subDomain: string;
   queueName: string;
   queueType: string;
-}
-
-export interface Setting {
-  data: string[] | null;
-  key: string;
-  type: string;
-  value: string;
+  sourceHost: string;
 }
 
 export interface Section {
-  content?: Setting[] | null;
-  index: number;
-  key?: string | null;
+  data?: string[];
+  key?: string;
+  index?: number;
+  sections?: Section[];
   type: string;
-  value?: string | null;
+  value?: string;
 }
 
 export interface QueueData {
@@ -33,7 +26,7 @@ export interface QueuePool {
   fileName: string;
   poolName: string;
   poolType: string | "";
-  queues: QueueData[];
+  queues: QueueData;
 }
 
 export interface Domain {

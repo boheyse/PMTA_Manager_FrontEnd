@@ -43,27 +43,25 @@ export function IPAddressesPage() {
 
     domains.forEach(domain => {
       domain.queuePools.forEach(pool => {
-        pool.queues.forEach(queue => {
-          queue.info.forEach(info => {
-            if (!mappings[info.ipAddress]) {
-              mappings[info.ipAddress] = {
-                ipAddress: info.ipAddress,
-                domains: [],
-                uniqueDomains: []
-              };
-            }
-            
-            mappings[info.ipAddress].domains.push({
-              domainName: domain.domainName,
-              poolName: pool.poolName,
-              queueName: info.queueName
-            });
-
-            // Add to unique domains if not already present
-            if (!mappings[info.ipAddress].uniqueDomains.includes(domain.domainName)) {
-              mappings[info.ipAddress].uniqueDomains.push(domain.domainName);
-            }
+        pool.queues.info.forEach(info => {
+          if (!mappings[info.ipAddress]) {
+            mappings[info.ipAddress] = {
+              ipAddress: info.ipAddress,
+              domains: [],
+              uniqueDomains: []
+            };
+          }
+          
+          mappings[info.ipAddress].domains.push({
+            domainName: domain.domainName,
+            poolName: pool.poolName,
+            queueName: info.queueName
           });
+
+          // Add to unique domains if not already present
+          if (!mappings[info.ipAddress].uniqueDomains.includes(domain.domainName)) {
+            mappings[info.ipAddress].uniqueDomains.push(domain.domainName);
+          }
         });
       });
     });

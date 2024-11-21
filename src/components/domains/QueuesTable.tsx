@@ -20,24 +20,22 @@ export function QueuesTable({ queuePools, onQueueClick }: QueuesTableProps) {
       </thead>
       <tbody>
         {queuePools.flatMap((pool) =>
-          pool.queues.flatMap((queue) =>
-            queue.info.map((info, infoIndex) => (
-              <tr key={`${pool.poolName}-${info.queueName}-${infoIndex}`} className="text-sm">
-                <td className="py-2">{pool.poolName}</td>
-                <td className="py-2">
-                  <button
-                    onClick={() => onQueueClick(queue)}
-                    className="text-blue-500 hover:text-blue-700"
-                  >
-                    {info.queueName}
-                  </button>
-                </td>
-                <td className="py-2">{info.subDomain}</td>
-                <td className="py-2">{info.ipAddress}</td>
-                <td className="py-2">{info.queueType || pool.poolType}</td>
-              </tr>
-            ))
-          )
+          pool.queues.info.map((info, infoIndex) => (
+            <tr key={`${pool.poolName}-${info.queueName}-${infoIndex}`} className="text-sm">
+              <td className="py-2">{pool.poolName}</td>
+              <td className="py-2">
+                <button
+                  onClick={() => onQueueClick(pool.queues)}
+                  className="text-blue-500 hover:text-blue-700"
+                >
+                  {info.queueName}
+                </button>
+              </td>
+              <td className="py-2">{info.sourceHost}</td>
+              <td className="py-2">{info.ipAddress}</td>
+              <td className="py-2">{info.queueType || pool.poolType}</td>
+            </tr>
+          ))
         )}
       </tbody>
     </table>
