@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Modal, Form, Button, Carousel, Tabs, Tab } from 'react-bootstrap';
 import { Plus, X, Upload, Search, Info } from 'lucide-react';
 import { recipientDomainSettings } from '../../config/recipientDomainSettings';
+import { ISPSettingsManager } from '../isp-settings';
 
 interface ConfigureServerModalProps {
   show: boolean;
@@ -35,9 +36,11 @@ export function ConfigureServerModal({ show, onHide, onSubmit }: ConfigureServer
   const [newPoolName, setNewPoolName] = useState('');
   const [targetISPs, setTargetISPs] = useState<string[]>([]);
   const [newTargetISP, setNewTargetISP] = useState('');
+  const [bulkISPs, setBulkISPs] = useState('');
   const [settingsSearchTerm, setSettingsSearchTerm] = useState('');
-  const [selectedSettings, setSelectedSettings] = useState<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const ispFileInputRef = useRef<HTMLInputElement>(null);
+  const [activeTab, setActiveTab] = useState('bulk');
 
   const defaultPoolNames = ['default', 'fresh', 'unthrottled'];
 
@@ -55,6 +58,7 @@ export function ConfigureServerModal({ show, onHide, onSubmit }: ConfigureServer
     setBulkDomains('');
     setPoolConfigs([]);
     setTargetISPs([]);
+    setBulkISPs('');
     setActiveStep(0);
   };
 
@@ -132,15 +136,34 @@ export function ConfigureServerModal({ show, onHide, onSubmit }: ConfigureServer
     setPoolConfigs(poolConfigs.filter(p => p.name !== name));
   };
 
-  const addTargetISP = () => {
-    if (newTargetISP && !targetISPs.includes(newTargetISP)) {
-      setTargetISPs([...targetISPs, newTargetISP]);
-      setNewTargetISP('');
-    }
+  const handleBulkISPImport = () => {
+    const newISPs = bulkISPs
+      .split(',')
+      .map(isp => isp.trim())
+      .filter(isp => isp && !targetISPs.includes(isp));
+
+    setTargetISPs([...targetISPs, ...newISPs]);
+    setBulkISPs('');
   };
 
-  const removeTargetISP = (isp: string) => {
-    setTargetISPs(targetISPs.filter(i => i !== isp));
+  const handleISPFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const content = e.target?.result as string;
+        const newISPs = content
+          .split(',')
+          .map(isp => isp.trim())
+          .filter(isp => isp && !targetISPs.includes(isp));
+
+        setTargetISPs([...targetISPs, ...newISPs]);
+      };
+      reader.readAsText(file);
+      if (ispFileInputRef.current) {
+        ispFileInputRef.current.value = '';
+      }
+    }
   };
 
   const canProceed = () => {
@@ -152,7 +175,7 @@ export function ConfigureServerModal({ show, onHide, onSubmit }: ConfigureServer
       case 2:
         return poolConfigs.length > 0;
       case 3:
-        return targetISPs.length > 0;
+        return true; // Allow proceeding as long as settings are configured
       case 4:
         return true;
       default:
@@ -313,35 +336,60 @@ export function ConfigureServerModal({ show, onHide, onSubmit }: ConfigureServer
 
   const renderTargetISPStep = () => (
     <div>
-      <div className="mb-4">
-        <h4 className="text-lg font-medium mb-3">Configure Target ISPs</h4>
-        <div className="flex gap-2 mb-3">
-          <Form.Control
-            type="text"
-            value={newTargetISP}
-            onChange={(e) => setNewTargetISP(e.target.value)}
-            placeholder="Enter target ISP name"
-            className="flex-grow"
-          />
-          <Button onClick={addTargetISP} disabled={!newTargetISP}>
-            <Plus className="w-4 h-4" />
-          </Button>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        {targetISPs.map((isp) => (
-          <div key={isp} className="flex items-center justify-between p-3 bg-gray-50 rounded">
-            <span>{isp}</span>
-            <button
-              onClick={() => removeTargetISP(isp)}
-              className="text-red-500 hover:text-red-700"
+      <Tabs
+        activeKey={activeTab}
+        onSelect={(k) => setActiveTab(k || 'bulk')}
+        className="mb-4"
+      >
+        <Tab eventKey="bulk" title="Bulk Import">
+          <div className="p-3">
+            <Form.Group className="mb-3">
+              <Form.Label>Paste ISPs (comma-separated)</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={3}
+                value={bulkISPs}
+                onChange={(e) => setBulkISPs(e.target.value)}
+                placeholder="gmail.com, yahoo.com, hotmail.com"
+              />
+            </Form.Group>
+            <Button 
+              variant="outline-primary" 
+              onClick={handleBulkISPImport}
+              disabled={!bulkISPs.trim()}
+              className="w-full mb-3"
             >
-              <X className="w-4 h-4" />
-            </button>
+              Import ISPs
+            </Button>
+            <div className="text-center">
+              <div className="text-sm text-gray-500 mb-2">- OR -</div>
+              <input
+                type="file"
+                ref={ispFileInputRef}
+                accept=".txt,.csv"
+                onChange={handleISPFileUpload}
+                className="hidden"
+              />
+              <Button 
+                variant="outline-secondary"
+                onClick={() => ispFileInputRef.current?.click()}
+                className="w-full"
+              >
+                <Upload className="w-4 h-4 mr-2 inline-block" />
+                Upload File
+              </Button>
+              <div className="text-xs text-gray-500 mt-1">
+                Accepts .txt or .csv files with comma-separated ISPs
+              </div>
+            </div>
           </div>
-        ))}
-      </div>
+        </Tab>
+        <Tab eventKey="settings" title="ISP Settings">
+          <div className="p-3">
+            <ISPSettingsManager />
+          </div>
+        </Tab>
+      </Tabs>
     </div>
   );
 
@@ -349,6 +397,7 @@ export function ConfigureServerModal({ show, onHide, onSubmit }: ConfigureServer
     <div>
       <div className="mb-4">
         <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           <Form.Control
             type="text"
             placeholder="Search settings..."
@@ -359,94 +408,35 @@ export function ConfigureServerModal({ show, onHide, onSubmit }: ConfigureServer
         </div>
       </div>
 
-      <div className="space-y-4 max-h-[60vh] overflow-y-auto">
-        {/* Selected Settings Section */}
-        {selectedSettings.size > 0 && (
-          <div className="border-b pb-4">
-            <h4 className="text-sm font-medium text-gray-700 mb-2">Selected Settings</h4>
-            <div className="grid grid-cols-2 gap-4">
-              {Object.entries(recipientDomainSettings)
-                .filter(([key]) => selectedSettings.has(key))
-                .map(([key, setting]) => (
-                  <div key={key} className="bg-gray-50 rounded p-2">
-                    <div className="flex items-start gap-2 mb-1">
-                      <input
-                        type="checkbox"
-                        checked={true}
-                        onChange={() => {
-                          const newSelected = new Set(selectedSettings);
-                          newSelected.delete(key);
-                          setSelectedSettings(newSelected);
-                        }}
-                        className="mt-1"
-                      />
-                      <div className="relative group">
-                        <Info className="w-4 h-4 text-gray-400 cursor-help mt-1" />
-                        <div className="absolute left-0 top-full mt-2 hidden group-hover:block w-64 p-2 bg-white border rounded shadow-lg text-sm z-10">
-                          <p className="text-gray-600">{setting.description}</p>
-                          {setting.syntax && (
-                            <p className="mt-1 text-gray-500 font-mono text-xs">
-                              Syntax: {setting.syntax}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      <span className="font-medium text-sm text-gray-700">{key}</span>
-                    </div>
-                    <Form.Control
-                      type="text"
-                      placeholder={setting.default || ''}
-                      className="w-full mt-1"
-                      size="sm"
-                    />
+      <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+        {Object.entries(recipientDomainSettings)
+          .filter(([key]) => 
+            key.toLowerCase().includes(settingsSearchTerm.toLowerCase())
+          )
+          .map(([key, setting]) => (
+            <div key={key} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+              <div className="flex items-center gap-2 flex-1">
+                <span className="font-medium">{key}</span>
+                <div className="relative group">
+                  <Info className="w-4 h-4 text-gray-400 cursor-help" />
+                  <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-64 p-2 bg-white border rounded shadow-lg text-sm">
+                    <p className="text-gray-600">{setting.description}</p>
+                    {setting.syntax && (
+                      <p className="mt-1 text-gray-500 font-mono text-xs">
+                        Syntax: {setting.syntax}
+                      </p>
+                    )}
                   </div>
-                ))}
-            </div>
-          </div>
-        )}
-
-        {/* Available Settings Section */}
-        <div className="grid grid-cols-2 gap-4">
-          {Object.entries(recipientDomainSettings)
-            .filter(([key]) => 
-              !selectedSettings.has(key) &&
-              key.toLowerCase().includes(settingsSearchTerm.toLowerCase())
-            )
-            .map(([key, setting]) => (
-              <div key={key} className="bg-gray-50 rounded p-2">
-                <div className="flex items-start gap-2 mb-1">
-                  <input
-                    type="checkbox"
-                    checked={false}
-                    onChange={() => {
-                      const newSelected = new Set(selectedSettings);
-                      newSelected.add(key);
-                      setSelectedSettings(newSelected);
-                    }}
-                    className="mt-1"
-                  />
-                  <div className="relative group">
-                    <Info className="w-4 h-4 text-gray-400 cursor-help mt-1" />
-                    <div className="absolute left-0 top-full mt-2 hidden group-hover:block w-64 p-2 bg-white border rounded shadow-lg text-sm z-10">
-                      <p className="text-gray-600">{setting.description}</p>
-                      {setting.syntax && (
-                        <p className="mt-1 text-gray-500 font-mono text-xs">
-                          Syntax: {setting.syntax}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <span className="font-medium text-sm text-gray-700">{key}</span>
                 </div>
-                <Form.Control
-                  type="text"
-                  placeholder={setting.default || ''}
-                  className="w-full mt-1"
-                  size="sm"
-                />
               </div>
-            ))}
-        </div>
+              <Form.Control
+                type="text"
+                placeholder={setting.default || ''}
+                className="w-48 ml-4"
+                size="sm"
+              />
+            </div>
+          ))}
       </div>
     </div>
   );

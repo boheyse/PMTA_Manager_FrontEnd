@@ -16,7 +16,7 @@ export function Sidebar() {
       </div>
       
       <nav className="space-y-2 flex-1">
-        <NavLink to="/" icon={<Home size={20} />} text="Status" />
+        <NavLink to="/" icon={<Home size={20} />} text="Monitoring" />
         <NavLink to="/domain-registrar" icon={<Globe2 size={20} />} text="Domain Registrar" />
         <NavLink to="/manage-server" icon={<Server size={20} />} text="Manage Server" />
         <NavLink to="/mailboxes" icon={<Inbox size={20} />} text="Mailboxes" />

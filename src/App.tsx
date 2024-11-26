@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Sidebar } from './components/Sidebar';
-import { StatusPage } from './pages/StatusPage';
+import { MonitoringPage } from './pages/MonitoringPage';
 import { NodeDetailsPage } from './pages/NodeDetailsPage';
 import { MailboxProvidersPage } from './pages/MailboxProvidersPage';
 import { EmailLogsPage } from './pages/EmailLogsPage';
@@ -11,6 +11,7 @@ import { DomainEditorPage } from './pages/DomainEditorPage';
 import { IPAddressesPage } from './pages/IPAddressesPage';
 import { ConfigViewerPage } from './pages/ConfigViewerPage';
 import { ServerManagerPage } from './pages/ServerManagerPage';
+import { ServerWizardPage } from './pages/ServerWizardPage';
 import { DomainRegistrarPage } from './pages/domain-registrar/DomainRegistrarPage';
 import { SidebarProvider } from './context/SidebarContext';
 
@@ -22,12 +23,13 @@ export default function App() {
           <Sidebar />
           <div className="flex-1">
             <Routes>
-              <Route path="/" element={<StatusPage />} />
-              <Route path="/status" element={<StatusPage />} />
+              <Route path="/" element={<MonitoringPage />} />
+              <Route path="/monitoring" element={<MonitoringPage />} />
               <Route path="/node/:nodeId" element={<NodeDetailsPage />} />
               <Route path="/mailbox-providers" element={<MailboxProvidersPage />} />
               <Route path="/email-logs" element={<EmailLogsPage />} />
               <Route path="/manage-server" element={<ServerManagerPage />} />
+              <Route path="/server-wizard" element={<ServerWizardPage />} />
               <Route path="/domain-registrar" element={<DomainRegistrarPage />} />
               <Route path="/manage-server/sending-domains" element={<SendingDomainsPage />} />
               <Route path="/manage-server/ip-addresses" element={<IPAddressesPage />} />

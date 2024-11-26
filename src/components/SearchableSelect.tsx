@@ -8,7 +8,7 @@ interface SearchableSelectProps {
   onChange?: (selected: string[]) => void;
 }
 
-export default function SearchableSelect({ options, placeholder, onChange }: SearchableSelectProps) {
+export function SearchableSelect({ options, placeholder, onChange }: SearchableSelectProps) {
   return (
     <Typeahead
       id="basic-typeahead"
