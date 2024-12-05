@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Form, Button, Tabs, Tab } from 'react-bootstrap';
 import { Plus, X, Info } from 'lucide-react';
+import { axiosGet } from '../../utils/apiUtils';
 import { recipientDomainSettings } from '../../config/recipientDomainSettings';
 
 interface Setting {
@@ -13,58 +14,54 @@ interface ISP {
   settings: Setting[];
 }
 
-interface Template {
-  name: string;
+interface TemplateContent {
   isps: ISP[];
 }
 
-export function ISPSettingsManager() {
+interface Template {
+  name: string;
+  content: TemplateContent;
+}
+
+interface APIResponse {
+  templates: Template[];
+}
+
+interface ISPSettingsManagerProps {
+  onTemplateChange: (template: Template | null) => void;
+}
+
+export function ISPSettingsManager({ onTemplateChange }: ISPSettingsManagerProps) {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [activeISPIndex, setActiveISPIndex] = useState<number>(0);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Mock data - replace with API call
   useEffect(() => {
-    const mockTemplates: Template[] = [
-      {
-        name: 'Default Template',
-        isps: [
-          {
-            name: '$gmail',
-            settings: [
-              { key: 'queue-to', value: 'gmail.rollup' },
-              { key: 'max-msg-rate', value: 'unlimited' },
-              { key: 'use-starttls', value: 'yes' }
-            ]
-          },
-          {
-            name: 'gmail.rollup',
-            settings: [
-              { key: 'max-smtp-out', value: '5' },
-              { key: 'max-msg-per-connection', value: '50' },
-              { key: 'max-msg-rate', value: '100/h' },
-              { key: 'smtp-hosts', value: 'lookup-mx:gmail.com' },
-              { key: 'use-starttls', value: 'yes' }
-            ]
-          }
-        ]
+    const fetchTemplates = async () => {
+      try {
+        const response = await axiosGet('/v1/templates');
+        setTemplates(response.templates);
+      } catch (error) {
+        console.error('Failed to fetch templates:', error);
       }
-    ];
-    setTemplates(mockTemplates);
+    };
+
+    fetchTemplates();
   }, []);
 
   const handleTemplateSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const template = templates.find(t => t.name === e.target.value);
     setSelectedTemplate(template || null);
     setActiveISPIndex(0);
+    onTemplateChange(template || null);
   };
 
   const addSetting = (ispIndex: number) => {
     if (!selectedTemplate) return;
 
     const updatedTemplate = { ...selectedTemplate };
-    updatedTemplate.isps[ispIndex].settings.push({ key: '', value: '' });
+    updatedTemplate.content.isps[ispIndex].settings.push({ key: '', value: '' });
     setSelectedTemplate(updatedTemplate);
   };
 
@@ -77,7 +74,7 @@ export function ISPSettingsManager() {
     if (!selectedTemplate) return;
 
     const updatedTemplate = { ...selectedTemplate };
-    updatedTemplate.isps[ispIndex].settings[settingIndex][field] = value;
+    updatedTemplate.content.isps[ispIndex].settings[settingIndex][field] = value;
     setSelectedTemplate(updatedTemplate);
   };
 
@@ -85,7 +82,7 @@ export function ISPSettingsManager() {
     if (!selectedTemplate) return;
 
     const updatedTemplate = { ...selectedTemplate };
-    updatedTemplate.isps[ispIndex].settings.splice(settingIndex, 1);
+    updatedTemplate.content.isps[ispIndex].settings.splice(settingIndex, 1);
     setSelectedTemplate(updatedTemplate);
   };
 
@@ -133,7 +130,7 @@ export function ISPSettingsManager() {
             onSelect={(k) => setActiveISPIndex(Number(k))}
             className="mb-4"
           >
-            {selectedTemplate.isps.map((isp, index) => (
+            {selectedTemplate.content.isps.map((isp, index) => (
               <Tab
                 key={isp.name}
                 eventKey={index}

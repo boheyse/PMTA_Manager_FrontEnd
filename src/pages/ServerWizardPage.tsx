@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Button, Form } from 'react-bootstrap';
 import { ChevronRight, Plus } from 'lucide-react';
 import { ISPSettingsManager } from '../components/isp-settings';
+import axios from 'axios';
+import { axiosPost } from '../utils/apiUtils';
 
 interface WizardStep {
   id: string;
@@ -19,6 +21,11 @@ export function ServerWizardPage() {
   const [poolTypes, setPoolTypes] = useState<string[]>([]);
   const [bulkDomains, setBulkDomains] = useState('');
   const [newPoolType, setNewPoolType] = useState('');
+  const [selectedISPTemplate, setSelectedISPTemplate] = useState<Template | null>(null);
+  const [sessionId, setSessionId] = useState<string>('');
+  const [ipAddresses, setIpAddresses] = useState<string[]>([]);
+  const [connectionError, setConnectionError] = useState<string>('');
+  const [isConnecting, setIsConnecting] = useState(false);
 
   const [stepStatus, setStepStatus] = useState<{[key: string]: 'incomplete' | 'complete'}>({
     'introduction': 'complete',
@@ -38,8 +45,44 @@ export function ServerWizardPage() {
     { id: 'summary', title: 'Summary', status: stepStatus['summary'] }
   ];
 
-  const handleNext = () => {
+  const handleNext = async () => {
     const currentIndex = steps.findIndex(step => step.id === currentStep);
+    
+    if (currentStep === 'server-details') {
+      setIsConnecting(true);
+      setConnectionError('');
+      
+      try {
+        const connectResponse = await axiosPost('/v1/pmta/connect', {
+          remote_host: host
+        });
+        
+        if (connectResponse.session_id) {
+          setSessionId(connectResponse.session_id);
+          
+          const ipResponse = await axiosPost('/v1/server/ip-addresses', {
+            session_id: connectResponse.session_id
+          });
+          
+          setIpAddresses(ipResponse.ip_addresses);
+          
+          alert(`Successfully connected to server!\nAvailable IP addresses:\n${ipResponse.ip_addresses.join('\n')}`);
+          
+          setStepStatus(prev => ({
+            ...prev,
+            [currentStep]: 'complete'
+          }));
+          setCurrentStep(steps[currentIndex + 1].id);
+        }
+      } catch (error) {
+        console.error('Connection failed:', error);
+        setConnectionError(error.response?.data?.message || 'Failed to connect to server');
+      } finally {
+        setIsConnecting(false);
+      }
+      return;
+    }
+
     if (currentIndex < steps.length - 1) {
       setStepStatus(prev => ({
         ...prev,
@@ -107,6 +150,29 @@ export function ServerWizardPage() {
     }
   };
 
+  const handleCreateServer = () => {
+    const serverData = {
+      serverName,
+      host,
+      domains,
+      poolTypes,
+      ispSettings: selectedISPTemplate ? {
+        templateName: selectedISPTemplate.name,
+        isps: selectedISPTemplate.content.isps
+      } : null
+    };
+
+    console.log('Server Creation Data:', {
+      ...serverData,
+      totalDomains: domains.length,
+      totalPoolTypes: poolTypes.length,
+    });
+  };
+
+  const handleISPTemplateChange = (template: Template | null) => {
+    setSelectedISPTemplate(template);
+  };
+
   const renderIntroduction = () => (
     <div className="max-w-2xl">
       <h2 className="text-2xl font-semibold mb-4">PMTA Server Configuration</h2>
@@ -148,6 +214,24 @@ export function ServerWizardPage() {
             placeholder="Enter host address"
           />
         </Form.Group>
+
+        {connectionError && (
+          <div className="text-danger mb-4">
+            {connectionError}
+          </div>
+        )}
+
+        {ipAddresses.length > 0 && (
+          <div className="mb-4 p-4 bg-success-light rounded">
+            <h4 className="text-success mb-2">Connected Successfully!</h4>
+            <div>Available IP addresses:</div>
+            <ul className="list-disc list-inside">
+              {ipAddresses.map((ip, index) => (
+                <li key={index}>{ip}</li>
+              ))}
+            </ul>
+          </div>
+        )}
       </Form>
     </div>
   );
@@ -259,7 +343,7 @@ export function ServerWizardPage() {
   const renderTargetISPs = () => (
     <div className="max-w-4xl">
       <h2 className="text-2xl font-semibold mb-6">Target ISP Configuration</h2>
-      <ISPSettingsManager />
+      <ISPSettingsManager onTemplateChange={handleISPTemplateChange} />
     </div>
   );
 
@@ -318,6 +402,7 @@ export function ServerWizardPage() {
           <Button 
             variant="primary"
             onClick={() => {
+              handleCreateServer();
               // Handle final configuration save
               navigate('/manage-server');
             }}
@@ -386,15 +471,16 @@ export function ServerWizardPage() {
               <Button
                 variant="secondary"
                 onClick={handleBack}
+                disabled={isConnecting}
               >
                 Back
               </Button>
               <Button
                 variant="primary"
                 onClick={handleNext}
-                disabled={!canProceed()}
+                disabled={!canProceed() || isConnecting}
               >
-                {currentStep === 'target-isps' ? 'Review' : 'Next'}
+                {isConnecting ? 'Connecting...' : currentStep === 'target-isps' ? 'Review' : 'Next'}
               </Button>
             </div>
           )}

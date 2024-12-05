@@ -8,7 +8,6 @@ import { SendingDomainsPage } from './SendingDomainsPage';
 
 export function ServerManagerPage() {
   const [nodes, setNodes] = useState<Node[]>([]);
-  const [showConfigureModal, setShowConfigureModal] = useState(false);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [showDomainModal, setShowDomainModal] = useState(false);
   const [selectedDomain, setSelectedDomain] = useState<string>('');
