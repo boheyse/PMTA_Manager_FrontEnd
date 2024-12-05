@@ -53,14 +53,14 @@ export function ServerWizardPage() {
       setConnectionError('');
       
       try {
-        const connectResponse = await axiosPost('/v1/pmta/connect', {
+        const connectResponse = await axiosPost('/api/v1/pmta/connect', {
           remote_host: host
         });
         
         if (connectResponse.session_id) {
           setSessionId(connectResponse.session_id);
           
-          const ipResponse = await axiosPost('/v1/server/ip-addresses', {
+          const ipResponse = await axiosPost('/api/v1/server/ip-addresses', {
             session_id: connectResponse.session_id
           });
           

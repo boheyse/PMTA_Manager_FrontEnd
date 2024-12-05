@@ -3,7 +3,7 @@ import type { Domain, DomainResponse } from '../../types/domain';
 
 // Get the domain data from the API and map it to the desired structure
 export const getMappedDomainData = async (): Promise<Domain[]> => {
-  const url = '/v1/domains';
+  const url = '/api/v1/domains';
 
   try {
     // Fetch the domainResponse from the API

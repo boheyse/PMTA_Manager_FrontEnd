@@ -267,11 +267,11 @@ export function DomainRegistrarPage() {
             <DomainList domains={filteredDomains} />
           </div>
         )}
-        {activeTab === 'search' && (
+        {/* {activeTab === 'search' && (
           <div className="p-6">
             <DomainSearch />
           </div>
-        )}
+        )} */}
         {activeTab === 'dns' && (
           <div className="p-6">
             <DNSManager />

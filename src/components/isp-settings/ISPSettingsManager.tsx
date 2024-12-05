@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Form, Button, Tabs, Tab } from 'react-bootstrap';
 import { Plus, X, Info } from 'lucide-react';
-import { axiosGet } from '../../utils/apiUtils';
+import { axiosGet, axiosGetNoAuth } from '../../utils/apiUtils';
 import { recipientDomainSettings } from '../../config/recipientDomainSettings';
 
 interface Setting {
@@ -40,7 +40,7 @@ export function ISPSettingsManager({ onTemplateChange }: ISPSettingsManagerProps
   useEffect(() => {
     const fetchTemplates = async () => {
       try {
-        const response = await axiosGet('/v1/templates');
+        const response = await axiosGet('/api/v1/templates');
         setTemplates(response.templates);
       } catch (error) {
         console.error('Failed to fetch templates:', error);
