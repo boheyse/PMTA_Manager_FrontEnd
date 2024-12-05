@@ -1,13 +1,13 @@
-import { Domain, Section, Setting } from "../../types/domain";
+import { Domain, Section } from "../../types/domain";
 
 
-export function createVMTASectionStart(sectionValue: string, newStartIndex: number, ipAddress: string, subDomain: string, domainKey: string, domain: string): Section {
+export function createVMTASection(sectionValue: string, newStartIndex: number, ipAddress: string, subDomain: string, domainKey: string, domain: string): Section {
     return {
       key: 'virtual-mta',
-      type: 'section_start',
+      type: 'section',
       value: sectionValue,
       index: newStartIndex,
-      content: [{
+      sections: [{
         "key": "smtp-source-host",
         "type": "setting",
         "value": `${ipAddress} ${subDomain}`,
@@ -21,53 +21,23 @@ export function createVMTASectionStart(sectionValue: string, newStartIndex: numb
     };
   }
 
-  export function createVMTAPoolSectionStart(poolName: string): Section {
-    return {
-      key: 'virtual-mta-pool',
-      type: 'section_start',
-      value: poolName,
-      index: 0,
-      content: []
-    };
-  }
-
-  export function createSectionStart(key: string, sectionValue: string, newStartIndex: number): Section {
+  export function createSection(key: string, sectionValue: string, newStartIndex: number): Section {
     return {
       key: key,
-      type: "section_start",
+      type: "section",
       value: sectionValue,
       index: newStartIndex,
-      content: []
+      sections: [],
+      data: []
     };
   }
 
-  export function createSectionEnd(key: string, newEndIndex: number): Section {
-    return {
-      key: key,
-      type: 'section_end',
-      value: '',
-      index: newEndIndex,
-      content: []
-    };
-  }
-
-  export function createVMTAPoolSetting(sectionValue: string): Setting {
+  export function createVMTAPoolSetting(sectionValue: string): Section {
     return {
         key: "virtual-mta",
         type: "setting",
-        value: `${sectionValue}`,
-        data: []
-    };
-  }
-
-
-
-  export function getSectionFromFile(fileName: string, type: string, key: string, value: string, fileData: any) {
-    const pool = fileData[fileName];
-    if (pool) {
-      return pool.find((section: Section) => section.type === type && section.key === key && section.value === value);
-    }
-    return null;
+        value: `${sectionValue}`
+          };
   }
 
   export function getLastIndex(file: any, key: string) {

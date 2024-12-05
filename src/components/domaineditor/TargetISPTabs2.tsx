@@ -1,5 +1,5 @@
 import { X, Plus } from 'lucide-react';
-import React, { useMemo, useCallback, useState } from 'react';
+import React, { useMemo, useCallback, useState, useEffect } from 'react';
 import { Tabs, Tab, Button, Form } from 'react-bootstrap';
 import { Section } from '../../types/domain';
 
@@ -13,9 +13,8 @@ const TargetISPTabs2 = React.memo(
     selectedQueueName: string;
     onUpdateSections: (updatedSections: Section[]) => void;
   }) => {
-
     // Active tab state
-    const [activeTab, setActiveTab] = useState<number | null>(0);
+    const [activeTab, setActiveTab] = useState<number | null>(null);
 
     // Locate the virtual-mta section for the selectedQueueName
     const virtualMTA = useMemo(
@@ -27,179 +26,240 @@ const TargetISPTabs2 = React.memo(
       [sections, selectedQueueName]
     );
 
-    // Compute start and end indices for the relevant virtual-mta
-    const [startIndex, endIndex] = useMemo(() => {
-      if (!virtualMTA) return [null, null];
-      const end = sections.find(
-        (section) =>
-          section.key === 'virtual-mta' &&
-          section.type === 'section_end' &&
-          section.index > virtualMTA.index
-      );
-      return [virtualMTA.index, end?.index];
-    }, [virtualMTA, sections]);
-
-    // Compute domain sections dynamically
+    // Get domain sections from the virtualMTA's sections and sort by index
     const domainSections = useMemo(() => {
-      if (startIndex === null || endIndex === null) return [];
-      return sections.filter(
-        (section) =>
-          section.key === 'domain' &&
-          section.type === 'section_start' &&
-          section.index > startIndex &&
-          section.index < endIndex
-      );
-    }, [sections, startIndex, endIndex]);
+      if (!virtualMTA || !virtualMTA.sections) return [];
+      const sections = virtualMTA.sections
+        .filter((section) => section.key === 'domain')
+        .sort((a, b) => a.index - b.index);
+      
+      // Set initial active tab if not set and sections exist
+      if (activeTab === null && sections.length > 0) {
+        setActiveTab(sections[0].index);
+      }
+      console.log('activeTab:', activeTab);
+      return sections;
+    }, [virtualMTA, activeTab]);
+
+    // Get the next available index for a new section
+    const getNextIndex = useCallback(() => {
+      if (!virtualMTA?.sections || virtualMTA.sections.length === 0) return 0;
+      
+      const domainSectionIndices = virtualMTA.sections
+        .filter(section => section.key === 'domain')
+        .map(section => section.index || 0);
+      
+      return domainSectionIndices.length > 0 
+        ? Math.max(...domainSectionIndices) + 1 
+        : 0;
+    }, [virtualMTA]);
 
     // Add a new domain section
     const addDomainSection = useCallback(() => {
-        if (endIndex === null) return; // Ensure endIndex is valid
-        
-        // Bump indices for sections after endIndex by 3
-        const bumpedSections = sections.map((section) =>
-          section.index >= endIndex
-            ? { ...section, index: section.index + 3 }
-            : section
-        );
-      
-        // Define new sections to be added
-        const newDomainSection: Section = {
-          content: [],
-          index: endIndex,
-          key: 'domain',
-          type: 'section_start',
-          value: 'new.target.isp',
-        };
-      
-        const newDomainEndSection: Section = {
-          content: [],
-          index: endIndex + 1,
-          key: 'domain',
-          type: 'section_end',
-          value: '',
-        };
+      if (!virtualMTA) return;
 
-        const newEmptyLine: Section = {
-            content: [],
-            index: endIndex + 2,
-            key: '',
-            type: 'empty_line',
-            value: '',
-          };
-      
-        // Combine bumped sections with new sections and sort
-        const updatedSections = [
-          ...bumpedSections,
-          newEmptyLine,
-          newDomainSection,
-          newDomainEndSection,
-        ].sort((a, b) => a.index - b.index);
-      
-        onUpdateSections(updatedSections);
-        // Set the newly added domain section as the active tab
-        setActiveTab(newDomainSection.index);
-      }, [sections, endIndex, onUpdateSections]);
-      
+      const newIndex = getNextIndex();
+      console.log('New domain section index:', newIndex);
+
+      const newDomainSection: Section = {
+        data: [],
+        key: 'domain',
+        type: 'section',
+        value: 'new.target.isp',
+        sections: [],
+        index: newIndex,
+      };
+
+      // Create sections array if it doesn't exist
+      const currentSections = virtualMTA.sections || [];
+
+      // Add the new section to the virtualMTA's sections
+      const updatedVMTA = {
+        ...virtualMTA,
+        sections: [...currentSections, newDomainSection],
+      };
+
+      // Update the main sections array
+      const updatedSections = sections.map((section) =>
+        section === virtualMTA ? updatedVMTA : section
+      );
+
+      onUpdateSections(updatedSections);
+      setActiveTab(newIndex);
+    }, [virtualMTA, sections, onUpdateSections, getNextIndex]);
 
     // Update a domain section's value
     const updateDomainSection = useCallback(
       (index: number, updatedValue: string) => {
+        if (!virtualMTA || !virtualMTA.sections) return;
+
+        const updatedVMTA = {
+          ...virtualMTA,
+          sections: virtualMTA.sections.map((section) =>
+            section.index === index ? { ...section, value: updatedValue } : section
+          ),
+        };
+
         const updatedSections = sections.map((section) =>
-          section.index === index ? { ...section, value: updatedValue } : section
+          section === virtualMTA ? updatedVMTA : section
         );
+
         onUpdateSections(updatedSections);
       },
-      [sections, onUpdateSections]
+      [virtualMTA, sections, onUpdateSections]
+    );
+
+    // Delete a domain section
+    const deleteDomainSection = useCallback(
+      (index: number) => {
+        if (!virtualMTA || !virtualMTA.sections) return;
+
+        const updatedVMTA = {
+          ...virtualMTA,
+          sections: virtualMTA.sections.filter((section) => section.index !== index),
+        };
+
+        const updatedSections = sections.map((section) =>
+          section === virtualMTA ? updatedVMTA : section
+        );
+
+        onUpdateSections(updatedSections);
+        
+        // Set active tab to the first remaining domain section's index, or null if none left
+        const remainingDomainSections = updatedVMTA.sections.filter(section => section.key === 'domain');
+        setActiveTab(remainingDomainSections.length > 0 ? remainingDomainSections[0].index : null);
+      },
+      [virtualMTA, sections, onUpdateSections]
+    );
+
+    // Add a new setting to a domain section
+    const addDomainSetting = useCallback(
+      (sectionIndex: number) => {
+        if (!virtualMTA || !virtualMTA.sections) return;
+
+        const updatedVMTA = {
+          ...virtualMTA,
+          sections: virtualMTA.sections.map((section) =>
+            section.index === sectionIndex
+              ? {
+                  ...section,
+                  sections: [
+                    ...(section.sections || []),
+                    {
+                      key: '',
+                      value: '',
+                      type: 'setting',
+                      index: section.sections ? section.sections.length : 0,
+                    },
+                  ],
+                }
+              : section
+          ),
+        };
+
+        const updatedSections = sections.map((section) =>
+          section === virtualMTA ? updatedVMTA : section
+        );
+
+        onUpdateSections(updatedSections);
+      },
+      [virtualMTA, sections, onUpdateSections]
+    );
+
+    // Update a domain setting
+    const updateDomainSetting = useCallback(
+      (sectionIndex: number, settingIndex: number, field: 'key' | 'value', newValue: string) => {
+        if (!virtualMTA || !virtualMTA.sections) return;
+
+        const updatedVMTA = {
+          ...virtualMTA,
+          sections: virtualMTA.sections.map((section) =>
+            section.index === sectionIndex
+              ? {
+                  ...section,
+                  sections: (section.sections || []).map((setting, idx) =>
+                    idx === settingIndex
+                      ? { ...setting, [field]: newValue }
+                      : setting
+                  ),
+                }
+              : section
+          ),
+        };
+
+        const updatedSections = sections.map((section) =>
+          section === virtualMTA ? updatedVMTA : section
+        );
+        console.log('updatedSections:', JSON.stringify(updatedSections, null, 2));
+
+        onUpdateSections(updatedSections);
+      },
+      [virtualMTA, sections, onUpdateSections]
+    );
+
+    // Delete a domain setting
+    const deleteDomainSetting = useCallback(
+      (sectionIndex: number, settingIndex: number) => {
+        if (!virtualMTA || !virtualMTA.sections) return;
+
+        const updatedVMTA = {
+          ...virtualMTA,
+          sections: virtualMTA.sections.map((section) =>
+            section.index === sectionIndex
+              ? {
+                  ...section,
+                  sections: (section.sections || []).filter((_, idx) => idx !== settingIndex),
+                }
+              : section
+          ),
+        };
+
+        const updatedSections = sections.map((section) =>
+          section === virtualMTA ? updatedVMTA : section
+        );
+
+        onUpdateSections(updatedSections);
+      },
+      [virtualMTA, sections, onUpdateSections]
     );
 
     // Handle tab change
-    const handleTabChange = useCallback(
-        (tabIndex: string | null) => {
-            setActiveTab(tabIndex ? parseInt(tabIndex, 10) : null);
-        },
-        []
-    );
-
-    // Add a domain setting
-    const addDomainSetting = useCallback(
-      (index: number) => {
-        const updatedSections = sections.map((section) =>
-          section.index === index
-            ? {
-                ...section,
-                content: [
-                  ...(section.content || []),
-                  { key: '', value: '', type: 'setting', data: [] },
-                ],
-              }
-            : section
-        );
-        onUpdateSections(updatedSections);
-      },
-      [sections, onUpdateSections]
-    );
-
-    // Generic function to update a domain section's setting property
-    const updateDomainSetting = useCallback(
-      (
-        index: number,
-        settingIndex: number,
-        property: 'key' | 'value',
-        updatedValue: string
-      ) => {
-        const updatedSections = sections.map((section) =>
-          section.index === index
-            ? {
-                ...section,
-                content: section.content.map((setting, i) =>
-                  i === settingIndex
-                    ? { ...setting, [property]: updatedValue }
-                    : setting
-                ),
-              }
-            : section
-        );
-        onUpdateSections(updatedSections);
-      },
-      [sections, onUpdateSections]
-    );
-
-    // Delete a domain section's setting
-    const deleteDomainSetting = useCallback(
-      (index: number, settingIndex: number) => {
-        const updatedSections = sections.map((section) =>
-          section.index === index
-            ? {
-                ...section,
-                content: section.content.filter((_, i) => i !== settingIndex),
-              }
-            : section
-        );
-        onUpdateSections(updatedSections);
-      },
-      [sections, onUpdateSections]
-    );
+    const handleTabChange = (index: number | null) => {
+      setActiveTab(index);
+    };
 
     return (
       <div>
         <h4 className="text-lg font-semibold mt-4">Target ISPs</h4>
-        <Button
-          variant="outline-primary"
-          onClick={addDomainSection}
-          size="sm"
-          className="mb-3"
-        >
-          Add Target ISP
-        </Button>
         <Tabs
           activeKey={activeTab?.toString() || ''}
-          onSelect={handleTabChange}
+          onSelect={(key) => {
+            if (key === "add-new") {
+              addDomainSection();
+            } else {
+              setActiveTab(Number(key));
+            }
+          }}
+          className="mb-3"
         >
           {domainSections.map((domain) => (
             <Tab
-              eventKey={domain.index || ''}
+              eventKey={domain.index}
               key={domain.index}
-              title={domain.value || 'Unnamed ISP'}
+              title={
+                <div className="flex items-center">
+                  <span>{domain.value}</span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteDomainSection(domain.index);
+                    }}
+                    className="ml-2 text-red-600 hover:text-red-800"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              }
             >
               <div className="p-4 border rounded">
                 <Form>
@@ -210,9 +270,7 @@ const TargetISPTabs2 = React.memo(
                         <Form.Control
                           type="text"
                           value={domain.value || ''}
-                          onChange={(e) =>
-                            updateDomainSection(domain.index, e.target.value)
-                          }
+                          onChange={(e) => updateDomainSection(domain.index, e.target.value)}
                           placeholder="Enter Target ISP"
                           className="w-full"
                         />
@@ -230,7 +288,7 @@ const TargetISPTabs2 = React.memo(
                 </Form>
                 <Form>
                   <div className="grid grid-cols-2 gap-4">
-                    {domain.content?.map((setting, settingIdx) => (
+                    {(domain.sections || []).map((setting, settingIdx) => (
                       <div
                         key={settingIdx}
                         className="flex items-center gap-2 p-2 border rounded"
@@ -275,9 +333,7 @@ const TargetISPTabs2 = React.memo(
                         <Button
                           variant="link"
                           className="p-0 text-danger flex-shrink-0"
-                          onClick={() =>
-                            deleteDomainSetting(domain.index, settingIdx)
-                          }
+                          onClick={() => deleteDomainSetting(domain.index, settingIdx)}
                         >
                           <X size={14} />
                         </Button>
@@ -288,6 +344,14 @@ const TargetISPTabs2 = React.memo(
               </div>
             </Tab>
           ))}
+          <Tab
+            eventKey="add-new"
+            title={
+              <Button variant="link" className="p-0">
+                +
+              </Button>
+            }
+          />
         </Tabs>
       </div>
     );

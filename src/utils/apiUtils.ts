@@ -1,8 +1,8 @@
 // src/utils/apiUtils.ts
 import axios from 'axios';
 
-// const hostName = 'http://127.0.0.1:5000';
-const hostName = 'https://pmta-manager-backend-boheyse.replit.app';
+const hostName = 'http://127.0.0.1:5000';
+// const hostName = 'https://pmta-manager-backend-boheyse.replit.app';
 export const axiosGet = async (url: string) => {
   try {
     const response = await axios.get(`${hostName}${url}`);

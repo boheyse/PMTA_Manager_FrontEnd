@@ -5,7 +5,7 @@ import { SearchableSelect } from './SearchableSelect';
 interface AddQueueModalProps {
   show: boolean;
   onHide: () => void;
-  onSubmit: (ipAddress: string, subDomain: string, domainKey: string) => void;
+  onSubmit: (queueName: string, ipAddress: string, subDomain: string, domainKey: string, poolType: string) => void;
   availableIPs: string[];
   domainName: string;
   poolType: string;
@@ -25,7 +25,8 @@ export function AddQueueModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(selectedIP, subDomain, domainKey);
+    const queueName = poolType ? `${selectedIP}-${domainName}-${poolType}` : `${selectedIP}-${domainName}`;
+    onSubmit(queueName, selectedIP, subDomain, domainKey, poolType);
     onHide();
     // Reset form
     setSelectedIP('');

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, BarChart2, Mail, Network, Globe, Ban, InboxIcon, Inbox, FileText, ChevronDown } from 'lucide-react';
+import { Home, BarChart2, Mail, Network, Globe, Ban, InboxIcon, Inbox, FileText, Server, Globe2 } from 'lucide-react';
 import { NavLink } from './NavLink';
 import { useSidebar } from '../context/SidebarContext';
 
@@ -16,10 +16,9 @@ export function Sidebar() {
       </div>
       
       <nav className="space-y-2 flex-1">
-        <NavLink to="/" icon={<Home size={20} />} text="Status" />
-        <NavLink to="/sending-domains" icon={<Globe size={20} />} text="Sending Domains" />
-        <NavLink to="/ip-addresses" icon={<Network size={20} />} text="IP Addresses" />
-        <NavLink to="/config-viewer" icon={<FileText size={20} />} text="Config Viewer" />
+        <NavLink to="/" icon={<Home size={20} />} text="Monitoring" />
+        <NavLink to="/domain-registrar" icon={<Globe2 size={20} />} text="Domain Registrar" />
+        <NavLink to="/manage-server" icon={<Server size={20} />} text="Manage Server" />
         <NavLink to="/mailboxes" icon={<Inbox size={20} />} text="Mailboxes" />
         <NavLink to="/mailbox-providers" icon={<Mail size={20} />} text="Mailbox Providers" />
         <NavLink to="/bounces" icon={<Ban size={20} />} text="Bounces" />
@@ -32,7 +31,6 @@ export function Sidebar() {
             B
           </div>
           <span className="flex-1 text-left">Profile</span>
-          <ChevronDown className="w-4 h-4" />
         </button>
       </div>
     </div>

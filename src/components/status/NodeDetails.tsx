@@ -15,8 +15,10 @@ interface NodeDetailsProps {
 
 export function NodeDetails({ show, onHide, node, onUpdate }: NodeDetailsProps) {
   const [isEditing, setIsEditing] = useState(false);
-  const [editedNode, setEditedNode] = useState(node);
+  const [editedNode, setEditedNode] = useState<Node>(node);
   const [activeTab, setActiveTab] = useState('overview');
+
+  if (!node) return null;
 
   // Mock data for charts
   const deliveryData = [
