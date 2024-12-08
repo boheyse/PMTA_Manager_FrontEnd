@@ -27,11 +27,15 @@ export const LoginForm: React.FC = () => {
       setIsLoading(true);
       const response = await authApi.login(data);
       login(response.token, response.refreshToken);
-      toast.success('Successfully logged in!');
-      navigate('/'); // Changed from /dashboard to / since that's our protected route
+      toast.success('Successfully logged in!', {
+        autoClose: 2000,
+      });
+      navigate('/');
     } catch (error: any) {
       console.error('Login error:', error);
-      toast.error(error.message || 'Failed to login');
+      toast.error(error.message || 'Failed to login', {
+        autoClose: 3000
+      });
     } finally {
       setIsLoading(false);
     }

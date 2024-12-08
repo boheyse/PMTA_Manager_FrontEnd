@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button, Form } from 'react-bootstrap';
 import { ChevronRight, Plus } from 'lucide-react';
 import { ISPSettingsManager } from '../components/isp-settings';
@@ -12,11 +12,21 @@ interface WizardStep {
   status: 'incomplete' | 'complete';
 }
 
+interface LocationState {
+  serverName?: string;
+  host?: string;
+  nodeId?: number;
+}
+
 export function ServerWizardPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { serverName: initialServerName, host: initialHost } = 
+    (location.state as LocationState) || {};
+
   const [currentStep, setCurrentStep] = useState('introduction');
-  const [serverName, setServerName] = useState('');
-  const [host, setHost] = useState('');
+  const [serverName, setServerName] = useState(initialServerName || '');
+  const [host, setHost] = useState(initialHost || '');
   const [domains, setDomains] = useState<string[]>([]);
   const [poolTypes, setPoolTypes] = useState<string[]>([]);
   const [bulkDomains, setBulkDomains] = useState('');
@@ -53,8 +63,10 @@ export function ServerWizardPage() {
       setConnectionError('');
       
       try {
-        const connectResponse = await axiosPost('/api/v1/pmta/connect', {
-          remote_host: host
+        const connectResponse = await axiosPost('/api/v1/server/connect', {
+          hostname: host,
+          name: serverName,
+          create_server: true
         });
         
         if (connectResponse.session_id) {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Form, Button, Tabs, Tab } from 'react-bootstrap';
 import { Plus, X, Info } from 'lucide-react';
-import { axiosGet, axiosGetNoAuth } from '../../utils/apiUtils';
+import { axiosGet } from '../../utils/apiUtils';
 import { recipientDomainSettings } from '../../config/recipientDomainSettings';
 
 interface Setting {
@@ -20,11 +20,10 @@ interface TemplateContent {
 
 interface Template {
   name: string;
-  content: TemplateContent;
-}
-
-interface APIResponse {
-  templates: Template[];
+  content: string;
+  screen_name: string;
+  description: string;
+  json_data: TemplateContent;
 }
 
 interface ISPSettingsManagerProps {
@@ -40,7 +39,7 @@ export function ISPSettingsManager({ onTemplateChange }: ISPSettingsManagerProps
   useEffect(() => {
     const fetchTemplates = async () => {
       try {
-        const response = await axiosGet('/api/v1/templates');
+        const response = await axiosGet('/api/v1/templates?contains=isp');
         setTemplates(response.templates);
       } catch (error) {
         console.error('Failed to fetch templates:', error);
@@ -61,7 +60,7 @@ export function ISPSettingsManager({ onTemplateChange }: ISPSettingsManagerProps
     if (!selectedTemplate) return;
 
     const updatedTemplate = { ...selectedTemplate };
-    updatedTemplate.content.isps[ispIndex].settings.push({ key: '', value: '' });
+    updatedTemplate.json_data.isps[ispIndex].settings.push({ key: '', value: '' });
     setSelectedTemplate(updatedTemplate);
   };
 
@@ -74,7 +73,7 @@ export function ISPSettingsManager({ onTemplateChange }: ISPSettingsManagerProps
     if (!selectedTemplate) return;
 
     const updatedTemplate = { ...selectedTemplate };
-    updatedTemplate.content.isps[ispIndex].settings[settingIndex][field] = value;
+    updatedTemplate.json_data.isps[ispIndex].settings[settingIndex][field] = value;
     setSelectedTemplate(updatedTemplate);
   };
 
@@ -82,7 +81,7 @@ export function ISPSettingsManager({ onTemplateChange }: ISPSettingsManagerProps
     if (!selectedTemplate) return;
 
     const updatedTemplate = { ...selectedTemplate };
-    updatedTemplate.content.isps[ispIndex].settings.splice(settingIndex, 1);
+    updatedTemplate.json_data.isps[ispIndex].settings.splice(settingIndex, 1);
     setSelectedTemplate(updatedTemplate);
   };
 
@@ -130,7 +129,7 @@ export function ISPSettingsManager({ onTemplateChange }: ISPSettingsManagerProps
             onSelect={(k) => setActiveISPIndex(Number(k))}
             className="mb-4"
           >
-            {selectedTemplate.content.isps.map((isp, index) => (
+            {selectedTemplate.json_data.isps.map((isp, index) => (
               <Tab
                 key={isp.name}
                 eventKey={index}
