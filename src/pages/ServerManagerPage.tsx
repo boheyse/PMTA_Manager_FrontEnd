@@ -1,30 +1,55 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Server, Search } from 'lucide-react';
-import { mockNodes } from '../mocks/nodeData';
-import type { Node } from '../types/node';
+import type { PMTANode } from '../types/node';
 import { DomainDetailsModal } from '../components/server-manager/DomainDetailsModal';
 import { SendingDomainsPage } from './SendingDomainsPage';
+import { axiosGet } from '../utils/apiUtils';
 
 export function ServerManagerPage() {
-  const [nodes, setNodes] = useState<Node[]>([]);
-  const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  const [nodes, setNodes] = useState<PMTANode[]>([]);
+  const [selectedNode, setSelectedNode] = useState<PMTANode | null>(null);
   const [showDomainModal, setShowDomainModal] = useState(false);
   const [selectedDomain, setSelectedDomain] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeServer, setActiveServer] = useState<Node | null>(null);
+  const [activeServer, setActiveServer] = useState<PMTANode | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    setNodes(mockNodes);
+    const fetchServers = async () => {
+      try {
+        setIsLoading(true);
+        const response = await axiosGet('/api/v1/servers');
+        console.log(response);
+        setNodes(response);
+      } catch (err) {
+        console.error('Failed to fetch servers:', err);
+        setError('Failed to load servers. Please try again later.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchServers();
   }, []);
 
-  const handleNodeSelect = (node: Node) => {
+  const handleNodeSelect = (node: PMTANode) => {
     setSelectedNode(node);
+    if (!node.setup_complete) {
+      navigate('/server-wizard', { 
+        state: { 
+          serverName: node.name,
+          hostname: node.hostname,
+          nodeId: node.id
+        } 
+      });
+    }
   };
 
   const handleConnect = () => {
-    if (selectedNode) {
+    if (selectedNode && selectedNode.setup_complete) {
       setActiveServer(selectedNode);
     }
   };
@@ -38,7 +63,15 @@ export function ServerManagerPage() {
     node.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (activeServer) {
+  if (isLoading) {
+    return <div className="p-6 text-center">Loading servers...</div>;
+  }
+
+  if (error) {
+    return <div className="p-6 text-center text-red-600">{error}</div>;
+  }
+
+  if (activeServer && activeServer.setup_complete) {
     return (
       <div className="p-6">
         <div className="bg-blue-50 p-4 mb-6 rounded-lg flex items-center justify-between">
@@ -106,14 +139,17 @@ export function ServerManagerPage() {
                     <Server className="w-5 h-5 text-gray-400" />
                     <div>
                       <div className="font-medium">{node.name}</div>
-                      <div className="text-sm text-gray-500">{node.host}</div>
+                      <div className="text-sm text-gray-500">{node.hostname}</div>
+                      {!node.setup_complete && (
+                        <div className="text-sm text-orange-500">Setup required</div>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center space-x-4">
                     <div className={`w-2 h-2 rounded-full ${
                       node.status === 'connected' ? 'bg-green-500' : 'bg-red-500'
                     }`} />
-                    {selectedNode?.id === node.id && (
+                    {selectedNode?.id === node.id && node.setup_complete && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();

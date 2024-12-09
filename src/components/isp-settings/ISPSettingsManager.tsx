@@ -20,27 +20,32 @@ interface TemplateContent {
 
 interface Template {
   name: string;
-  content: TemplateContent;
-}
-
-interface APIResponse {
-  templates: Template[];
+  content: string;
+  screen_name: string;
+  description: string;
+  json_data: TemplateContent;
 }
 
 interface ISPSettingsManagerProps {
   onTemplateChange: (template: Template | null) => void;
+  selectedTemplate?: Template | null;
+  viewOnly?: boolean;
 }
 
-export function ISPSettingsManager({ onTemplateChange }: ISPSettingsManagerProps) {
+export function ISPSettingsManager({ 
+  onTemplateChange, 
+  selectedTemplate: initialTemplate,
+  viewOnly = false 
+}: ISPSettingsManagerProps) {
   const [templates, setTemplates] = useState<Template[]>([]);
-  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(initialTemplate || null);
   const [activeISPIndex, setActiveISPIndex] = useState<number>(0);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const fetchTemplates = async () => {
       try {
-        const response = await axiosGet('/v1/templates');
+        const response = await axiosGet('/api/v1/templates?contains=isp');
         setTemplates(response.templates);
       } catch (error) {
         console.error('Failed to fetch templates:', error);
@@ -61,7 +66,7 @@ export function ISPSettingsManager({ onTemplateChange }: ISPSettingsManagerProps
     if (!selectedTemplate) return;
 
     const updatedTemplate = { ...selectedTemplate };
-    updatedTemplate.content.isps[ispIndex].settings.push({ key: '', value: '' });
+    updatedTemplate.json_data.isps[ispIndex].settings.push({ key: '', value: '' });
     setSelectedTemplate(updatedTemplate);
   };
 
@@ -74,7 +79,7 @@ export function ISPSettingsManager({ onTemplateChange }: ISPSettingsManagerProps
     if (!selectedTemplate) return;
 
     const updatedTemplate = { ...selectedTemplate };
-    updatedTemplate.content.isps[ispIndex].settings[settingIndex][field] = value;
+    updatedTemplate.json_data.isps[ispIndex].settings[settingIndex][field] = value;
     setSelectedTemplate(updatedTemplate);
   };
 
@@ -82,7 +87,7 @@ export function ISPSettingsManager({ onTemplateChange }: ISPSettingsManagerProps
     if (!selectedTemplate) return;
 
     const updatedTemplate = { ...selectedTemplate };
-    updatedTemplate.content.isps[ispIndex].settings.splice(settingIndex, 1);
+    updatedTemplate.json_data.isps[ispIndex].settings.splice(settingIndex, 1);
     setSelectedTemplate(updatedTemplate);
   };
 
@@ -97,7 +102,6 @@ export function ISPSettingsManager({ onTemplateChange }: ISPSettingsManagerProps
       <div className="flex items-center gap-4 mb-6">
         <div className="flex-1">
           <Form.Group>
-            <Form.Label>Choose from template</Form.Label>
             <Form.Select
               onChange={handleTemplateSelect}
               value={selectedTemplate?.name || ''}
@@ -111,7 +115,9 @@ export function ISPSettingsManager({ onTemplateChange }: ISPSettingsManagerProps
             </Form.Select>
           </Form.Group>
         </div>
-        <Button variant="outline-primary">Save as Template</Button>
+        {!viewOnly && (
+          <Button variant="outline-primary">Save as Template</Button>
+        )}
       </div>
 
       {selectedTemplate && (
@@ -130,7 +136,7 @@ export function ISPSettingsManager({ onTemplateChange }: ISPSettingsManagerProps
             onSelect={(k) => setActiveISPIndex(Number(k))}
             className="mb-4"
           >
-            {selectedTemplate.content.isps.map((isp, index) => (
+            {selectedTemplate.json_data.isps.map((isp, index) => (
               <Tab
                 key={isp.name}
                 eventKey={index}

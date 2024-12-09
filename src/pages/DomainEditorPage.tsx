@@ -8,7 +8,7 @@ import { createVMTASection, createSection, getLastIndex, createVMTAPoolSetting }
 import type { Domain, Section } from '../types/domain';
 import cloneDeep from 'lodash/cloneDeep';
 import { AddQueueModal } from '../components/AddQueueModal';
-import { axiosPost, fetchPost } from '../utils/apiUtils';
+import { axiosPost } from '../utils/apiUtils';
 import QueueTabs from '../components/domaineditor/QueueTabs';
 import AddPoolModal from '../components/domaineditor/AddPoolModal';
 
