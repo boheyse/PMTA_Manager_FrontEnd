@@ -41,7 +41,7 @@ export function ServerManagerPage() {
       navigate('/server-wizard', { 
         state: { 
           serverName: node.name,
-          host: node.hostname,
+          hostname: node.hostname,
           nodeId: node.id
         } 
       });

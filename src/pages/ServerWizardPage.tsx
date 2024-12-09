@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Button, Form } from 'react-bootstrap';
+import { Button, Form, Tabs, Tab } from 'react-bootstrap';
 import { ChevronRight, Plus } from 'lucide-react';
 import { ISPSettingsManager } from '../components/isp-settings';
-import axios from 'axios';
-import { axiosPost } from '../utils/apiUtils';
+import { axiosPost, axiosGet, axiosPut } from '../utils/apiUtils';
+import { TemplateSelector } from '../components/isp-settings/TemplateSelector';
+import { PoolTypeConfig, Template } from '../types/templates';
+import { toast } from 'react-toastify';
 
 interface WizardStep {
   id: string;
@@ -14,19 +16,20 @@ interface WizardStep {
 
 interface LocationState {
   serverName?: string;
-  host?: string;
+  hostname?: string;
   nodeId?: number;
 }
 
 export function ServerWizardPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { serverName: initialServerName, host: initialHost } = 
+  const { serverName: initialServerName, hostname: initialHostname, nodeId: initialNodeId } = 
     (location.state as LocationState) || {};
 
   const [currentStep, setCurrentStep] = useState('introduction');
   const [serverName, setServerName] = useState(initialServerName || '');
-  const [host, setHost] = useState(initialHost || '');
+  const [hostname, setHostname] = useState(initialHostname || '');
+  const [nodeId, setNodeId] = useState(initialNodeId || -1);
   const [domains, setDomains] = useState<string[]>([]);
   const [poolTypes, setPoolTypes] = useState<string[]>([]);
   const [bulkDomains, setBulkDomains] = useState('');
@@ -46,6 +49,25 @@ export function ServerWizardPage() {
     'summary': 'incomplete'
   });
 
+  const [poolTypeConfigs, setPoolTypeConfigs] = useState<PoolTypeConfig[]>([]);
+  const [templates, setTemplates] = useState<Template[]>([]);
+
+  // Add new state for setup loading
+  const [isSettingUp, setIsSettingUp] = useState(false);
+
+  useEffect(() => {
+    const fetchTemplates = async () => {
+      try {
+        const response = await axiosGet('/api/v1/templates?contains=isp');
+        setTemplates(response.templates);
+      } catch (error) {
+        console.error('Failed to fetch templates:', error);
+      }
+    };
+
+    fetchTemplates();
+  }, []);
+
   const steps: WizardStep[] = [
     { id: 'introduction', title: 'Introduction', status: 'complete' },
     { id: 'server-details', title: 'Server Details', status: stepStatus['server-details'] },
@@ -58,13 +80,14 @@ export function ServerWizardPage() {
   const handleNext = async () => {
     const currentIndex = steps.findIndex(step => step.id === currentStep);
     
+    // First handle the server-details connection step
     if (currentStep === 'server-details') {
       setIsConnecting(true);
       setConnectionError('');
       
       try {
         const connectResponse = await axiosPost('/api/v1/server/connect', {
-          hostname: host,
+          hostname: hostname,
           name: serverName,
           create_server: true
         });
@@ -79,28 +102,45 @@ export function ServerWizardPage() {
           setIpAddresses(ipResponse.ip_addresses);
           
           alert(`Successfully connected to server!\nAvailable IP addresses:\n${ipResponse.ip_addresses.join('\n')}`);
-          
-          setStepStatus(prev => ({
-            ...prev,
-            [currentStep]: 'complete'
-          }));
-          setCurrentStep(steps[currentIndex + 1].id);
         }
       } catch (error) {
         console.error('Connection failed:', error);
         setConnectionError(error.response?.data?.message || 'Failed to connect to server');
-      } finally {
         setIsConnecting(false);
+        return;
       }
-      return;
     }
 
-    if (currentIndex < steps.length - 1) {
+    // Update server data before proceeding to next step
+    try {
+      const cleanedPoolTypes = poolTypeConfigs.map(({ template, ...rest }) => rest);
+      
+      const serverData = {
+        nodeId: nodeId,
+        ip_addresses: ipAddresses,
+        domains: domains,
+        pool_types: cleanedPoolTypes
+      };
+
+      await axiosPut(`/api/v1/server/${nodeId}`, serverData);
+
+      // Only proceed if the update was successful
       setStepStatus(prev => ({
         ...prev,
         [currentStep]: 'complete'
       }));
-      setCurrentStep(steps[currentIndex + 1].id);
+      
+      if (currentIndex < steps.length - 1) {
+        setCurrentStep(steps[currentIndex + 1].id);
+      }
+    } catch (error) {
+      console.error('Failed to update server:', error);
+      toast.error(
+        error.response?.data?.message || 
+        'Failed to save changes. Please try again.'
+      );
+    } finally {
+      setIsConnecting(false);
     }
   };
 
@@ -139,18 +179,38 @@ export function ServerWizardPage() {
   const addPoolType = () => {
     if (newPoolType && !poolTypes.includes(newPoolType)) {
       setPoolTypes(prev => [...prev, newPoolType]);
+      setPoolTypeConfigs(prev => [...prev, {
+        pool_type: newPoolType,
+        isps: [],
+      }]);
       setNewPoolType('');
     }
   };
 
+  const handlePoolTemplateChange = (poolType: string, template: Template | null) => {
+    if (!template) return;
+    
+    setPoolTypeConfigs(prev => prev.map(config => {
+      if (config.pool_type === poolType) {
+        return {
+          ...config,
+          isps: template.json_data.isps,
+          template: template
+        };
+      }
+      return config;
+    }));
+  };
+
   const removePoolType = (type: string) => {
     setPoolTypes(prev => prev.filter(t => t !== type));
+    setPoolTypeConfigs(prev => prev.filter(config => config.pool_type !== type));
   };
 
   const canProceed = () => {
     switch (currentStep) {
       case 'server-details':
-        return serverName.trim() !== '' && host.trim() !== '';
+        return serverName.trim() !== '' && hostname.trim() !== '';
       case 'domains':
         return domains.length > 0;
       case 'pool-types':
@@ -162,23 +222,45 @@ export function ServerWizardPage() {
     }
   };
 
-  const handleCreateServer = () => {
-    const serverData = {
-      serverName,
-      host,
-      domains,
-      poolTypes,
-      ispSettings: selectedISPTemplate ? {
-        templateName: selectedISPTemplate.name,
-        isps: selectedISPTemplate.content.isps
-      } : null
-    };
+  const handleCreateServer = async () => {
+    try {
+      setIsSettingUp(true);
+      const toastId = toast.loading('Server setup in progress...', {
+        autoClose: false
+      });
 
-    console.log('Server Creation Data:', {
-      ...serverData,
-      totalDomains: domains.length,
-      totalPoolTypes: poolTypes.length,
-    });
+      const cleanedPoolTypes = poolTypeConfigs.map(({ template, ...rest }) => rest);
+
+      const serverData = {
+        session_id: sessionId,
+        nodeId: nodeId,
+        ip_addresses: ipAddresses,
+        domains: domains,
+        pool_types: cleanedPoolTypes
+      };
+
+      const response = await axiosPost('/api/v1/server/setup', serverData);
+      
+      if (response.success) {
+        toast.dismiss(toastId);
+        toast.success('Server setup completed successfully!', {
+          autoClose: 2000
+        });
+        navigate('/manage-server');
+      } else {
+        toast.dismiss(toastId);
+        toast.error(response.error || 'Failed to setup server. Please try again.');
+      }
+    } catch (error) {
+      console.error('Server setup failed:', error);
+      toast.dismiss(); // Dismiss all toasts
+      toast.error(
+        error.response?.data?.message || 
+        'An error occurred during server setup. Please try again.'
+      );
+    } finally {
+      setIsSettingUp(false);
+    }
   };
 
   const handleISPTemplateChange = (template: Template | null) => {
@@ -221,8 +303,8 @@ export function ServerWizardPage() {
           <Form.Label>Host Address</Form.Label>
           <Form.Control
             type="text"
-            value={host}
-            onChange={(e) => setHost(e.target.value)}
+            value={hostname}
+            onChange={(e) => setHostname(e.target.value)}
             placeholder="Enter host address"
           />
         </Form.Group>
@@ -323,9 +405,6 @@ export function ServerWizardPage() {
               <Plus className="w-4 h-4" />
             </Button>
           </div>
-          <Form.Text className="text-muted">
-            Default pool uses an empty suffix
-          </Form.Text>
         </Form.Group>
 
         <datalist id="defaultPools">
@@ -335,17 +414,30 @@ export function ServerWizardPage() {
         </datalist>
       </div>
 
-      <div className="space-y-2">
-        {poolTypes.map(type => (
-          <div key={type} className="flex justify-between items-center p-3 bg-gray-50 rounded">
-            <span>{type}</span>
-            <Button
-              variant="link"
-              className="text-danger p-0"
-              onClick={() => removePoolType(type)}
-            >
-              ×
-            </Button>
+      <div className="space-y-4">
+        {poolTypeConfigs.map(config => (
+          <div key={config.pool_type} className="p-4 bg-gray-50 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <h3 className="text-lg font-medium">{config.pool_type}</h3>
+                <Button
+                  variant="link"
+                  className="text-danger p-0"
+                  onClick={() => removePoolType(config.pool_type)}
+                >
+                  ×
+                </Button>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">ISP Template:</span>
+                <TemplateSelector 
+                  templates={templates}
+                  selectedTemplate={config.template}
+                  onTemplateChange={(template) => handlePoolTemplateChange(config.pool_type, template)}
+                />
+              </div>
+            </div>
           </div>
         ))}
       </div>
@@ -355,7 +447,26 @@ export function ServerWizardPage() {
   const renderTargetISPs = () => (
     <div className="max-w-4xl">
       <h2 className="text-2xl font-semibold mb-6">Target ISP Configuration</h2>
-      <ISPSettingsManager onTemplateChange={handleISPTemplateChange} />
+      
+      <Tabs
+        defaultActiveKey={poolTypes[0]}
+        className="mb-4"
+      >
+        {poolTypeConfigs.map(config => (
+          <Tab 
+            key={config.pool_type} 
+            eventKey={config.pool_type} 
+            title={config.pool_type}
+          >
+            <div className="p-4">
+              <ISPSettingsManager 
+                onTemplateChange={(template) => handlePoolTemplateChange(config.pool_type, template)}
+                selectedTemplate={config.template}
+              />
+            </div>
+          </Tab>
+        ))}
+      </Tabs>
     </div>
   );
 
@@ -373,7 +484,7 @@ export function ServerWizardPage() {
             </div>
             <div>
               <span className="text-gray-600">Host Address:</span>
-              <p className="font-medium">{host}</p>
+              <p className="font-medium">{hostname}</p>
             </div>
           </div>
         </div>
@@ -413,13 +524,10 @@ export function ServerWizardPage() {
           </Button>
           <Button 
             variant="primary"
-            onClick={() => {
-              handleCreateServer();
-              // Handle final configuration save
-              navigate('/manage-server');
-            }}
+            onClick={handleCreateServer}
+            disabled={isSettingUp}
           >
-            Create Server
+            {isSettingUp ? 'Setting up server...' : 'Create Server'}
           </Button>
         </div>
       </div>
@@ -478,7 +586,7 @@ export function ServerWizardPage() {
           </div>
 
           {/* Navigation Buttons */}
-          {currentStep !== 'introduction' && currentStep !== 'summary' && (
+          {currentStep !== 'introduction' && (
             <div className="flex justify-between mt-8">
               <Button
                 variant="secondary"
@@ -487,13 +595,15 @@ export function ServerWizardPage() {
               >
                 Back
               </Button>
-              <Button
-                variant="primary"
-                onClick={handleNext}
-                disabled={!canProceed() || isConnecting}
-              >
-                {isConnecting ? 'Connecting...' : currentStep === 'target-isps' ? 'Review' : 'Next'}
-              </Button>
+              {currentStep !== 'summary' && (
+                <Button
+                  variant="primary"
+                  onClick={handleNext}
+                  disabled={!canProceed() || isConnecting}
+                >
+                  {isConnecting ? 'Connecting...' : currentStep === 'target-isps' ? 'Review' : 'Next'}
+                </Button>
+              )}
             </div>
           )}
         </div>

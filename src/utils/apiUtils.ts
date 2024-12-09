@@ -54,42 +54,17 @@ export const axiosPost = async (url: string, data: any) => {
   }
 };
 
-export const fetchGet = async (url: string) => {
+export const axiosPut = async (url: string, data: any) => {
   try {
-    const headers = new Headers({
-      'Content-Type': 'application/json',
-      ...getAuthHeader()
+    const response = await axios.put(`${hostName}${url}`, data, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeader()
+      },
     });
-
-    const response = await fetch(url, { headers });
-    if (!response.ok) {
-      throw new Error(`Error: ${response.statusText}`);
-    }
-    return await response.json();
+    return response.data;
   } catch (error) {
-    console.error('GET request failed:', error);
-    throw error;
-  }
-};
-
-export const fetchPost = async (url: string, body: any) => {
-  try {
-    const headers = new Headers({
-      'Content-Type': 'application/json',
-      ...getAuthHeader()
-    });
-
-    const response = await fetch(url, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(body),
-    });
-    if (!response.ok) {
-      throw new Error(`Error: ${response.statusText}`);
-    }
-    return await response.json();
-  } catch (error) {
-    console.error('POST request failed:', error);
+    console.error('PUT request failed:', error);
     throw error;
   }
 };

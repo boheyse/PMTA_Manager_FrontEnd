@@ -28,11 +28,17 @@ interface Template {
 
 interface ISPSettingsManagerProps {
   onTemplateChange: (template: Template | null) => void;
+  selectedTemplate?: Template | null;
+  viewOnly?: boolean;
 }
 
-export function ISPSettingsManager({ onTemplateChange }: ISPSettingsManagerProps) {
+export function ISPSettingsManager({ 
+  onTemplateChange, 
+  selectedTemplate: initialTemplate,
+  viewOnly = false 
+}: ISPSettingsManagerProps) {
   const [templates, setTemplates] = useState<Template[]>([]);
-  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(initialTemplate || null);
   const [activeISPIndex, setActiveISPIndex] = useState<number>(0);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -96,7 +102,6 @@ export function ISPSettingsManager({ onTemplateChange }: ISPSettingsManagerProps
       <div className="flex items-center gap-4 mb-6">
         <div className="flex-1">
           <Form.Group>
-            <Form.Label>Choose from template</Form.Label>
             <Form.Select
               onChange={handleTemplateSelect}
               value={selectedTemplate?.name || ''}
@@ -110,7 +115,9 @@ export function ISPSettingsManager({ onTemplateChange }: ISPSettingsManagerProps
             </Form.Select>
           </Form.Group>
         </div>
-        <Button variant="outline-primary">Save as Template</Button>
+        {!viewOnly && (
+          <Button variant="outline-primary">Save as Template</Button>
+        )}
       </div>
 
       {selectedTemplate && (
