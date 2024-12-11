@@ -71,7 +71,7 @@ function App() {
                   <EmailLogsPage />
                 </ProtectedRoute>
               } />
-              <Route path="/manage-server" element={
+              <Route path="/manage-server/*" element={
                 <ProtectedRoute>
                   <ServerManagerPage />
                 </ProtectedRoute>

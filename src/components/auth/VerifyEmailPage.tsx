@@ -21,7 +21,9 @@ export const VerifyEmailPage: React.FC = () => {
       try {
         await authApi.verifyEmail(token);
         setVerificationStatus('success');
-        toast.success('Email verified successfully!');
+        toast.success('Email verified successfully!', {
+            autoClose: 2000,
+          });
         setTimeout(() => {
           navigate('/login');
         }, 3000);

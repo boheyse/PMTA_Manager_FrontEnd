@@ -9,13 +9,24 @@ export interface ISPConfig {
 }
 
 export interface Template {
+  id: string;
   name: string;
-  json_data: any;
+  screen_name: string;
   content: string;
+  description: string;
+  json_data: Record<string, any>;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface PoolTypeConfig {
   pool_type: string;
   isps: ISPConfig[];
-  template?: Template; // Store selected template for reference
-} 
+  template?: Template;
+}
+
+export interface TemplatesResponse {
+  templates: Template[];
+  success?: boolean;
+}
