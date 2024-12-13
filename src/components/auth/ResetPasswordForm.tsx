@@ -51,7 +51,9 @@ export const ResetPasswordForm: React.FC = () => {
     try {
       setIsLoading(true);
       await authApi.resetPassword(token, data.password);
-      toast.success('Password has been reset successfully');
+      toast.success('Password has been reset successfully', {
+        autoClose: 2000,
+      });
       navigate('/login');
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to reset password');

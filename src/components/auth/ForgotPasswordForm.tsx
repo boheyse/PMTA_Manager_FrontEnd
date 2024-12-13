@@ -29,9 +29,13 @@ export const ForgotPasswordForm: React.FC = () => {
       setIsLoading(true);
       await authApi.forgotPassword(data.email);
       setEmailSent(true);
-      toast.success('Password reset instructions have been sent to your email');
+      toast.success('Password reset instructions have been sent to your email', {
+        autoClose: 2000,
+      });
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to send reset email');
+      toast.error(error.response?.data?.message || 'Failed to send reset email', {
+        autoClose: 2000,
+      });
     } finally {
       setIsLoading(false);
     }

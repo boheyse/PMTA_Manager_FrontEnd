@@ -8,9 +8,7 @@ import { ResetPasswordForm } from './components/auth/ResetPasswordForm';
 import { VerifyEmailPage } from './components/auth/VerifyEmailPage';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { MonitoringPage } from './pages/MonitoringPage';
-import { NodeDetailsPage } from './pages/NodeDetailsPage';
-import { MailboxProvidersPage } from './pages/MailboxProvidersPage';
-import { EmailLogsPage } from './pages/EmailLogsPage';
+import { ServerDetailsPage } from './pages/monitoring/ServerDetailsPage';
 import { SendingDomainsPage } from './pages/SendingDomainsPage';
 import { MailboxesPage } from './pages/MailboxesPage';
 import { DomainEditorPage } from './pages/DomainEditorPage';
@@ -18,13 +16,14 @@ import { IPAddressesPage } from './pages/IPAddressesPage';
 import { ConfigViewerPage } from './pages/ConfigViewerPage';
 import { ServerManagerPage } from './pages/ServerManagerPage';
 import { ServerWizardPage } from './pages/ServerWizardPage';
+import { ImportServerPage } from './pages/ImportServerPage';
 import { DomainRegistrarPage } from './pages/domain-registrar/DomainRegistrarPage';
 import { Sidebar } from './components/Sidebar';
 import { SidebarProvider } from './context/SidebarContext';
 import { useAuthStore } from './stores/authStore';
 import 'react-toastify/dist/ReactToastify.css';
 
-function App() {
+export default function App() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   return (
@@ -56,22 +55,12 @@ function App() {
                   <MonitoringPage />
                 </ProtectedRoute>
               } />
-              <Route path="/node/:nodeId" element={
+              <Route path="/monitoring/:serverId" element={
                 <ProtectedRoute>
-                  <NodeDetailsPage />
+                  <ServerDetailsPage />
                 </ProtectedRoute>
               } />
-              <Route path="/mailbox-providers" element={
-                <ProtectedRoute>
-                  <MailboxProvidersPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/email-logs" element={
-                <ProtectedRoute>
-                  <EmailLogsPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/manage-server" element={
+              <Route path="/manage-server/*" element={
                 <ProtectedRoute>
                   <ServerManagerPage />
                 </ProtectedRoute>
@@ -79,6 +68,11 @@ function App() {
               <Route path="/server-wizard" element={
                 <ProtectedRoute>
                   <ServerWizardPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/import-server" element={
+                <ProtectedRoute>
+                  <ImportServerPage />
                 </ProtectedRoute>
               } />
               <Route path="/domain-registrar" element={
@@ -129,5 +123,3 @@ function App() {
     </BrowserRouter>
   );
 }
-
-export default App;

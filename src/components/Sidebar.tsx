@@ -19,10 +19,14 @@ export function Sidebar() {
       await authApi.logout();
       logout();
       navigate('/login');
-      toast.success('Successfully logged out');
+      toast.success('Successfully logged out', {
+        autoClose: 2000,
+      });
     } catch (error) {
       console.error('Logout error:', error);
-      toast.error('Failed to logout');
+      toast.error('Failed to logout', {
+        autoClose: 2000,
+      });
     }
   };
   
@@ -38,9 +42,6 @@ export function Sidebar() {
         <NavLink to="/domain-registrar" icon={<Globe2 size={20} />} text="Domain Registrar" />
         <NavLink to="/manage-server" icon={<Server size={20} />} text="Manage Servers" />
         <NavLink to="/mailboxes" icon={<Inbox size={20} />} text="Mailboxes" />
-        <NavLink to="/mailbox-providers" icon={<Mail size={20} />} text="Mailbox Providers" />
-        <NavLink to="/bounces" icon={<Ban size={20} />} text="Bounces" />
-        <NavLink to="/email-logs" icon={<InboxIcon size={20} />} text="Email Logs" />
       </nav>
 
       <div className="pt-4 border-t border-gray-700">

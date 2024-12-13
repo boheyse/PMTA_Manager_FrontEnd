@@ -5,6 +5,7 @@ import { AuthError } from '../types/auth';
 import { ADMIN_CREDENTIALS } from '../stores/authStore';
 
 const BASE_URL = 'http://127.0.0.1:5000/api/v1';
+// const BASE_URL = 'https://pmta-manager-backend-BoHeyse.replit.app/api/v1';
 
 export const api = axios.create({
   baseURL: BASE_URL,
@@ -16,10 +17,13 @@ export const api = axios.create({
 
 // Mock authentication for admin user
 const mockAdminAuth = (email: string, password: string) => {
-  if (email === ADMIN_CREDENTIALS.email && password === ADMIN_CREDENTIALS.password) {
+  if (
+    email === ADMIN_CREDENTIALS.email &&
+    password === ADMIN_CREDENTIALS.password
+  ) {
     const token = 'mock_admin_token';
     const refreshToken = 'mock_admin_refresh_token';
-    
+
     return {
       token,
       refreshToken,
@@ -27,8 +31,8 @@ const mockAdminAuth = (email: string, password: string) => {
         id: 'admin_id',
         email: ADMIN_CREDENTIALS.email,
         username: 'admin',
-        isAdmin: true
-      }
+        isAdmin: true,
+      },
     };
   }
   throw new Error('Invalid credentials');
@@ -52,7 +56,10 @@ api.interceptors.response.use(
   async (error: AxiosError<AuthError>) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest?.headers['X-Retry']) {
+    if (
+      error.response?.status === 401 &&
+      !originalRequest?.headers['X-Retry']
+    ) {
       try {
         const refreshToken = Cookies.get('refresh_token');
         if (!refreshToken) {
@@ -83,28 +90,35 @@ api.interceptors.response.use(
 );
 
 export const authApi = {
-  register: async (data: { username: string; email: string; password: string }) => {
+  register: async (data: {
+    username: string;
+    email: string;
+    password: string;
+  }) => {
     console.log('Sending registration request with:', data);
     try {
       const response = await axios.post(`${BASE_URL}/auth/register`, data, {
         headers: {
           'Content-Type': 'application/json',
         },
-        withCredentials: false
+        withCredentials: false,
       });
       console.log('Raw registration response:', response);
-      
+
       // Check if the response indicates an error
       if (!response.data.success) {
         throw new Error(response.data.error || 'Registration failed');
       }
-      
+
       return response.data;
     } catch (error) {
       console.error('Registration API error:', error);
       if (axios.isAxiosError(error)) {
         // Handle axios error response
-        const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Registration failed';
+        const errorMessage =
+          error.response?.data?.error ||
+          error.response?.data?.message ||
+          'Registration failed';
         throw new Error(errorMessage);
       }
       // Handle other errors
@@ -115,7 +129,11 @@ export const authApi = {
     }
   },
 
-  login: async (credentials: { username: string; password: string; rememberMe?: boolean }) => {
+  login: async (credentials: {
+    username: string;
+    password: string;
+    rememberMe?: boolean;
+  }) => {
     try {
       // Check for admin credentials first
       if (credentials.username === ADMIN_CREDENTIALS.email) {
@@ -124,11 +142,11 @@ export const authApi = {
         }
         throw new Error('Invalid credentials');
       }
-      
+
       // If not admin, proceed with regular API call
       const response = await api.post('/auth/login', {
         username: credentials.username,
-        password: credentials.password
+        password: credentials.password,
       });
       return response.data;
     } catch (error) {
@@ -146,5 +164,5 @@ export const authApi = {
       Cookies.remove('auth_token');
       Cookies.remove('refresh_token');
     }
-  }
+  },
 };
