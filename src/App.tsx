@@ -18,6 +18,7 @@ import { IPAddressesPage } from './pages/IPAddressesPage';
 import { ConfigViewerPage } from './pages/ConfigViewerPage';
 import { ServerManagerPage } from './pages/ServerManagerPage';
 import { ServerWizardPage } from './pages/ServerWizardPage';
+import { ImportServerPage } from './pages/ImportServerPage';
 import { DomainRegistrarPage } from './pages/domain-registrar/DomainRegistrarPage';
 import { Sidebar } from './components/Sidebar';
 import { SidebarProvider } from './context/SidebarContext';
@@ -79,6 +80,11 @@ function App() {
               <Route path="/server-wizard" element={
                 <ProtectedRoute>
                   <ServerWizardPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/import-server" element={
+                <ProtectedRoute>
+                  <ImportServerPage />
                 </ProtectedRoute>
               } />
               <Route path="/domain-registrar" element={

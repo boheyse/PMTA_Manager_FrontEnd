@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Routes, Route } from 'react-router-dom';
-import { Plus, Server, Search, Trash2 } from 'lucide-react';
+import { Plus, Server, Search, Trash2, Download } from 'lucide-react';
 import type { PMTANode } from '../types/node';
 import { DomainDetailsModal } from '../components/server-manager/DomainDetailsModal';
 import { SendingDomainsPage } from './SendingDomainsPage';
@@ -130,13 +130,22 @@ export function ServerManagerPage() {
           <div className="p-4 border-b">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">Servers</h2>
-              <button
-                onClick={() => navigate('/server-wizard')}
-                className="flex items-center px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                PMTA Server Wizard
-              </button>
+              <div className="flex space-x-4">
+                <button
+                  onClick={() => navigate('/import-server')}
+                  className="flex items-center px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Import Server
+                </button>
+                <button
+                  onClick={() => navigate('/server-wizard')}
+                  className="flex items-center px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  PMTA Server Wizard
+                </button>
+              </div>
             </div>
           </div>
 
