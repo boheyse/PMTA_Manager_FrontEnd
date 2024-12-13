@@ -8,9 +8,7 @@ import { ResetPasswordForm } from './components/auth/ResetPasswordForm';
 import { VerifyEmailPage } from './components/auth/VerifyEmailPage';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { MonitoringPage } from './pages/MonitoringPage';
-import { NodeDetailsPage } from './pages/NodeDetailsPage';
-import { MailboxProvidersPage } from './pages/MailboxProvidersPage';
-import { EmailLogsPage } from './pages/EmailLogsPage';
+import { ServerDetailsPage } from './pages/monitoring/ServerDetailsPage';
 import { SendingDomainsPage } from './pages/SendingDomainsPage';
 import { MailboxesPage } from './pages/MailboxesPage';
 import { DomainEditorPage } from './pages/DomainEditorPage';
@@ -25,7 +23,7 @@ import { SidebarProvider } from './context/SidebarContext';
 import { useAuthStore } from './stores/authStore';
 import 'react-toastify/dist/ReactToastify.css';
 
-function App() {
+export default function App() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   return (
@@ -57,19 +55,9 @@ function App() {
                   <MonitoringPage />
                 </ProtectedRoute>
               } />
-              <Route path="/node/:nodeId" element={
+              <Route path="/monitoring/:serverId" element={
                 <ProtectedRoute>
-                  <NodeDetailsPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/mailbox-providers" element={
-                <ProtectedRoute>
-                  <MailboxProvidersPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/email-logs" element={
-                <ProtectedRoute>
-                  <EmailLogsPage />
+                  <ServerDetailsPage />
                 </ProtectedRoute>
               } />
               <Route path="/manage-server/*" element={
@@ -135,5 +123,3 @@ function App() {
     </BrowserRouter>
   );
 }
-
-export default App;

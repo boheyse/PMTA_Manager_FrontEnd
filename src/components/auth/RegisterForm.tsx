@@ -40,14 +40,10 @@ export const RegisterForm: React.FC = () => {
       console.log('Registration response:', response);
       
       if (response.success) {
-        toast.success(response.message || 'Registration successful! Please check your email to verify your account.', {
-            autoClose: 2000,
-          });
+        toast.success(response.message || 'Registration successful! Please check your email to verify your account.');
         navigate('/login');
       } else {
-        toast.error(response.error || 'Registration failed. Please try again.', {
-            autoClose: 2000,
-          });
+        toast.error(response.error || 'Registration failed. Please try again.');
       }
     } catch (error) {
       console.error('Registration error:', error);
