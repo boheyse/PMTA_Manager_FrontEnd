@@ -81,6 +81,9 @@ jobs:
           script: |
             cd /var/www/PMTA-MONITORING-UI
 
+            # Export the DOCKER_USERNAME environment variable
+            export DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
+
             # Pull the latest image
             docker-compose pull
 
