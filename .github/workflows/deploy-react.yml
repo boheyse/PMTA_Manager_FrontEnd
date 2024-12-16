@@ -81,14 +81,17 @@ jobs:
           script: |
             cd /var/www/PMTA-MONITORING-UI
 
-            # Export the DOCKER_USERNAME environment variable
-            export DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
+            # Ensure Docker is running
+            sudo systemctl start docker
+
+            # Clean up old containers and images
+            docker-compose down --rmi all --remove-orphans || true
+
+            docker rmi ${{ secrets.DOCKER_USERNAME }}/pmta-monitoring-ui:latest -f || true
 
             # Create the external network if it doesn't exist
             docker network ls | grep pmta-network || docker network create pmta-network
 
-            # Pull the latest image
+            # Pull the latest image and restart the containers
             docker-compose pull
-
-            # Start the containers
             docker-compose up -d --force-recreate --remove-orphans

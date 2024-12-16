@@ -2,8 +2,7 @@ version: '3.8'
 
 services:
   pmta-monitoring-ui:
-    image: pmta-monitoring-ui:latest
-    container_name: pmta-monitoring-ui
+    build: .
     restart: unless-stopped
     ports:
       - "80:80"
