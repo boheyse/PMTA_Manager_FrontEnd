@@ -2,7 +2,7 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 
 // const hostName = 'https://pmta-manager-backend-BoHeyse.replit.app';
-const hostName = 'http://127.0.0.1:5000';
+const hostName = import.meta.env.VITE_API_URL;
 
 const getAuthHeader = () => {
   const token = Cookies.get('auth_token');
