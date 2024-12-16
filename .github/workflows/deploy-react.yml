@@ -84,6 +84,9 @@ jobs:
             # Export the DOCKER_USERNAME environment variable
             export DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
 
+            # Create the external network if it doesn't exist
+            docker network ls | grep pmta-network || docker network create pmta-network
+
             # Pull the latest image
             docker-compose pull
 
