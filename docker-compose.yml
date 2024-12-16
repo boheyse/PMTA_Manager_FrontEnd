@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   pmta-monitoring-ui:
-    image: ${ DOCKER_USERNAME }/pmta-monitoring-ui:latest
+    image: pmta-monitoring-ui:latest
     container_name: pmta-monitoring-ui
     restart: unless-stopped
     ports:
