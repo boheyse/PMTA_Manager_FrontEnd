@@ -31,12 +31,12 @@ export function ServerDetailsForm({
         onSubmit();
       }}>
         <Form.Group className="mb-4">
-          <Form.Label>Server Name</Form.Label>
+          <Form.Label>Server Name (Users Choice) </Form.Label>
           <Form.Control
             type="text"
             value={serverName}
             onChange={(e) => onServerNameChange(e.target.value)}
-            placeholder="Enter server name"
+            placeholder="Example: Prod Server 1/1/25"
           />
         </Form.Group>
         <Form.Group className="mb-4">
@@ -45,7 +45,7 @@ export function ServerDetailsForm({
             type="text"
             value={hostname}
             onChange={(e) => onHostnameChange(e.target.value)}
-            placeholder="Enter host address"
+            placeholder="Example: 192.168.1.100"
           />
         </Form.Group>
 

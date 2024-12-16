@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Server, Eye } from 'lucide-react';
 import { MetricChart } from './MetricChart';
 import type { ServerMetrics } from '../../types/monitoring';
-import type { MetricKey } from '../../types/monitoring';
+import { MetricKey } from '../../constants/monitoring';
 
 interface ServerDashboardProps {
   name: string;
