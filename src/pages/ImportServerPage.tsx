@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, CheckCircle, Circle } from 'lucide-react';
+import { ArrowLeft, Circle } from 'lucide-react';
 import { ServerDetailsForm } from '../components/server-manager/ServerDetailsForm';
 import { axiosPost } from '../utils/apiUtils';
 import { toast } from 'react-toastify';

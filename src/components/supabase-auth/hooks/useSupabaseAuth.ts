@@ -2,7 +2,12 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { authService } from '../../../services/auth';
-import type { LoginFormData, RegisterFormData, ResetPasswordFormData } from '../types/auth';
+import type { 
+  LoginFormData, 
+  ResetPasswordFormData, 
+  SignUpFormData,
+  SignUpResponse 
+} from '../../../types/auth';
 
 export const useSupabaseAuth = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -25,19 +30,23 @@ export const useSupabaseAuth = () => {
     }
   };
 
-  const register = async (data: RegisterFormData) => {
+  const signUp = async (data: SignUpFormData): Promise<SignUpResponse> => {
     try {
       setIsLoading(true);
-      const response = await authService.register({
-        email: data.email,
-        password: data.password,
-        username: data.username,
-      });
-      toast.success(response.message);
+      const { error } = await authService.signUp(data);
+      
+      if (error) {
+        toast.error(error.message);
+        return { data: null, error };
+      }
+
+      toast.success('Sign up successful! Please check your email to verify your account.');
       navigate('/login');
+      return { data: null, error: null };
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to register');
-      throw error;
+      const message = error instanceof Error ? error.message : 'Failed to sign up';
+      toast.error(message);
+      return { data: null, error: new Error(message) };
     } finally {
       setIsLoading(false);
     }
@@ -88,7 +97,7 @@ export const useSupabaseAuth = () => {
   return {
     isLoading,
     login,
-    register,
+    signUp,
     resetPassword,
     updatePassword,
     logout,
