@@ -1,34 +1,24 @@
 import axios from 'axios';
-import Cookies from 'js-cookie';
+import { supabase } from '../lib/supabase';
 
 // const hostName = 'https://pmta-manager-backend-BoHeyse.replit.app';
-const hostName = import.meta.env.VITE_API_URL;
+// const hostName = import.meta.env.VITE_API_URL;
+const hostName = 'http://127.0.0.1:5000';
 
-const getAuthHeader = () => {
-  const token = Cookies.get('auth_token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
+
+const getAuthHeader = async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {};
 };
+
 
 export const axiosGet = async <T = any>(url: string): Promise<T> => {
   try {
+    const headers = await getAuthHeader();
     const response = await axios.get(`${hostName}${url}`, {
       headers: {
         'Content-Type': 'application/json',
-        ...getAuthHeader(),
-      },
-    });
-    return response.data;
-  } catch (error) {
-    console.error('GET request failed:', error);
-    throw error;
-  }
-};
-
-export const axiosGetNoAuth = async <T = any>(url: string): Promise<T> => {
-  try {
-    const response = await axios.get(`${hostName}${url}`, {
-      headers: {
-        'Content-Type': 'application/json',
+        ...headers,
       },
     });
     return response.data;
@@ -40,10 +30,11 @@ export const axiosGetNoAuth = async <T = any>(url: string): Promise<T> => {
 
 export const axiosPost = async <T = any>(url: string, data: any): Promise<T> => {
   try {
+    const headers = await getAuthHeader();
     const response = await axios.post(`${hostName}${url}`, data, {
       headers: {
         'Content-Type': 'application/json',
-        ...getAuthHeader(),
+        ...headers,
       },
     });
     return response.data;
@@ -55,10 +46,11 @@ export const axiosPost = async <T = any>(url: string, data: any): Promise<T> => 
 
 export const axiosPut = async <T = any>(url: string, data: any): Promise<T> => {
   try {
+    const headers = await getAuthHeader();
     const response = await axios.put(`${hostName}${url}`, data, {
       headers: {
         'Content-Type': 'application/json',
-        ...getAuthHeader(),
+        ...headers,
       },
     });
     return response.data;
@@ -70,10 +62,11 @@ export const axiosPut = async <T = any>(url: string, data: any): Promise<T> => {
 
 export const axiosDelete = async <T = any>(url: string): Promise<T> => {
   try {
+    const headers = await getAuthHeader();
     const response = await axios.delete(`${hostName}${url}`, {
       headers: {
         'Content-Type': 'application/json',
-        ...getAuthHeader(),
+        ...headers,
       },
     });
     return response.data;

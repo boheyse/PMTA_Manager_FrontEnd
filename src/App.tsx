@@ -1,12 +1,13 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
-import { LoginForm } from './components/auth/LoginForm';
-import { RegisterForm } from './components/auth/RegisterForm';
-import { ForgotPasswordForm } from './components/auth/ForgotPasswordForm';
-import { ResetPasswordForm } from './components/auth/ResetPasswordForm';
-import { VerifyEmailPage } from './components/auth/VerifyEmailPage';
-import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import {
+  LoginForm,
+  SignUpForm,
+  ForgotPasswordForm,
+  ResetPasswordForm,
+  ProtectedRoute
+} from './components/supabase-auth';
 import { MonitoringPage } from './pages/MonitoringPage';
 import { ServerDetailsPage } from './pages/monitoring/ServerDetailsPage';
 import { SendingDomainsPage } from './pages/SendingDomainsPage';
@@ -20,29 +21,28 @@ import { ImportServerPage } from './pages/ImportServerPage';
 import { DomainRegistrarPage } from './pages/domain-registrar/DomainRegistrarPage';
 import { Sidebar } from './components/Sidebar';
 import { SidebarProvider } from './context/SidebarContext';
-import { useAuthStore } from './stores/authStore';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import 'react-toastify/dist/ReactToastify.css';
 
-export default function App() {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+function AppContent() {
+  const { user } = useAuth();
 
   return (
     <BrowserRouter>
       <SidebarProvider>
-        <div className="flex min-h-screen bg-gray-50">
-          {isAuthenticated && <Sidebar />}
-          <div className="flex-1">
+        <div className="flex h-screen overflow-hidden">
+          {user && <Sidebar />}
+          <div className="flex-1 overflow-auto">
             <Routes>
               {/* Public Routes */}
               <Route path="/login" element={
-                isAuthenticated ? <Navigate to="/" replace /> : <LoginForm />
+                user ? <Navigate to="/" replace /> : <LoginForm />
               } />
               <Route path="/register" element={
-                isAuthenticated ? <Navigate to="/" replace /> : <RegisterForm />
+                user ? <Navigate to="/" replace /> : <SignUpForm />
               } />
               <Route path="/forgot-password" element={<ForgotPasswordForm />} />
               <Route path="/reset-password" element={<ResetPasswordForm />} />
-              <Route path="/verify-email" element={<VerifyEmailPage />} />
 
               {/* Protected Routes */}
               <Route path="/" element={
@@ -113,7 +113,7 @@ export default function App() {
 
               {/* Catch all route - redirect to login if not authenticated, home if authenticated */}
               <Route path="*" element={
-                isAuthenticated ? <Navigate to="/" replace /> : <Navigate to="/login" replace />
+                user ? <Navigate to="/" replace /> : <Navigate to="/login" replace />
               } />
             </Routes>
           </div>
@@ -121,5 +121,13 @@ export default function App() {
         <ToastContainer position="top-right" />
       </SidebarProvider>
     </BrowserRouter>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }

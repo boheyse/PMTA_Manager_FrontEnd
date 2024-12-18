@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuthStore } from '../../stores/authStore';
+import { useAuth } from '../../../context/AuthContext';
 import { toast } from 'react-toastify';
 
 interface ProtectedRouteProps {
@@ -8,16 +8,11 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const { user } = useAuth();
   const location = useLocation();
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      toast.error('Please login to access this page');
-    }
-  }, [isAuthenticated]);
-
-  if (!isAuthenticated) {
+  if (!user) {
+    toast.error('Please login to access this page');
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
