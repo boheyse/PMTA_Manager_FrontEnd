@@ -1,4 +1,4 @@
-import { axiosGet } from '../../utils/apiUtils'; // Assuming your axiosGet is in an 'api.ts' file
+import { axiosGet } from '../../utils/apiUtils'; 
 import type { Domain, DomainResponse } from '../../types/domain';
 
 // Get the domain data from the API and map it to the desired structure

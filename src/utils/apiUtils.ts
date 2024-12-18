@@ -1,10 +1,7 @@
 import axios from 'axios';
 import { supabase } from '../lib/supabase';
 
-// const hostName = 'https://pmta-manager-backend-BoHeyse.replit.app';
-// const hostName = import.meta.env.VITE_API_URL;
-const hostName = 'http://127.0.0.1:5000';
-
+const hostName = import.meta.env.VITE_API_URL;
 
 const getAuthHeader = async () => {
   const { data: { session } } = await supabase.auth.getSession();
