@@ -26,7 +26,7 @@ export function useMonitoring(): MonitoringState & {
         return;
       }
 
-      const response = await axiosGet('/api/v1/servers');
+      const response = await axiosGet('/data/servers');
       setServers(response);
     } catch (err) {
       setError('Failed to fetch servers');

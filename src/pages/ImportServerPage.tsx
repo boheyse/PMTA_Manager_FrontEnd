@@ -4,6 +4,7 @@ import { ArrowLeft, Circle } from 'lucide-react';
 import { ServerDetailsForm } from '../components/server-manager/ServerDetailsForm';
 import { axiosPost } from '../utils/apiUtils';
 import { toast } from 'react-toastify';
+import { AxiosError } from 'axios';
 
 export function ImportServerPage() {
   const navigate = useNavigate();
@@ -26,7 +27,7 @@ export function ImportServerPage() {
     {
       title: 'Update Sudo Permissions',
       description: 'Use sudo visudo to update the wheel group to use this command without requiring a password',
-      code: '%wheel  ALL=(ALL)       NOPASSWD:/usr/bin/mv'
+      code: '%wheel  ALL=(ALL)       NOPASSWD:/usr/bin/mv, /usr/bin/cp, /usr/bin/cat'
     },
     {
       title: 'Add API Key',
@@ -69,8 +70,10 @@ export function ImportServerPage() {
     } catch (error) {
       console.error('Import failed:', error);
       toast.dismiss();
-      setError(error.response?.data?.message || 'Failed to import server');
-      toast.error('Failed to import server. Please try again.');
+      const axiosError = error as AxiosError<{ error: string }>;
+      const errorMessage = axiosError.response?.data?.error || 'Failed to import server';
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsImporting(false);
     }

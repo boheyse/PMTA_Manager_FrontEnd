@@ -1,7 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 
 // Log all available environment variables (for debugging)
-console.log('VITE_URL', import.meta.env.VITE_API_URL);
 
 if (!import.meta.env.VITE_SUPABASE_URL) {
   console.error('Available SUPABASE_URL:', import.meta.env.VITE_SUPABASE_URL);
