@@ -1,14 +1,20 @@
 import type { PMTANode } from './node';
 
 export interface MetricDataPoint {
-  timestamp: string;
-  value: number;
+  timestamp: number;
+  sent: number;
+  deliveries: number;
+  bounces: number;
 }
 
 export interface ServerMetrics {
-  sent: MetricDataPoint[];
-  deliveryRate: MetricDataPoint[];
-  bounceRate: MetricDataPoint[];
+  stats: MetricDataPoint[];
+  start_time: number;
+  end_time: number;
+  interval: string;
+  timeframe: string;
+  server_id: number;
+  status: string;
 }
 
 export interface MetricsMap {

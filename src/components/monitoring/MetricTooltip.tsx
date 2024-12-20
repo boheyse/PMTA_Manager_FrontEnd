@@ -1,6 +1,5 @@
 import React from 'react';
 import { METRICS } from '../../constants/monitoring';
-import { formatMetricValue } from '../../utils/monitoring';
 import type { MetricKey } from '../../types/monitoring';
 
 interface MetricTooltipProps {
@@ -16,10 +15,15 @@ export function MetricTooltip({ active, payload, label, visibleMetrics }: Metric
   return (
     <div className="bg-white p-3 border rounded shadow-lg">
       <p className="text-sm text-gray-600 mb-2">
-        {new Date(label).toLocaleString()}
+        {new Date(label * 1000).toLocaleString()}
       </p>
       {payload.map((entry: any) => {
-        const metric = METRICS.find(m => m.key === entry.dataKey);
+        const metric = METRICS.find(m => {
+          if (entry.dataKey === 'deliveries') return m.key === 'delivered';
+          if (entry.dataKey === 'bounces') return m.key === 'bounced';
+          return m.key === entry.dataKey;
+        });
+        
         if (!metric || !visibleMetrics.includes(metric.key)) return null;
 
         return (
@@ -29,7 +33,7 @@ export function MetricTooltip({ active, payload, label, visibleMetrics }: Metric
               style={{ backgroundColor: entry.color }}
             />
             <span className="text-sm">
-              {metric.name}: {formatMetricValue(entry.value, entry.dataKey, payload[0].payload)}
+              {metric.name}: {entry.value.toLocaleString()}
             </span>
           </div>
         );

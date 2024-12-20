@@ -1,17 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import { axiosGet } from '../utils/apiUtils';
-import { parseTimeRange, parseTimeWindow } from '../utils/monitoring';
 import type { PMTANode } from '../types/node';
 import type { MonitoringState, MetricsMap } from '../types/monitoring';
 import { mockServers, generateMockMetrics } from '../mocks/monitoringData';
 
-const USE_MOCK_DATA = true; // Toggle this to switch between mock and real API
+const USE_MOCK_DATA = false; // Toggle this to switch between mock and real API
 
 export function useMonitoring(): MonitoringState & {
   fetchServers: () => Promise<void>;
   fetchMetrics: () => Promise<void>;
 } {
-  const [timeRange, setTimeRange] = useState('1h');
+  const [timeRange, setTimeRange] = useState('2h');
   const [timeWindow, setTimeWindow] = useState('5m');
   const [servers, setServers] = useState<PMTANode[]>([]);
   const [metrics, setMetrics] = useState<MetricsMap>({});
@@ -26,7 +25,7 @@ export function useMonitoring(): MonitoringState & {
         return;
       }
 
-      const response = await axiosGet('/data/servers');
+      const response = await axiosGet('/api/v1/servers');
       setServers(response);
     } catch (err) {
       setError('Failed to fetch servers');
@@ -38,26 +37,33 @@ export function useMonitoring(): MonitoringState & {
     if (!servers.length) return;
 
     setIsLoading(true);
-    const startDate = parseTimeRange(timeRange);
-    const windowMinutes = parseTimeWindow(timeWindow);
-
     try {
       if (USE_MOCK_DATA) {
-        const mockData = generateMockMetrics(startDate);
+        const mockData = generateMockMetrics();
         setMetrics(mockData);
         setIsLoading(false);
         return;
       }
 
       const metricsPromises = servers.map(server => 
-        axiosGet(`/api/v1/stats/?serverId=${server.id}&last=${startDate.toISOString()}&timeframe=${windowMinutes}m`)
+        axiosGet(`/data/stats?server_id=${server.id}&timeframe=${timeRange}&interval=${timeWindow}`)
       );
 
       const results = await Promise.all(metricsPromises);
       
       const metricsMap: MetricsMap = {};
       results.forEach((result, index) => {
-        metricsMap[servers[index].id] = result;
+        if (result.status === 'success') {
+          metricsMap[servers[index].id] = {
+            stats: result.stats,
+            start_time: result.start_time,
+            end_time: result.end_time,
+            interval: result.interval,
+            timeframe: result.timeframe,
+            server_id: result.server_id,
+            status: result.status
+          };
+        }
       });
 
       setMetrics(metricsMap);

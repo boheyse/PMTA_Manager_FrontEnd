@@ -14,14 +14,6 @@ interface ServerDashboardProps {
 export function ServerDashboard({ name, hostname, metrics, onClick }: ServerDashboardProps) {
   const [visibleMetrics, setVisibleMetrics] = useState<MetricKey[]>(['sent', 'delivered', 'bounced']);
 
-  // Transform metrics into chart data format
-  const chartData = metrics.sent.map((point, index) => ({
-    timestamp: point.timestamp,
-    sent: point.value,
-    delivered: (metrics.deliveryRate[index]?.value / 100) * point.value,
-    bounced: (metrics.bounceRate[index]?.value / 100) * point.value
-  }));
-
   const handleMetricToggle = (metric: MetricKey) => {
     setVisibleMetrics(prev => {
       if (prev.includes(metric)) {
@@ -53,7 +45,7 @@ export function ServerDashboard({ name, hostname, metrics, onClick }: ServerDash
 
       <div className="h-[300px]">
         <MetricChart 
-          data={chartData} 
+          data={metrics.stats || []} 
           visibleMetrics={visibleMetrics}
           onToggleMetric={handleMetricToggle}
         />

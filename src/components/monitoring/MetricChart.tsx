@@ -4,13 +4,7 @@ import { METRICS } from '../../constants/monitoring';
 import { MetricTooltip } from './MetricTooltip';
 import { MetricLegend } from './MetricLegend';
 import type { MetricKey } from '../../types/monitoring';
-
-interface MetricDataPoint {
-  timestamp: string;
-  sent: number;
-  delivered: number;
-  bounced: number;
-}
+import type { MetricDataPoint } from '../../types/monitoring';
 
 interface MetricChartProps {
   data: MetricDataPoint[];
@@ -30,7 +24,7 @@ export function MetricChart({ data, title, visibleMetrics, onToggleMetric }: Met
             <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
             <XAxis 
               dataKey="timestamp"
-              tickFormatter={(value) => new Date(value).toLocaleTimeString()}
+              tickFormatter={(value) => new Date(value * 1000).toLocaleTimeString()}
               stroke="#9CA3AF"
               fontSize={12}
             />
@@ -47,7 +41,7 @@ export function MetricChart({ data, title, visibleMetrics, onToggleMetric }: Met
                 <Line
                   key={metric.key}
                   type="monotone"
-                  dataKey={metric.key}
+                  dataKey={metric.key === 'sent' ? 'sent' : metric.key === 'delivered' ? 'deliveries' : 'bounces'}
                   stroke={metric.color}
                   dot={false}
                   strokeWidth={2}
