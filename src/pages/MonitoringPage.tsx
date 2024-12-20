@@ -17,6 +17,17 @@ export function MonitoringPage() {
     setTimeWindow,
   } = useMonitoring();
 
+  const handleServerClick = (serverId: number) => {
+    navigate(`/monitoring/${serverId}`, { 
+      state: { 
+        servers,
+        metrics,
+        timeRange,
+        timeWindow
+      } 
+    });
+  };
+
   if (error) {
     return (
       <div className="p-6 text-center text-red-600">
@@ -48,12 +59,8 @@ export function MonitoringPage() {
               key={server.id}
               name={server.name}
               hostname={server.hostname}
-              metrics={metrics[server.id] || {
-                sent: [],
-                deliveryRate: [],
-                bounceRate: []
-              }}
-              onClick={() => navigate(`/monitoring/${server.id}`)}
+              metrics={metrics[server.id]}
+              onClick={() => handleServerClick(server.id)}
             />
           ))}
         </div>

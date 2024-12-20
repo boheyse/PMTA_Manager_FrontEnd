@@ -30,7 +30,7 @@ export interface PoolType {
 }
 
 export interface PMTANode {
-  id: string;
+  id: number;
   name: string;
   hostname: string;
   description: string;

@@ -1,47 +1,42 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Tabs, Tab } from 'react-bootstrap';
-import { ServerDashboard } from '../../components/monitoring/ServerDashboard';
 import { TimeRangeSelector } from '../../components/monitoring/TimeRangeSelector';
 import { ServerOverview } from './components/ServerOverview';
 import { DomainDetails } from './components/DomainDetails';
 import { VMTADetails } from './components/VMTADetails';
-import { useMonitoring } from '../../hooks/useMonitoring';
+import type { PMTANode } from '../../types/node';
+import type { MetricsMap } from '../../types/monitoring';
+
+interface LocationState {
+  servers: PMTANode[];
+  metrics: MetricsMap;
+  timeRange: string;
+  timeWindow: string;
+}
 
 export function ServerDetailsPage() {
   const { serverId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState('overview');
-  const {
-    timeRange,
-    timeWindow,
-    servers,
-    metrics,
-    isLoading,
-    error,
-    setTimeRange,
-    setTimeWindow,
-  } = useMonitoring();
+  
+  const { servers, metrics, timeRange, timeWindow } = location.state as LocationState;
+  // console.log("servers passed in", JSON.stringify(servers));
 
-  useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, []);
-
-  if (!serverId || !servers.length) {
-    return null;
+  if (!serverId || !servers) {
+    return <div className="p-6 text-center text-red-600">Invalid server data</div>;
   }
 
-  const server = servers.find(s => s.id === serverId);
+  const server = servers.find(s => {
+    return s.id === parseInt(serverId); 
+  });
+
+  console.log("server", JSON.stringify(server));
+
   if (!server) {
-    return (
-      <div className="p-6 text-center text-red-600">
-        Server not found
-      </div>
-    );
+    return <div className="p-6 text-center text-red-600">Server not found</div>;
   }
 
   return (
@@ -59,52 +54,36 @@ export function ServerDetailsPage() {
           </div>
           <TimeRangeSelector
             timeRange={timeRange}
-            onTimeRangeChange={setTimeRange}
+            onTimeRangeChange={() => {}} // Read-only in details view
             timeWindow={timeWindow}
-            onTimeWindowChange={setTimeWindow}
+            onTimeWindowChange={() => {}} // Read-only in details view
           />
         </div>
 
-        {error ? (
-          <div className="text-center text-red-600">
-            {error}
-          </div>
-        ) : isLoading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-          </div>
-        ) : (
-          <Tabs
-            activeKey={activeTab}
-            onSelect={(k) => setActiveTab(k || 'overview')}
-            className="mb-4"
-          >
-            <Tab eventKey="overview" title="Overview">
-              <ServerOverview
-                server={server}
-                metrics={metrics[server.id]}
-              />
-            </Tab>
-            <Tab eventKey="domains" title="Domains">
-              <DomainDetails
-                server={server}
-                timeRange={timeRange}
-              />
-            </Tab>
-            <Tab eventKey="vmtas" title="VMTAs">
-              <VMTADetails
-                server={server}
-                timeRange={timeRange}
-              />
-            </Tab>
-            <Tab eventKey="queues" title="Queues">
-              <VMTADetails
-                server={server}
-                timeRange={timeRange}
-              />
-            </Tab>
-          </Tabs>
-        )}
+        <Tabs
+          activeKey={activeTab}
+          onSelect={(k) => setActiveTab(k || 'overview')}
+          className="mb-4"
+        >
+          <Tab eventKey="overview" title="Overview">
+            <ServerOverview
+              server={server}
+              metrics={metrics[server.id]}
+            />
+          </Tab>
+          <Tab eventKey="domains" title="Domains">
+            <DomainDetails
+              server={server}
+              timeRange={timeRange}
+            />
+          </Tab>
+          <Tab eventKey="vmtas" title="VMTAs">
+            <VMTADetails
+              server={server}
+              timeRange={timeRange}
+            />
+          </Tab>
+        </Tabs>
       </div>
     </div>
   );
