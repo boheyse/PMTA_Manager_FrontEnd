@@ -15,36 +15,24 @@ export function ImportServerPage() {
 
   const setupInstructions = [
     {
-      title: 'Create User Group',
-      description: 'Ensure the server has a "heyse" group created for it and that user is part of the wheel group',
+      title: 'Create User',
+      description: 'Ensure the server has a "heyse" user created for it and that user is part of the wheel group',
       code: 'sudo usermod -aG wheel heyse'
     },
     {
       title: 'ssh Key Access',
       description: 'Ensure the ssh public key has been added for the heyse user',
-      code: 'ssh-add ~/.ssh/heyse_key'
+      code: 'ssh-add ~/.ssh/id_rsa'
     },
     {
       title: 'Update Sudo Permissions',
-      description: 'Use sudo visudo to update the wheel group to use this command without requiring a password',
+      description: 'Use sudo visudo to update the wheel group to use these commands without requiring a password',
       code: '%wheel  ALL=(ALL)       NOPASSWD:/usr/bin/mv, /usr/bin/cp, /usr/bin/cat'
     },
     {
       title: 'Add API Key',
       description: 'Add an api key to the pmta config found at /etc/pmta/config',
       code: 'http-api-key abcd_0123_abcd_0123_abcd_0123_ab'
-    },
-    {
-      title: 'Configure Webhook',
-      description: 'Add the webhook configuration to /etc/pmta/config',
-      code: `<acct-file /var/log/pmta/webhook.csv>
-  http-webhook-max-interval 1m
-  max-size 5M   # 5 MB max 
-  http-webhook-url https://moondiver.xyz/webhook/pmta
-  http-webhook-ca-file /etc/pmta/webhook-server-ca-certs.pem
-  http-webhook-extra-headers /etc/pmta/http-webhook-headers.txt
-  records b, d 
-</acct-file>`
     }
   ];
 
