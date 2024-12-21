@@ -5,10 +5,11 @@ import type { PMTANode } from '../../../types/node';
 
 interface DomainOverviewProps {
   server: PMTANode;
+  timeRange: string;
 }
 
-export function DomainOverview({ server }: DomainOverviewProps) {
-  const { stats, isLoading, error } = useDomainStats(server);
+export function DomainOverview({ server, timeRange }: DomainOverviewProps) {
+  const { stats, isLoading, error } = useDomainStats({ server, timeRange });
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">

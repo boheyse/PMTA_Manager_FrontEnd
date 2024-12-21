@@ -6,7 +6,7 @@ import { TimeRangeSelector } from '../../components/monitoring/TimeRangeSelector
 import { ServerOverview } from './components/ServerOverview';
 import { DomainDetails } from './components/DomainDetails';
 import { VMTADetails } from './components/VMTADetails';
-import { axiosGet } from '../../utils/apiUtils';
+import { axiosGet, axiosPost } from '../../utils/apiUtils';
 import type { PMTANode } from '../../types/node';
 import type { MetricsMap, ServerMetrics } from '../../types/monitoring';
 
@@ -45,21 +45,34 @@ export function ServerDetailsPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await axiosGet(
-        `/data/stats?server_id=${serverId}&timeframe=${timeRange}&interval=${timeWindow}`
-      );
+      const requestData = {
+        server_id: Number(serverId),
+        timeframe: String(timeRange),
+        interval: String(timeWindow),
+        query_name: "sent_deliveries_bounces_by_timestamp_and_interval"
+      };
+
+      const response = await axiosPost('/data/stats2', requestData);
       
       if (response.status === 'success') {
+        // Process the stats data to ensure it's serializable
+        const stats = response.query_data.map(point => ({
+          timestamp: Number(point.bucket),
+          sent: Number(point.total_events),
+          deliveries: Number(point.deliveries),
+          bounces: Number(point.bounces)
+        }));
+
         setMetrics(prev => ({
           ...prev,
           [serverId]: {
-            stats: response.stats,
-            start_time: response.start_time,
-            end_time: response.end_time,
-            interval: response.interval,
-            timeframe: response.timeframe,
-            server_id: response.server_id,
-            status: response.status
+            stats,
+            start_time: Number(response.start_time),
+            end_time: Number(response.end_time),
+            interval: String(response.interval),
+            timeframe: String(response.timeframe),
+            server_id: Number(response.server_id),
+            status: String(response.status)
           }
         }));
       }
@@ -121,6 +134,7 @@ export function ServerDetailsPage() {
               server={server}
               metrics={metrics[server.id]}
               isLoading={isLoading}
+              timeRange={timeRange}
             />
           </Tab>
           <Tab eventKey="domains" title="Domains">

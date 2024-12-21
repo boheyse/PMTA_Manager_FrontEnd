@@ -10,7 +10,7 @@ export function useMonitoring(): MonitoringState & {
   fetchServers: () => Promise<void>;
   fetchMetrics: () => Promise<void>;
 } {
-  const [timeRange, setTimeRange] = useState('2h');
+  const [timeRange, setTimeRange] = useState('1h');
   const [timeWindow, setTimeWindow] = useState('5m');
   const [servers, setServers] = useState<PMTANode[]>([]);
   const [metrics, setMetrics] = useState<MetricsMap>({});
@@ -26,7 +26,25 @@ export function useMonitoring(): MonitoringState & {
       }
 
       const response = await axiosGet('/api/v1/servers');
-      setServers(response);
+      // Ensure we only store serializable data
+      const processedServers = response.map((server: PMTANode) => ({
+        ...server,
+        id: Number(server.id),
+        domains: Array.from(server.domains, domain => String(domain)),
+        ip_addresses: Array.from(server.ip_addresses, ip => String(ip)),
+        pool_types: server.pool_types.map(pool => ({
+          ...pool,
+          pool_type: String(pool.pool_type),
+          isps: pool.isps.map(isp => ({
+            name: String(isp.name),
+            settings: isp.settings.map(setting => ({
+              key: String(setting.key),
+              value: String(setting.value)
+            }))
+          }))
+        }))
+      }));
+      setServers(processedServers);
     } catch (err) {
       setError('Failed to fetch servers');
       console.error(err);
@@ -41,39 +59,40 @@ export function useMonitoring(): MonitoringState & {
       if (USE_MOCK_DATA) {
         const mockData = generateMockMetrics();
         setMetrics(mockData);
-        setIsLoading(false);
         return;
       }
 
-      const metricsPromises = servers.map(server => 
-        axiosPost('/data/stats2', {
-          server_id: server.id,
-          timeframe: timeRange,
-          interval: timeWindow,
+      const metricsPromises = servers.map(server => {
+        const requestData = {
+          server_id: Number(server.id),
+          timeframe: String(timeRange),
+          interval: String(timeWindow),
           query_name: "sent_deliveries_bounces_by_timestamp_and_interval"
-        })
-      );
+        };
+        return axiosPost('/data/stats2', requestData);
+      });
 
       const results = await Promise.all(metricsPromises);
       
       const metricsMap: MetricsMap = {};
       results.forEach((result, index) => {
         if (result.status === 'success') {
+          // Process the stats data to ensure it's serializable
           const stats = result.query_data.map(point => ({
-            timestamp: point.bucket,
-            sent: point.total_events,
-            deliveries: point.deliveries,
-            bounces: point.bounces
+            timestamp: Number(point.bucket),
+            sent: Number(point.total_events),
+            deliveries: Number(point.deliveries),
+            bounces: Number(point.bounces)
           }));
 
           metricsMap[servers[index].id] = {
             stats,
-            start_time: result.start_time,
-            end_time: result.end_time,
-            interval: result.interval,
-            timeframe: result.timeframe,
-            server_id: result.server_id,
-            status: result.status
+            start_time: Number(result.start_time),
+            end_time: Number(result.end_time),
+            interval: String(result.interval),
+            timeframe: String(result.timeframe),
+            server_id: Number(result.server_id),
+            status: String(result.status)
           };
         }
       });

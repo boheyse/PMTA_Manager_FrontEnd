@@ -9,9 +9,10 @@ interface ServerOverviewProps {
   server: PMTANode;
   metrics: ServerMetrics;
   isLoading: boolean;
+  timeRange: string;
 }
 
-export function ServerOverview({ server, metrics, isLoading }: ServerOverviewProps) {
+export function ServerOverview({ server, metrics, isLoading, timeRange }: ServerOverviewProps) {
   return (
     <div className="grid grid-cols-2 gap-6">
       <div className="space-y-6">
@@ -25,7 +26,10 @@ export function ServerOverview({ server, metrics, isLoading }: ServerOverviewPro
       </div>
       
       <div>
-        <DomainOverview server={server} />
+        <DomainOverview 
+          server={server} 
+          timeRange={timeRange}
+        />
       </div>
     </div>
   );
