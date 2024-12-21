@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { axiosGet } from '../utils/apiUtils';
+import { axiosGet, axiosPost } from '../utils/apiUtils';
 import type { PMTANode } from '../types/node';
 import type { MonitoringState, MetricsMap } from '../types/monitoring';
 import { mockServers, generateMockMetrics } from '../mocks/monitoringData';
 
-const USE_MOCK_DATA = false; // Toggle this to switch between mock and real API
+const USE_MOCK_DATA = false;
 
 export function useMonitoring(): MonitoringState & {
   fetchServers: () => Promise<void>;
@@ -46,7 +46,12 @@ export function useMonitoring(): MonitoringState & {
       }
 
       const metricsPromises = servers.map(server => 
-        axiosGet(`/data/stats?server_id=${server.id}&timeframe=${timeRange}&interval=${timeWindow}`)
+        axiosPost('/data/stats2', {
+          server_id: server.id,
+          timeframe: timeRange,
+          interval: timeWindow,
+          query_name: "sent_deliveries_bounces_by_timestamp_and_interval"
+        })
       );
 
       const results = await Promise.all(metricsPromises);
@@ -54,8 +59,15 @@ export function useMonitoring(): MonitoringState & {
       const metricsMap: MetricsMap = {};
       results.forEach((result, index) => {
         if (result.status === 'success') {
+          const stats = result.query_data.map(point => ({
+            timestamp: point.bucket,
+            sent: point.total_events,
+            deliveries: point.deliveries,
+            bounces: point.bounces
+          }));
+
           metricsMap[servers[index].id] = {
-            stats: result.stats,
+            stats,
             start_time: result.start_time,
             end_time: result.end_time,
             interval: result.interval,

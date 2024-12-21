@@ -12,7 +12,7 @@ export function VMTADetails({ server, timeRange }: VMTADetailsProps) {
       <div className="space-y-6">
         {server.pool_types.map(pool => (
           <div key={pool.pool_type} className="border rounded-lg p-6">
-            <h3 className="text-xl font-semibold mb-4">{pool.pool_type || 'Default'} Pool</h3>
+            <h3 className="text-xl font-semibold mb-4">{pool.pool_type || 'Default'} pool</h3>
             
             <div className="grid grid-cols-4 gap-6 mb-6">
               <div>

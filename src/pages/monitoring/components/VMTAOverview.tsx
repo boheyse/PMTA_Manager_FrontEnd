@@ -12,7 +12,7 @@ export function VMTAOverview({ server }: VMTAOverviewProps) {
       <div className="space-y-4">
         {server.pool_types.map(pool => (
           <div key={pool.pool_type} className="p-4 border rounded">
-            <h3 className="font-medium mb-2">{pool.pool_type || 'Default'} Pool</h3>
+            <h3 className="font-medium mb-2">{pool.pool_type || 'Default'} pool</h3>
             <div className="grid grid-cols-3 gap-4">
               <div>
                 <div className="text-sm text-gray-500">Active VMTAs</div>

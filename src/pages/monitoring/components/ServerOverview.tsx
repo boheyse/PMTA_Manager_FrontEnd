@@ -8,27 +8,24 @@ import type { ServerMetrics } from '../../../types/monitoring';
 interface ServerOverviewProps {
   server: PMTANode;
   metrics: ServerMetrics;
+  isLoading: boolean;
 }
 
-export function ServerOverview({ server, metrics }: ServerOverviewProps) {
+export function ServerOverview({ server, metrics, isLoading }: ServerOverviewProps) {
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <ServerDashboard
-            name={server.name}
-            hostname={server.hostname}
-            metrics={metrics || {
-              sent: [],
-              deliveryRate: [],
-              bounceRate: []
-            }}
-          />
-        </div>
-        <div className="space-y-6">
-          <DomainOverview server={server} />
-          <VMTAOverview server={server} />
-        </div>
+    <div className="grid grid-cols-2 gap-6">
+      <div className="space-y-6">
+        <ServerDashboard
+          name={server.name}
+          hostname={server.hostname}
+          metrics={metrics}
+          isLoading={isLoading}
+        />
+        <VMTAOverview server={server} />
+      </div>
+      
+      <div>
+        <DomainOverview server={server} />
       </div>
     </div>
   );

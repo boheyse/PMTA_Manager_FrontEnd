@@ -1,4 +1,6 @@
 import React from 'react';
+import { DomainStatsTable } from '../../../components/monitoring/DomainStatsTable';
+import { useDomainStats } from '../../../hooks/useDomainStats';
 import type { PMTANode } from '../../../types/node';
 
 interface DomainOverviewProps {
@@ -6,29 +8,24 @@ interface DomainOverviewProps {
 }
 
 export function DomainOverview({ server }: DomainOverviewProps) {
+  const { stats, isLoading, error } = useDomainStats(server);
+
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
       <h2 className="text-lg font-semibold mb-4">Domain Overview</h2>
-      <div className="space-y-4">
-        {server.domains.map(domain => (
-          <div key={domain} className="p-4 border rounded">
-            <h3 className="font-medium mb-2">{domain}</h3>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <div className="text-sm text-gray-500">Messages Sent</div>
-                <div className="text-lg font-medium">12,345</div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-500">Delivery Rate</div>
-                <div className="text-lg font-medium text-green-600">98.5%</div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-500">Bounce Rate</div>
-                <div className="text-lg font-medium text-red-600">1.5%</div>
-              </div>
-            </div>
+      
+      <div className="overflow-x-auto relative">
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75 z-10">
+            <div className="animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent"></div>
           </div>
-        ))}
+        )}
+
+        {error ? (
+          <div className="text-red-600 p-4">{error}</div>
+        ) : (
+          <DomainStatsTable stats={stats} />
+        )}
       </div>
     </div>
   );

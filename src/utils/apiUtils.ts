@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { supabase } from '../lib/supabase';
 
-const hostName = import.meta.env.VITE_API_URL;
+const hostName = "https://moondiver.xyz";
 
 const getAuthHeader = async () => {
   const { data: { session } } = await supabase.auth.getSession();
