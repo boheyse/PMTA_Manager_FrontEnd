@@ -6,9 +6,11 @@ import { TimeRangeSelector } from '../../components/monitoring/TimeRangeSelector
 import { ServerOverview } from './components/ServerOverview';
 import { DomainDetails } from './components/DomainDetails';
 import { VMTADetails } from './components/VMTADetails';
-import { axiosGet, axiosPost } from '../../utils/apiUtils';
+import { IPMappingsView } from './components/IPMappingsView';
+import { useServerConnection } from '../../hooks/useServerConnection';
+import { axiosPost } from '../../utils/apiUtils';
 import type { PMTANode } from '../../types/node';
-import type { MetricsMap, ServerMetrics } from '../../types/monitoring';
+import type { MetricsMap } from '../../types/monitoring';
 
 interface LocationState {
   servers: PMTANode[];
@@ -40,62 +42,58 @@ export function ServerDetailsPage() {
     return <div className="p-6 text-center text-red-600">Server not found</div>;
   }
 
-  // Function to fetch updated metrics
-  const fetchMetrics = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const requestData = {
-        server_id: Number(serverId),
-        timeframe: String(timeRange),
-        interval: String(timeWindow),
-        query_name: "sent_deliveries_bounces_by_timestamp_and_interval"
-      };
+  // Connect to server and get session ID in the background
+  const { sessionId, isConnecting, error: connectionError, retryAttempt } = useServerConnection({
+    hostname: server.hostname
+  });
 
-      const response = await axiosPost('/data/stats2', requestData);
-      
-      if (response.status === 'success') {
-        // Process the stats data to ensure it's serializable
-        const stats = response.query_data.map(point => ({
-          timestamp: Number(point.bucket),
-          sent: Number(point.total_events),
-          deliveries: Number(point.deliveries),
-          bounces: Number(point.bounces)
-        }));
-
-        setMetrics(prev => ({
-          ...prev,
-          [serverId]: {
-            stats,
-            start_time: Number(response.start_time),
-            end_time: Number(response.end_time),
-            interval: String(response.interval),
-            timeframe: String(response.timeframe),
-            server_id: Number(response.server_id),
-            status: String(response.status)
-          }
-        }));
-      }
-    } catch (err) {
-      setError('Failed to fetch metrics');
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Update metrics when timeRange or timeWindow changes
+  // Fetch metrics data
   useEffect(() => {
+    const fetchMetrics = async () => {
+      setIsLoading(true);
+      setError(null);
+      
+      try {
+        const requestData = {
+          server_id: Number(serverId),
+          timeframe: String(timeRange),
+          interval: String(timeWindow),
+          query_name: "sent_deliveries_bounces_by_timestamp_and_interval"
+        };
+
+        const response = await axiosPost('/data/stats2', requestData);
+
+        if (response.status === 'success') {
+          const stats = response.query_data.map(point => ({
+            timestamp: Number(point.bucket),
+            sent: Number(point.total_events),
+            deliveries: Number(point.deliveries),
+            bounces: Number(point.bounces)
+          }));
+
+          setMetrics(prev => ({
+            ...prev,
+            [serverId]: {
+              stats,
+              start_time: Number(response.start_time),
+              end_time: Number(response.end_time),
+              interval: String(response.interval),
+              timeframe: String(response.timeframe),
+              server_id: Number(response.server_id),
+              status: String(response.status)
+            }
+          }));
+        }
+      } catch (err) {
+        setError('Failed to fetch metrics');
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     fetchMetrics();
-  }, [timeRange, timeWindow]);
-
-  const handleTimeRangeChange = (range: string) => {
-    setTimeRange(range);
-  };
-
-  const handleTimeWindowChange = (window: string) => {
-    setTimeWindow(window);
-  };
+  }, [serverId, timeRange, timeWindow]);
 
   return (
     <div className="fixed inset-0 bg-gray-50 z-50 overflow-auto">
@@ -112,12 +110,28 @@ export function ServerDetailsPage() {
           </div>
           <TimeRangeSelector
             timeRange={timeRange}
-            onTimeRangeChange={handleTimeRangeChange}
+            onTimeRangeChange={setTimeRange}
             timeWindow={timeWindow}
-            onTimeWindowChange={handleTimeWindowChange}
+            onTimeWindowChange={setTimeWindow}
           />
         </div>
 
+        {/* Show connection retry status */}
+        {connectionError && retryAttempt > 0 && (
+          <div className="mb-4 p-4 bg-yellow-50 text-yellow-700 rounded-lg flex items-center justify-between">
+            <div>
+              <p className="font-medium">Connection issue: {connectionError}</p>
+              <p className="text-sm mt-1">
+                Attempting to reconnect... (Attempt {retryAttempt}/3)
+              </p>
+            </div>
+            {isConnecting && (
+              <div className="animate-spin rounded-full h-4 w-4 border-2 border-yellow-700 border-t-transparent"></div>
+            )}
+          </div>
+        )}
+
+        {/* Show metrics error if any */}
         {error && (
           <div className="mb-4 p-4 bg-red-50 text-red-600 rounded-lg">
             {error}
@@ -141,6 +155,12 @@ export function ServerDetailsPage() {
             <DomainDetails
               server={server}
               timeRange={timeRange}
+            />
+          </Tab>
+          <Tab eventKey="ip-addresses" title="IP Addresses">
+            <IPMappingsView
+              server={server}
+              sessionId={sessionId}
             />
           </Tab>
           <Tab eventKey="vmtas" title="VMTAs">
