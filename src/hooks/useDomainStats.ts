@@ -26,12 +26,15 @@ export function useDomainStats({ server, timeRange }: UseDomainStatsProps) {
       
       try {
         // Create a plain serializable object for the request
+        // console.log(server.domains);
         const requestData = {
           server_id: Number(server.id), // Fixed: Use Number() instead of int()
           timeframe: String(timeRange),
           query_name: "sent_deliveries_bounces_by_domain",
           data_for_query: server.domains.map(domain => String(domain.name)) // Simplified array mapping
         };
+
+        console.log(requestData.data_for_query);
 
         const response = await axiosPost('/data/stats2', requestData);
 
