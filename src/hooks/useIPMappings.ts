@@ -38,7 +38,7 @@ export function useIPMappings(sessionId: string) {
         });
 
         // Validate response structure with safe navigation
-        const vmtas = response?.data?.data?.vmtas;
+        const vmtas = response?.data?.vmtas;
         if (!Array.isArray(vmtas)) {
           throw new Error('Invalid response format: vmtas data is not an array');
         }
