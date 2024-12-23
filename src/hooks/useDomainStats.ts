@@ -26,11 +26,12 @@ export function useDomainStats({ server, timeRange }: UseDomainStatsProps) {
       setError(null);
       
       try {
-        // Log the incoming server domains structure
-        debug.log('Raw server domains:', server.domains);
-
         const domainNames = server.domains.map(domain => String(domain.name));
-        console.log('Extracted domain names:', domainNames);
+        debug.log(`Fetching stats for ${server.name}`, {
+          domains: domainNames,
+          timeRange,
+          serverId: server.id
+        });
 
         const requestData = {
           server_id: Number(server.id),
@@ -39,20 +40,14 @@ export function useDomainStats({ server, timeRange }: UseDomainStatsProps) {
           data_for_query: domainNames
         };
 
-        // Log the full request data
-        debug.log('Domain stats request:', {
-          ...requestData,
-          server_name: server.name,
-          domain_count: domainNames.length
-        });
+        debug.log(`Request payload for ${server.name}`, requestData);
 
         const response = await axiosPost('/data/stats2', requestData);
 
-        // Log the response structure
-        console.log('Domain stats response:', {
+        debug.log(`Response for ${server.name}`, {
           status: response.status,
-          data_length: response.query_data?.length || 0,
-          sample_data: response.query_data?.[0],
+          domains_returned: response.query_data?.length || 0,
+          first_domain: response.query_data?.[0]?.domain,
           timeframe: response.timeframe
         });
 
@@ -70,11 +65,11 @@ export function useDomainStats({ server, timeRange }: UseDomainStatsProps) {
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to fetch domain stats';
         setError(errorMessage);
-        console.error('Domain stats error:', {
+        debug.error(`Failed to fetch stats for ${server.name}`, {
           error: err,
           server_id: server.id,
-          server_name: server.name,
-          domain_count: server.domains?.length || 0
+          domain_count: server.domains?.length || 0,
+          timeRange
         });
       } finally {
         setIsLoading(false);
@@ -84,13 +79,13 @@ export function useDomainStats({ server, timeRange }: UseDomainStatsProps) {
     if (server.domains && server.domains.length > 0) {
       fetchDomainStats();
     } else {
-      console.log('No domains found for server:', {
+      debug.warn(`No domains found for server ${server.name}`, {
         server_id: server.id,
-        server_name: server.name
+        timeRange
       });
-      setStats([]); // Reset stats if no domains
+      setStats([]);
     }
-  }, [server.id, server.domains, timeRange]);
+  }, [server.id, server.domains, timeRange, server.name]);
 
   return { stats, isLoading, error };
 }
