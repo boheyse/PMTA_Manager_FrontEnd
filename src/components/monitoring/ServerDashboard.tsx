@@ -2,14 +2,14 @@ import React, { useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Server, Eye } from 'lucide-react';
 import { MetricChart } from './MetricChart';
-import type { ServerMetrics } from '../../types/monitoring';
+import type { MetricData, ServerMetrics } from '../../types/monitoring';
 import { MetricKey } from '../../constants/monitoring';
 
 interface ServerDashboardProps {
   name: string;
   hostname: string;
-  metrics: ServerMetrics;
-  onClick?: () => void;
+  metrics: MetricData;
+  onClick: () => void;
   isLoading?: boolean;
 }
 
@@ -25,6 +25,30 @@ export function ServerDashboard({ name, hostname, metrics, onClick, isLoading }:
       return [...prev, metric];
     });
   };
+
+  if (metrics?.error) {
+    return (
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className="flex justify-between items-start mb-4">
+          <div>
+            <h2 className="text-lg font-semibold">{name}</h2>
+            <p className="text-sm text-gray-500">{hostname}</p>
+          </div>
+          <button
+            onClick={onClick}
+            className="text-gray-400 hover:text-gray-600"
+          >
+            <Eye className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="p-4 bg-red-50 rounded-md">
+          <p className="text-sm text-red-600">
+            Failed to load metrics: {metrics.error}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-lg p-6 relative">

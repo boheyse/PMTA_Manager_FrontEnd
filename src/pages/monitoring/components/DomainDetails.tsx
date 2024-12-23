@@ -11,8 +11,8 @@ export function DomainDetails({ server, timeRange }: DomainDetailsProps) {
     <div className="bg-white rounded-lg shadow-sm p-6">
       <div className="space-y-6">
         {server.domains.map(domain => (
-          <div key={domain} className="border rounded-lg p-6">
-            <h3 className="text-xl font-semibold mb-4">{domain}</h3>
+          <div key={domain.name} className="border rounded-lg p-6">
+            <h3 className="text-xl font-semibold mb-4">{domain.name}</h3>
             <div className="grid grid-cols-4 gap-6">
               <div>
                 <div className="text-sm text-gray-500">Messages Sent</div>

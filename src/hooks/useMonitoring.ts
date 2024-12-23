@@ -30,7 +30,14 @@ export function useMonitoring(): MonitoringState & {
       const processedServers = response.map((server: PMTANode) => ({
         ...server,
         id: Number(server.id),
-        domains: Array.from(server.domains, domain => String(domain)),
+        domains: Array.isArray(server.domains) 
+          ? server.domains.map(domain => ({
+              name: String(domain.name),
+              vmtas: Array.isArray(domain.vmtas) 
+                ? domain.vmtas.map(vmta => String(vmta))
+                : []
+            }))
+          : [],
         ip_addresses: Array.from(server.ip_addresses, ip => String(ip)),
         pool_types: server.pool_types.map(pool => ({
           ...pool,
@@ -62,45 +69,61 @@ export function useMonitoring(): MonitoringState & {
         return;
       }
 
-      const metricsPromises = servers.map(server => {
-        const requestData = {
-          server_id: Number(server.id),
-          timeframe: String(timeRange),
-          interval: String(timeWindow),
-          query_name: "sent_deliveries_bounces_by_timestamp_and_interval"
-        };
-        return axiosPost('/data/stats2', requestData);
-      });
-
-      const results = await Promise.all(metricsPromises);
-      
       const metricsMap: MetricsMap = {};
-      results.forEach((result, index) => {
-        if (result.status === 'success') {
-          // Process the stats data to ensure it's serializable
-          const stats = result.query_data.map(point => ({
-            timestamp: Number(point.bucket),
-            sent: Number(point.total_events),
-            deliveries: Number(point.deliveries),
-            bounces: Number(point.bounces)
-          }));
+      
+      // Process each server individually to prevent one failure from affecting others
+      await Promise.all(
+        servers.map(async (server) => {
+          try {
+            const requestData = {
+              server_id: Number(server.id),
+              timeframe: String(timeRange),
+              interval: String(timeWindow),
+              query_name: "sent_deliveries_bounces_by_timestamp_and_interval"
+            };
+            
+            const result = await axiosPost('/data/stats2', requestData);
 
-          metricsMap[servers[index].id] = {
-            stats,
-            start_time: Number(result.start_time),
-            end_time: Number(result.end_time),
-            interval: String(result.interval),
-            timeframe: String(result.timeframe),
-            server_id: Number(result.server_id),
-            status: String(result.status)
-          };
-        }
-      });
+            if (result.status === 'success') {
+              const stats = result.query_data.map(point => ({
+                timestamp: Number(point.bucket),
+                sent: Number(point.total_events),
+                deliveries: Number(point.deliveries),
+                bounces: Number(point.bounces)
+              }));
+
+              metricsMap[server.id] = {
+                stats,
+                start_time: Number(result.start_time),
+                end_time: Number(result.end_time),
+                interval: String(result.interval),
+                timeframe: String(result.timeframe),
+                server_id: Number(result.server_id),
+                status: String(result.status),
+                error: null
+              };
+            }
+          } catch (err) {
+            // Handle individual server errors
+            metricsMap[server.id] = {
+              stats: [],
+              start_time: 0,
+              end_time: 0,
+              interval: timeWindow,
+              timeframe: timeRange,
+              server_id: server.id,
+              status: 'error',
+              error: err instanceof Error ? err.message : 'Failed to fetch metrics'
+            };
+            console.error(`Failed to fetch metrics for server ${server.name}:`, err);
+          }
+        })
+      );
 
       setMetrics(metricsMap);
     } catch (err) {
-      setError('Failed to fetch metrics');
-      console.error(err);
+      setError('Some servers failed to load metrics');
+      console.error('Metrics fetch error:', err);
     } finally {
       setIsLoading(false);
     }

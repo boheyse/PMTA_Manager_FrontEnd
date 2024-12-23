@@ -7,18 +7,24 @@ export interface MetricDataPoint {
   bounces: number;
 }
 
-export interface ServerMetrics {
-  stats: MetricDataPoint[];
+export interface MetricData {
+  stats: Array<{
+    timestamp: number;
+    sent: number;
+    deliveries: number;
+    bounces: number;
+  }>;
   start_time: number;
   end_time: number;
   interval: string;
   timeframe: string;
   server_id: number;
   status: string;
+  error: string | null;
 }
 
 export interface MetricsMap {
-  [key: string]: ServerMetrics;
+  [key: number]: MetricData;
 }
 
 export interface TimeRange {

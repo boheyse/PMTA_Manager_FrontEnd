@@ -29,6 +29,11 @@ export interface PoolType {
   isps: ISPConfig[];
 }
 
+export interface DomainVMTA {
+  name: string;
+  vmta: string[];
+}
+
 export interface PMTANode {
   id: number;
   name: string;
@@ -36,7 +41,6 @@ export interface PMTANode {
   description: string;
   setup_complete: boolean;
   ip_addresses: string[];
-  domains: string[];
+  domains: DomainVMTA[];
   pool_types: PoolType[];
-  status: 'connected' | 'disconnected';
 }

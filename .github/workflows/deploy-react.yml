@@ -63,9 +63,6 @@ jobs:
             # Navigate to the app directory
             cd $APP_DIR
 
-            # Stop and remove existing containers related to this app
-            docker-compose down --rmi all --remove-orphans || true
-
       - name: Transfer Files to Server
         uses: appleboy/scp-action@master
         with:
@@ -87,6 +84,9 @@ jobs:
             # Ensure Docker is running
             sudo systemctl start docker
 
+            # Pull the latest image and restart the containers
+            docker-compose pull
+            
             # Clean up old containers and images
             docker-compose down --rmi all --remove-orphans || true
 
@@ -95,6 +95,5 @@ jobs:
             # Create the external network if it doesn't exist
             docker network ls | grep pmta-network || docker network create pmta-network
 
-            # Pull the latest image and restart the containers
-            docker-compose pull
+            
             docker-compose up -d --force-recreate --remove-orphans
